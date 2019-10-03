@@ -75,8 +75,8 @@ class v_symbol(vhdl_base):
         return name + " : " +self.type +" := " +  self.DefaultValue  + "; \n"
     
     def recordMemberDefault(self, name, parent,Inout=None):
-        if self.vhdl_name:
-            name = self.vhdl_name
+        #if self.vhdl_name:
+        #    name = self.vhdl_name
         
         if issubclass(type(parent),v_class):
             return name + " => " + self.DefaultValue 

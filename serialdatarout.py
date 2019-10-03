@@ -18,7 +18,8 @@ class SerialDataConfig(v_class):
         super().__init__("SerialDataConfig")
         self.__v_classType__       = v_classType_t.Record_t
 
-        self.WIN_ADDR              = port_out( v_slv(9) )  
+        self.row_Select            = port_out( v_slv(3) )  
+        self.column_select         = port_out( v_slv(6) )  
         self.ASIC_NUM              = port_out( copy.deepcopy(asicN) )  
         self.force_test_pattern    = port_out( v_sl() )  
         self.sample_start          = port_out( v_slv(5) )  

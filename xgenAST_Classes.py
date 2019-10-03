@@ -21,9 +21,21 @@ def Unfold_call(astParser, callNode):
 
 
 
+class indent:
+    def __init__(self):
+        self.ind = 2
 
+    def inc(self):
+        self.ind += 2
+    
+    def deinc(self):
+        self.ind -= 2
 
+    def __str__(self):
+        ret  = ''.ljust(self.ind)
+        return ret
 
+gIndent = indent()
 
 
 def port_in_to_vhdl(astParser,Node):
@@ -402,24 +414,38 @@ class v_if(v_ast_base):
         self.test=test
         self.body = body
         self.oreEsle  = oreEsle
+        self.isElse = False
+
 
     def __str__(self):
-        ret ="\nif ("
-        ret += str(self.test) +") then \n  "
+        
+        if self.isElse:
+            gIndent.deinc()
+            ret ="\n" +str(gIndent) +  "elsif ("
+            gIndent.inc()
+        else:
+            ret ="\n" +str(gIndent) +  "if ("
+        gIndent.inc()
+        ret += str(self.test) +") then \n"+str(gIndent)
         for x in self.body:
             x_str =str(x)
             if x_str:
-                x_str.replace("\n","\n  ")
-                ret += x_str +";\n  "
+               # x_str.replace("\n","\n  ")
+                ret += x_str +";\n"+str(gIndent)
 
         oreelse =""
         for x in self.oreEsle:
+            x.isElse = True
             oreelse += str(x)
         
-        oreelse = oreelse.replace("end if","")
-        oreelse = oreelse.replace("if","elsif")
+
         ret += oreelse
-        ret += "\nend if" 
+        gIndent.deinc()
+        if self.isElse:
+            ret +=""
+        else:
+            ret +="\n" +str(gIndent) +  "end if" 
+        
 
         return ret
 
