@@ -425,7 +425,9 @@ class v_if(v_ast_base):
             gIndent.inc()
         else:
             ret ="\n" +str(gIndent) +  "if ("
-        gIndent.inc()
+        
+            gIndent.inc()
+        
         ret += str(self.test) +") then \n"+str(gIndent)
         for x in self.body:
             x_str =str(x)
@@ -433,11 +435,21 @@ class v_if(v_ast_base):
                # x_str.replace("\n","\n  ")
                 ret += x_str +";\n"+str(gIndent)
 
-        oreelse =""
-        for x in self.oreEsle:
-            x.isElse = True
-            oreelse += str(x)
         
+        oreelse =""
+        if len(self.oreEsle) > 0 and type(self.oreEsle[0]).__name__ != "v_if":
+            gIndent.deinc()
+            oreelse+="\n"+ str(gIndent) + "else"
+            gIndent.inc()
+            oreelse += "\n"+str(gIndent) 
+            for x in self.oreEsle:
+                oreelse += str(x)+";\n"+str(gIndent) 
+        
+        else:
+            for x in self.oreEsle:
+                x.isElse = True
+                oreelse += str(x)
+            
 
         ret += oreelse
         gIndent.deinc()
