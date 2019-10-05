@@ -59,6 +59,8 @@ def v_sl_to_vhdl(astParser,Node):
         return v_sl(InOut_t.input_t )
         
         
+def v_int_to_vhdl(astParser,Node):
+    return v_int()
 
 class v_ast_base:
 
@@ -345,6 +347,7 @@ class v_add(v_ast_base):
     def __init__(self,lhs, rhs):
         self.lhs = lhs
         self.rhs = rhs
+        self.type = lhs.type
         
 
         

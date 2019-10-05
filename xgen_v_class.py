@@ -15,6 +15,8 @@ class v_class(vhdl_base):
         self.__AfterPull__  = ""
         self.__BeforePush__ = ""
         self.__AfterPush__  = ""
+        self.__vectorPush__ = False
+        self.__vectorPull__ = False
         self.__ast_functions__ =list()
         self.Inout  = InOut_t.Internal_t
         self.vhdl_name =None
@@ -171,7 +173,7 @@ class v_class(vhdl_base):
    
      
 
-    def getMemberArgs(self,InOut_Filter,InOut):
+    def getMemberArgs(self,InOut_Filter,InOut,suffix=""):
         members = self.getMember(InOut_Filter) 
         members_args = ""
         start = " signal "
@@ -186,7 +188,7 @@ class v_class(vhdl_base):
                 members_args += start.replace("signal","") + i["symbol"].getMemberArgs(inout_local,InOut)
             
             else:
-                members_args += start + i["name"] + " : " + InOut + " "  + i["symbol"].getType(inout_local)
+                members_args += start + i["name"] + " : " + InOut + " "  + i["symbol"].getType(inout_local)+suffix
             
             start = "; signal "
         
@@ -245,7 +247,43 @@ class v_class(vhdl_base):
         
 
         return ret
-    
+    def getConnecting_procedure_vector(self,InOut_Filter,PushPull,procedureName=None):
+        
+        isEmpty = False
+        if PushPull== "push":
+            inout = " out "
+            isEmpty = self.push.isEmpty
+
+        else:
+            inout = " in "
+            isEmpty = self.pull.isEmpty
+
+        TypeName = self.getType(self.__v_classType__)
+        members = self.getMember(InOut_Filter) 
+        selfarg = "self : inout "+ TypeName+"_a"
+        argumentList =  self.getMemberArgs(InOut_Filter,inout,suffix="_a").strip()
+        if argumentList:
+            selfarg += "; " +argumentList
+        args =""
+        start =", "
+        for x in members:
+            args+= start + x["name"]+"(i)"
+            
+        ret        = v_procedure(name=procedureName, argumentList=selfarg , body='''
+        for i in 0 to self'length - 1 loop
+        {PushPull}(self(i) {args});
+        end loop;
+            '''.format(
+                PushPull=PushPull,
+                args = args
+            ),
+            isFreeFunction=True,
+            IsEmpty=isEmpty
+            )
+
+        return ret
+
+
     def getConnecting_procedure(self,InOut_Filter,PushPull,ClassName=None,procedureName=None):
         if PushPull== "push":
             beforeConnecting = self.__BeforePush__
@@ -279,6 +317,7 @@ class v_class(vhdl_base):
             argumentList = self.getMemberArgs(InOut_Filter,inout)
 
         Connecting = self.getMemeber_Connect(InOut_Filter,PushPull, ClassName)
+        IsEmpty=len(Connecting.strip()) == 0 and len(beforeConnecting.strip()) == 0 and  len(AfterConnecting.strip()) == 0
         ret        = v_procedure(name=procedureName, argumentList=argumentList , body='''
     {beforeConnecting}
 -- Start Connecting
@@ -289,7 +328,9 @@ class v_class(vhdl_base):
                beforeConnecting=beforeConnecting,
                Connecting = Connecting,
                AfterConnecting=AfterConnecting
-            ))
+            ),
+            IsEmpty=IsEmpty
+            )
         
         return ret
 
@@ -314,6 +355,11 @@ class v_class(vhdl_base):
    
             self.pull       =  self.getConnecting_procedure(InOut_t.input_t , "pull")
             self.push       =  self.getConnecting_procedure(InOut_t.output_t, "push")
+
+            if self.__vectorPull__:
+                self.vpull       =  self.getConnecting_procedure_vector(InOut_t.input_t , "pull",procedureName="pull")
+            if self.__vectorPush__:
+                self.vpush       =  self.getConnecting_procedure_vector(InOut_t.output_t, "push",procedureName="push")
 
     def getBody_onPush(self):
         for x in self.__ast_functions__:

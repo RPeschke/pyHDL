@@ -148,7 +148,7 @@ class SerialDataRout_s(v_class):
         if self.sr_counter > self.sr_counter_max:
             self.state << SerialDataRout_s_state.idle
             self.sr_counter << 0
-            self.rx.SampleSelectAny  << 0
+            self.rx.SampleSelect  << 0
             self.rx.SampleSelectAny  << 0
 
 

@@ -36,7 +36,14 @@ class axisStream_slave(v_class):
         self.data_internal_isvalid2  = v_sl()
         self.data_internal_was_read2 = v_sl()
         self.data_internal_isLast2   = v_sl()
-        
+        self.__vectorPull__ = True
+        self.__vectorPush__ = True
+
+        self.observe_data = v_procedure(argumentList= "datain : out " + self.rx.data.type, body='''
+    if(self.data_internal_isvalid2 = '1') then
+        datain := self.data_internal2;
+    end if;
+''')
         self.read_data = v_procedure(argumentList= "datain : out " + self.rx.data.type, body='''
     if(self.data_internal_isvalid2 = '1') then
         datain := self.data_internal2;
@@ -86,7 +93,8 @@ class axisStream_master(v_class):
         super().__init__("axisStream_"+ str(AXiName)+"_master")
         self.tx = port_Master(axisStream(AXiName,AxiType))
         self.__v_classType__         = v_classType_t.Master_t
-
+        self.__vectorPull__ = True
+        self.__vectorPush__ = True
         
         self.send_data = v_procedure(argumentList= "datain : in " + self.tx.data.type, body='''
    self.tx.valid   := '1';
@@ -123,6 +131,7 @@ class axisStream_master_with_strean_counter(v_class):
         self.SendingData = v_sl()
         self.EndOfStream = v_sl()
         self.EOF_Counter_max = v_int(0)
+
 
         self.__BeforePush__ ='''
         if self.SendingData = '1' then
@@ -216,16 +225,42 @@ class  axiStream_package(v_package):
  
 
 
+def arg2type(AXiName):
+    if AXiName.isdigit():
+        AxiType = v_slv(int(AXiName))
+    else:
+        pac = get_package_for_type(AXiName)
+        if  pac:
+            include = pac["packageDef"][0]
+            include =  "use work."+include+".all;\n"
+
+        else:
+            include= "-- Unable to locate package which contains class: '" +AXiName+"'  $$$missingInclude$$$"
+        AxiType = v_symbol(AXiName,AXiName+"_null", includes = include)
+
+    return AXiName,AxiType
 
 def main():
     
     parser = argparse.ArgumentParser(description='Generate Packages')
-    parser.add_argument('--OutputPath',    help='Path to where the build system is located',default="build/xgen/xgen_axiStream_SerialDataConfig.vhd")
-    parser.add_argument('--PackageName',   help='package Name',default="xgen_axiStream_SerialDataConfig")
+    parser.add_argument('--OutputPath',    help='Path to where the build system is located',default="build/xgen/xgen_axiStream_zerosupression.vhd")
+    parser.add_argument('--PackageName',   help='package Name',default="xgen_axiStream_zerosupression")
    
     args = parser.parse_args()
     sp = args.PackageName.split("_")
-    ax = axiStream_package(args.PackageName,sp[2])
+    AXiName,AxiType = arg2type(sp[2])
+
+
+    ax = v_package(args.PackageName,sourceFile=__file__,
+    PackageContent = [
+        axisStream(AXiName,AxiType),
+        axisStream_slave(AXiName,AxiType),
+        axisStream_master(AXiName,AxiType),
+        axisStream_master_with_strean_counter(AXiName,AxiType)
+    ]
+    
+    
+    )
     fileContent = ax.to_string()
     with open(args.OutputPath, "w", newline="\n") as f:
         f.write(fileContent)

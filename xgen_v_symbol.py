@@ -91,6 +91,9 @@ class v_symbol(vhdl_base):
 
     def _vhdl__reasign(self, rhs):
         if self.type == "std_logic":
+            if type(rhs).__name__=="v_symbol":
+                return str(self) + " := " +  str(rhs) 
+            
             return str(self) + " := '" +  str(rhs) +"'"
         elif "std_logic_vector" in self.type:
             if str(rhs) == '0':

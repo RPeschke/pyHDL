@@ -33,7 +33,8 @@ class xgenAST:
     "port_in" : port_in_to_vhdl,
     "port_out" : port_out_to_vhdl,
     "v_slv"  : v_slv_to_vhdl,
-    "v_sl"  : v_sl_to_vhdl
+    "v_sl"  : v_sl_to_vhdl,
+    "v_int" : v_int_to_vhdl
     }
 
         self._Unfold_body={
