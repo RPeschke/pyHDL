@@ -13,8 +13,7 @@ class v_package(vhdl_base):
         self.astTree = None
         self.astv_classes = None
         if sourceFile:
-            with open(sourceFile, "r") as source:
-                self.astTree = xgenAST(sourceFile)
+            self.astTree = xgenAST(sourceFile)
 
             for x in self.PackageContent:
                 if issubclass(type(x),v_class):

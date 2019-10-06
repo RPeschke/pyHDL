@@ -4,6 +4,7 @@ import copy
 from .xgenBase import *
 from .xgen_v_enum import * 
 from .xgen_to_v_object import *
+#from .xgen_v_entity import *
 
 def Node_line_col_2_str(astParser, Node):
     return  "Error in File: "+ astParser.sourceFileName+" line: "+str(Node.lineno) + ".\n"
@@ -94,6 +95,14 @@ class v_funDef(v_ast_base):
 
 
 def body_unfold_functionDef(astParser,Node):
+    astParser.FuncArgs.append(
+                   {
+                    "name":Node.name,
+                    "symbol": Node.name,
+                    "ScopeType": ""
+
+                }
+    )
     ret = list()
     for x in Node.body:
         ret.append( astParser.Unfold_body(x))
@@ -167,8 +176,12 @@ class v_Attribute(v_ast_base):
 
 def body_unfold_Attribute(astParser,Node):
     val = astParser.Unfold_body(Node.value)
-   
-    obj=astParser.getInstantByName(val)
+    
+    if type(val).__name__ == "str":
+
+        obj=astParser.getInstantByName(val)
+    else:
+        obj = val 
     if issubclass(type(obj),v_enum):
         return v_enum(getattr(obj.type,Node.attr))
     att = getattr(obj,Node.attr)
@@ -176,8 +189,11 @@ def body_unfold_Attribute(astParser,Node):
     if type(type(att)).__name__ == "EnumMeta": 
         return v_enum(att)
     
-    att.set_vhdl_name(obj.vhdl_name+"."+Node.attr)
 
+    n = obj._vhdl_get_adtribute(Node.attr)
+
+    att.set_vhdl_name(n)
+    
     astParser.FuncArgs.append(
                     {
                     "name":att.vhdl_name,
@@ -238,7 +254,7 @@ def  body_unfold_assign(astParser,Node):
             raise Exception(Node_line_col_2_str(astParser, Node)+" Target already exist. Use << operate to assigne new value to existing object.")
 
     for x in astParser.FuncArgs:
-        if Node.targets[0].id in x["name"]:
+        if Node.targets[0].id == x["name"]:
             raise Exception(Node_line_col_2_str(astParser, Node)+" Target already exist. Use << operate to assigne new value to existing object.")
             
 
@@ -290,7 +306,13 @@ class v_call(v_ast_base):
 
 def body_unfold_call(astParser,Node):
     if hasattr(Node.func, 'id'):
-        return astParser._unfold_symbol_fun_arg[Node.func.id](astParser, Node.args)
+        if Node.func.id in astParser._unfold_symbol_fun_arg:
+            return astParser._unfold_symbol_fun_arg[Node.func.id](astParser, Node.args)
+        elif Node.func.id in astParser.local_function:
+            return astParser.local_function[Node.func.id](astParser.Unfold_body(Node.args[0]),astParser.Unfold_body(Node.args[1]))
+        else:
+            raise Exception("unknown function")
+
     elif hasattr(Node.func, 'value'):
         obj = astParser.getInstantByName(Node.func.value.id)
         memFunc = Node.func.attr
@@ -300,8 +322,14 @@ def body_unfold_call(astParser,Node):
         for x in Node.args:
             pass #fill arg list here 
         
+        if len(Node.args) == 0:
+            r = f()  # find out how to forward args 
+        elif len(Node.args) == 1:
+            r = f(astParser.Unfold_body(Node.args[0]))  # find out how to forward args
+        elif len(Node.args) == 2:
+            r = f(astParser.Unfold_body(Node.args[0]),astParser.Unfold_body(Node.args[1]))  # find out how to forward args
+        
 
-        r = f()  # find out how to forward args 
         r = to_v_object(r)
         vhdl = obj._vhdl__call_member_func(memFunc,args)
         r.set_vhdl_name(vhdl)

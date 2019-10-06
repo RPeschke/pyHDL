@@ -18,6 +18,7 @@ class v_class(vhdl_base):
         self.__vectorPush__ = False
         self.__vectorPull__ = False
         self.__ast_functions__ =list()
+        self.__connection__ = list()
         self.Inout  = InOut_t.Internal_t
         self.vhdl_name =None
 
@@ -428,5 +429,34 @@ class v_class(vhdl_base):
     def __str__(self):
         return self.vhdl_name
 
+    def _vhdl__Pull(self):
+        suffix =""
+        if self.__v_classType__ == v_classType_t.Slave_t:
+            suffix = "_m2s"
+        
+        elif self.__v_classType__ == v_classType_t.Master_t:
+            suffix = "_s2m"
+        else:
+            raise Exception("unexpected class type")
+        args = ""
+        for x in self.__connection__:
+            args += ", " + str(x)+suffix
+        return "pull( " +str(self) +args+");"
 
+    def _vhdl__push(self):
+        suffix =""
+        if self.__v_classType__ == v_classType_t.Slave_t:
+            suffix = "_s2m"
+        elif self.__v_classType__ == v_classType_t.Master_t:
+            suffix = "_m2s"
+        else:
+            raise Exception("unexpected class type")
+        args = ""
+        for x in self.__connection__:
+            args += ", " + str(x)+suffix
+        return  "push( " +str(self) +args+");"
+
+    def Connect(self,Connections):
+        self.__connection__.append(Connections)
+        return self
 

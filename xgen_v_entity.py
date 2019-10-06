@@ -5,12 +5,20 @@ from .axiStream import *
 class v_entiy2text:
     def __init__(self, input_entity):
         self.entity = input_entity
+        self.astTree = None
+        if input_entity.srcFileName:
+            self.astTree = xgenAST(input_entity.srcFileName)
+        
+        self.getProcessBlocks()
 
     def get_Includes(self):
         bufffer = ""
         members= self.getMember()
         for x in members:
             bufffer += x["symbol"].includes(x["name"],None)
+
+        for x in self.entity.__processList__:
+            bufffer += x.includes("",None)
 
         sp = bufffer.split(";")
         sp  = [x.strip() for x in sp]
@@ -61,13 +69,19 @@ class v_entiy2text:
             if sym.Inout == InOut_t.Internal_t:
                 ret += "  " + sym._vhdl__DefineSymbol("signal")
         
+        for x in self.entity.__processList__:
+            ret += x.getHeader("",None)
         return ret 
 
 
     def get_archhitecture(self):
+
         ret = "architecture rtl of "+ self.entity.name +" is\n\n"
         ret += self.get_archhitecture_header()
         ret += "\nbegin\n"
+        for x in self.entity.__processList__:
+            ret += x.getBody("",None)
+
         ret += "\nend architecture;\n"
         return ret 
 
@@ -82,6 +96,16 @@ class v_entiy2text:
         ret += self.get_archhitecture()
         return ret
 
+    def getProcessBlocks(self):
+        ret = ""
+        for x in self.entity.__dir__():
+            if "_proc" in x:
+                print(x)
+        
+        self.astTree.extractFunctionsForEntity(self.entity,None)
+
+
+        return ret 
     def getMember(self):
         ret = list()
         for x in self.entity.__dict__.items():
@@ -95,13 +119,17 @@ class v_entiy2text:
 
         return ret
 class v_entity:
-    def __init__(self,name):
+    def __init__(self,name,srcFileName=None):
         self.name = name
-
+        self.srcFileName = srcFileName
+        self.__processList__ = list()
+        self.Inout = ""
 
     def get_definition(self):
         to_text=v_entiy2text(self)
 
         return to_text.get_definition()
 
+    def _vhdl_get_adtribute(self,attName):
+        return attName
 

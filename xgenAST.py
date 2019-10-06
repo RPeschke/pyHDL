@@ -9,7 +9,7 @@ from CodeGen.xgen_v_function import *
 
 def get_subclasses(astList,BaseName):
     for astObj in astList:
-        if  type(astObj).__name__ == 'ClassDef' and 'v_class' in [x.id  for x in astObj.bases]:
+        if  type(astObj).__name__ == 'ClassDef' and BaseName in [x.id  for x in astObj.bases]:
             yield astObj
 
 
@@ -28,7 +28,8 @@ class xgenAST:
 
         self.functionNameVetoList = list()
         self.functionNameVetoList.append("__init__")
-
+        self.functionNameVetoList.append("create")
+        self.local_function ={}
         self._unfold_symbol_fun_arg={
     "port_in" : port_in_to_vhdl,
     "port_out" : port_out_to_vhdl,
@@ -64,6 +65,7 @@ class xgenAST:
             self.tree = ast.parse(source.read())
 
         self.ast_v_classes = list(get_subclasses(self.tree.body,'v_class'))
+        self.ast_v_Entities = list(get_subclasses(self.tree.body,'v_entity'))
 
 
     def get_variable(self,name, Node):
@@ -83,6 +85,9 @@ class xgenAST:
         for x in self.ast_v_classes:
             if x.name == ClassName:
                 return x
+        for x in self.ast_v_Entities:
+            if x.name == ClassName:
+                return x
 
         raise Exception("unable to find v_class '" + ClassName +"' in source '"+ self.sourceFileName+"'")
 
@@ -93,6 +98,59 @@ class xgenAST:
             ret += x._vhdl__DefineSymbol()
         
         return ret
+
+    def extractFunctionsForEntity(self, ClassInstance, parent):
+        ClassName  = type(ClassInstance).__name__
+        cl = self.getClassByName(ClassName)
+        for f in cl.body:
+            self.local_function ={}
+            if  f.name in self.functionNameVetoList:
+                continue
+            print(f.name)
+            self.parent = parent
+            self.FuncArgs = list()
+            self.LocalVar = list()
+            self.FuncArgs.append(
+                {
+                    "name":"self",
+                    "symbol": ClassInstance,
+                    "ScopeType": InOut_t.InOut_tt
+
+                }
+            )
+            p=ClassInstance._process1()
+            self.local_function = p.__globals__
+            body = self.Unfold_body(f)  ## get local vars 
+
+            header =""
+            for x in self.LocalVar:
+                if x.type == "undef":
+                    continue
+                header += x._vhdl__DefineSymbol("variable")
+
+            pull =""
+            for x in self.LocalVar:
+                if x.type == "undef":
+                    continue
+                pull += x._vhdl__Pull()
+
+            push =""
+            for x in self.LocalVar:
+                if x.type == "undef":
+                    continue
+                push += x._vhdl__push()
+            
+            for x in f.body:
+                if type(x).__name__ == "FunctionDef":
+                    body = str(self.Unfold_body(x))  ## unfold function of intressed  
+                    break
+            
+            body =pull +"\n" + body +"\n" + push
+            proc = v_process(body=body, SensitivityList="clk",VariableList=header)
+            ClassInstance.__processList__.append(proc)
+            
+
+
     def extractFunctionsForClass(self,ClassInstance,parent ):
         
         ClassName  = type(ClassInstance).__name__
@@ -159,7 +217,7 @@ class xgenAST:
                 return ret 
                 
 
-        raise Exception("Unable to find symbol", SymbolName, "\nAvalible Symbols\n",self.Arglist)
+        raise Exception("Unable to find symbol", SymbolName, "\nAvalible Symbols\n",self.FuncArgs)
 
 
 

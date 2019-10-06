@@ -105,4 +105,23 @@ class v_function(vhdl_base):
 
         )
         return ret
-    
+
+
+
+
+
+class v_process(vhdl_base):
+    def __init__(self,body="", SensitivityList=None,VariableList="",name=None,IsEmpty=False):
+        self.body = body 
+        self.SensitivityList = SensitivityList
+        self.VariableList = VariableList
+        self.name = name
+        self.IsEmpty = IsEmpty
+
+
+    def getBody(self, name,parent):
+        ret = "process("+str(self.SensitivityList)+") is\n" +str(self.VariableList)+ "\n  begin\n"
+        ret += "  if rising_edge("+str(self.SensitivityList)+") then\n"
+        ret += self.body
+        ret += "\n  end if;\n end process;\n"
+        return ret

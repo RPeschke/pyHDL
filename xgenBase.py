@@ -56,12 +56,14 @@ class vhdl_base:
         print("rshift")
   
     def _vhdl__reasign(self, rhs):
-        return str(self) + " := " +  str(rhs) +";\n"
+        return str(self) + " := " +  str(rhs) 
 
     def _vhdl__make_constant(self, name):
         return str(self) + " := " +  str(rhs) +";\n"
 
     def _vhdl__call_member_func(self, name, args):
+        if name =="Connect":
+            return str(self)
         return name+"(" +  str(self) + ")" 
 
     def _vhdl__to_bool(self,astParser):
@@ -73,13 +75,22 @@ class vhdl_base:
     def _vhdl__compare(self, ops, rhs):
         return str(self) + " " +ops2str(ops)+" " + str(rhs)
 
-    def _vhdl__DefineSymbol(self):
-        
-        return " -- No Generic symbol definition for object " + self.getName()
+    def _vhdl__DefineSymbol(self,VarSymb="variable"):
+        return VarSymb +" " +str(self) + " : " +self.type +" := " + self.type+"_null;\n"
+        #return " -- No Generic symbol definition for object " + self.getName()
+
+    def _vhdl__Pull(self):
+        return ""
+
+    def _vhdl__push(self):
+        return ""
 
     def _vhdl_slice(self,sl):
         raise Exception("Not implemented")
         return self
+
+    def _vhdl_get_adtribute(self,attName):
+        return str(self) + "." +str(attName)
 
 def optional_concatonat(first, delimer, Second):
     if first and Second:
