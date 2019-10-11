@@ -4,14 +4,17 @@ from .xgen_v_class import *
 
 
 class v_symbol(vhdl_base):
-    def __init__(self, v_type, DefaultValue, Inout = InOut_t.Internal_t,includes="",value=None):
+    def __init__(self, v_type, DefaultValue, Inout = InOut_t.Internal_t,includes="",value=None,varSigConst=varSig.variable_t):
         self.type = v_type
         self.DefaultValue = DefaultValue
         self.Inout = Inout
         self.inc = includes
         self.vhdl_name = None
         self.value = value
+        self.varSigConst=varSigConst
 
+    def length(self):
+        return str(self)+"'length"
 
     def get_value(self):
         return self.value
@@ -73,7 +76,9 @@ class v_symbol(vhdl_base):
              return ""
             
         return name + " : " +self.type +" := " +  self.DefaultValue  + "; \n"
-    
+    def get_type(self):
+        return self.type
+
     def recordMemberDefault(self, name, parent,Inout=None):
         #if self.vhdl_name:
         #    name = self.vhdl_name
@@ -90,30 +95,37 @@ class v_symbol(vhdl_base):
         return str(self.value)
 
     def _vhdl__reasign(self, rhs):
+        if self.varSigConst== varSig.const_t:
+            raise Exception("cannot asign to constant")
+        elif self.varSigConst== varSig.signal_t:
+            asOp = " <= "
+        else: 
+            asOp = " := "
         if self.type == "std_logic":
             if type(rhs).__name__=="v_symbol":
-                return str(self) + " := " +  str(rhs) 
+                return str(self) + asOp + rhs._vhdl__getValue(self.type) 
             
-            return str(self) + " := '" +  str(rhs) +"'"
+            return str(self) + asOp+"'" +  str(rhs) +"'"
         elif "std_logic_vector" in self.type:
             if str(rhs) == '0':
-                return str(self) + " := (others => '0')"
+                return str(self) + asOp+ " (others => '0')"
             elif  issubclass(type(rhs),vhdl_base):
-                return str(self) + " := " +  str(rhs) +""
+                return str(self) + asOp +  rhs._vhdl__getValue(self.type) 
             elif  type(rhs).__name__=="v_Num":
-                return  """{dest} := std_logic_vector(to_unsigned({src}, {dest}'length))""".format(
+                return  """{dest} {asOp} std_logic_vector(to_unsigned({src}, {dest}'length))""".format(
                     dest=str(self),
-                    src = str(rhs.value)
+                    src = str(rhs.value),
+                    asOp=asOp
                 )
         elif self.type == "integer":
             if str(rhs) == '0':
-                return str(self) + " := 0"
+                return str(self) + asOp+ " 0"
             elif rhs.type == "integer":
-                return str(self) + " := "+ str(rhs)
+                return str(self) + asOp+ str(rhs)
             elif "std_logic_vector" in rhs.type:
-                return str(self) + " := to_integer(signed("+ str(rhs)+"))"
+                return str(self) + asOp +" to_integer(signed("+ str(rhs)+"))"
 
-        return str(self) + " := " +  str(rhs)
+        return str(self) +asOp +  str(rhs)
 
     def _vhdl__compare(self, ops, rhs):
         if self.type == "std_logic":
@@ -163,39 +175,36 @@ class v_symbol(vhdl_base):
         raise Exception("unexpected type")
 
 
-   
-def v_sl(Inout=InOut_t.Internal_t,Default="'0'"):
-    return v_symbol(v_type= "std_logic", DefaultValue=Default, Inout = Inout,includes="""
+slv_includes = """
 library IEEE;
-  use IEEE.std_logic_1164.all;
-  use IEEE.numeric_std.all;
-
 library UNISIM;
+  use IEEE.numeric_std.all;
+  use IEEE.std_logic_1164.all;
   use UNISIM.VComponents.all;
-""")
+  use ieee.std_logic_unsigned.all;
+  
+"""
+ 
+def v_sl(Inout=InOut_t.Internal_t,Default="'0'",varSigConst=varSig.variable_t):
+    return v_symbol(v_type= "std_logic", DefaultValue=Default, Inout = Inout,includes=slv_includes,varSigConst=varSigConst)
 
-def v_slv(BitWidth,Default="(others => '0')", Inout=InOut_t.Internal_t):
+def v_slv(BitWidth=None,Default="(others => '0')", Inout=InOut_t.Internal_t,varSigConst=varSig.variable_t):
+
+
     value = Default
     if type(Default).__name__ == "int":
         Default =  'x"'+ hex(Default)[2:].zfill(int( int(BitWidth)/4))+'"'  
+    
+    v_type = ""
+    if BitWidth == None:
+        v_type="std_logic_vector"    
+    elif type(BitWidth).__name__ == "int":
+        v_type="std_logic_vector(" + str(BitWidth -1 ) + " downto 0)"
+    else: 
+        v_type = "std_logic_vector(" + str(BitWidth ) + " -1 downto 0)"
 
-    return v_symbol(v_type="std_logic_vector(" + str(BitWidth -1) + " downto 0)",DefaultValue=Default,value=value,Inout=Inout,includes="""
-library IEEE;
-  use IEEE.std_logic_1164.all;
-  use IEEE.numeric_std.all;
-  use ieee.std_logic_unsigned.all;
+    return v_symbol(v_type=v_type, DefaultValue=Default,value=value,Inout=Inout,includes=slv_includes,varSigConst=varSigConst)
 
-library UNISIM;
-  use UNISIM.VComponents.all;
-""")
-
-def v_int(Default="0",Inout=InOut_t.Internal_t):
-    return v_symbol(v_type= "integer", DefaultValue=str(Default), Inout = Inout,includes="""
-library IEEE;
-  use IEEE.std_logic_1164.all;
-  use IEEE.numeric_std.all;
-
-library UNISIM;
-  use UNISIM.VComponents.all;
-""")
+def v_int(Default="0", Inout=InOut_t.Internal_t, varSigConst=varSig.variable_t):
+    return v_symbol(v_type= "integer", DefaultValue=str(Default), Inout = Inout,includes=slv_includes,varSigConst=varSigConst)
 

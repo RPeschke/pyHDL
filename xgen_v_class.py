@@ -21,6 +21,7 @@ class v_class(vhdl_base):
         self.__connection__ = list()
         self.Inout  = InOut_t.Internal_t
         self.vhdl_name =None
+        self.varSigConst = varSig.variable_t
 
     def set_vhdl_name(self,name):
         if self.vhdl_name and self.vhdl_name != name:
@@ -33,6 +34,23 @@ class v_class(vhdl_base):
 
     def getName(self):
         return self.name
+
+    def get_type(self):
+        return self.type
+
+    def get_vhdl_name(self,Inout=None):
+        if Inout== None:
+            return self.vhdl_name
+        
+        if self.__v_classType__ == v_classType_t.Slave_t:
+            Inout = InoutFlip(Inout)
+
+        if Inout== InOut_t.input_t:
+            return self.vhdl_name+"_s2m"
+        
+        elif Inout== InOut_t.output_t:
+            return self.vhdl_name+"_m2s"
+        return None
 
     def recordMember(self, name,parent,Inout=None):
         if issubclass(type(parent),v_class):
@@ -155,6 +173,11 @@ class v_class(vhdl_base):
         return ret
 
 
+
+    def make_serializer(self):
+        pass 
+
+    
     def getMember(self,InOut_Filter=None):
         ret = list()
         for x in self.__dict__.items():
@@ -172,6 +195,27 @@ class v_class(vhdl_base):
 
 
    
+    def getMemberArgsImpl(self,InOut_Filter,InOut,suffix=""):
+        members = self.getMember(InOut_Filter) 
+        members_args = list()
+        
+        for i in members:
+            if i["symbol"].Inout == InOut_t.Slave_t:
+                inout_local =  InoutFlip(InOut_Filter)
+            else:
+                inout_local = InOut_Filter 
+
+            if issubclass(type(i["symbol"]),v_class)   and  i["symbol"].__v_classType__ == v_classType_t.Master_t:
+                members_args.append( i["symbol"].getMemberArgsImpl(inout_local,InOut) )
+            
+            else:
+                members_args.append({ 
+                    "name" :  i["name"], 
+                    "symbol" : i["symbol"].getType(inout_local),
+                    "vhdl_name": i["symbol"].get_vhdl_name(inout_local)
+                    })
+            
+        return members_args
      
 
     def getMemberArgs(self,InOut_Filter,InOut,suffix=""):
@@ -430,31 +474,23 @@ class v_class(vhdl_base):
         return self.vhdl_name
 
     def _vhdl__Pull(self):
-        suffix =""
-        if self.__v_classType__ == v_classType_t.Slave_t:
-            suffix = "_m2s"
-        
-        elif self.__v_classType__ == v_classType_t.Master_t:
-            suffix = "_s2m"
-        else:
-            raise Exception("unexpected class type")
         args = ""
-        for x in self.__connection__:
-            args += ", " + str(x)+suffix
-        return "pull( " +str(self) +args+");"
+        for x in self.getMemberArgsImpl(InOut_t.input_t,""):
+            
+            args += ", " + x["vhdl_name"]
+
+        return "    pull( " +str(self) +args+");"
+
+
+
 
     def _vhdl__push(self):
-        suffix =""
-        if self.__v_classType__ == v_classType_t.Slave_t:
-            suffix = "_s2m"
-        elif self.__v_classType__ == v_classType_t.Master_t:
-            suffix = "_m2s"
-        else:
-            raise Exception("unexpected class type")
         args = ""
-        for x in self.__connection__:
-            args += ", " + str(x)+suffix
-        return  "push( " +str(self) +args+");"
+        for x in self.getMemberArgsImpl(InOut_t.output_t,""):
+            
+            args += ", " + x["vhdl_name"]
+
+        return  "    push( " +str(self) +args+");"
 
     def Connect(self,Connections):
         self.__connection__.append(Connections)

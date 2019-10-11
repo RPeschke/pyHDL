@@ -27,71 +27,79 @@ class axisStream(v_class):
 
 
 class axisStream_slave(v_class):
-    def __init__(self, AXiName,AxiType):
-        super().__init__("axisStream_"+ str(AXiName)+"_slave")
-        self.rx = port_Slave(axisStream(AXiName,AxiType))
+    def __init__(self, Axi_in):
+        super().__init__(Axi_in.type+"_slave")
+        
+        self.rx = port_Slave(Axi_in)
         self.__v_classType__         = v_classType_t.Slave_t
         self.data_isvalid            = v_sl()
-        self.data_internal2          = copy.deepcopy( AxiType)
+        self.data_internal2          = v_copy(Axi_in)
         self.data_internal_isvalid2  = v_sl()
         self.data_internal_was_read2 = v_sl()
         self.data_internal_isLast2   = v_sl()
         self.__vectorPull__ = True
         self.__vectorPush__ = True
 
-        self.observe_data = v_procedure(argumentList= "datain : out " + self.rx.data.type, body='''
-    if(self.data_internal_isvalid2 = '1') then
-        datain := self.data_internal2;
-    end if;
-''')
-        self.read_data = v_procedure(argumentList= "datain : out " + self.rx.data.type, body='''
-    if(self.data_internal_isvalid2 = '1') then
-        datain := self.data_internal2;
-        self.data_internal_was_read2 :='1';
-    end if;
-''')
+
+    def observe_data(self, dataOut = port_out(v_slv())):
+        if self.data_internal_isvalid2:
+            dataOut << self.data_internal2
+    
+    
+    def read_data(self, dataOut = port_out(v_slv())):
+        if self.data_internal_isvalid2:
+            dataOut << self.data_internal2
+            self.data_internal_was_read2 << 1
+    
+
+    def isReceivingData(self):
+        return  self.data_internal_isvalid2 == 1
+
+
+    def IsEndOfStream(self):
+        return  self.data_internal_isvalid2  and  self.data_internal_isLast2
+
+
+    def _onPull(self):
+
+        if self.rx.ready and self.rx.valid:
+            self.data_isvalid << 1
         
-        self.isReceivingData = v_function(returnType="boolean",body = '''
-    return  self.data_internal_isvalid2 = '1' ;
-''')
-        self.IsEndOfStream = v_function(returnType="boolean",body='''
-    return  self.data_internal_isvalid2 = '1' and  self.data_internal_isLast2 = '1';
-''')
+        self.data_internal_was_read2 << 0
+        self.rx.ready << 0      
+   
+        if self.data_isvalid  and not self.data_internal_isvalid2:
+            self.data_internal2 << self.rx.data 
+            self.data_internal_isvalid2 << self.data_isvalid
+            self.data_internal_isLast2 << self.rx.last
+            self.data_isvalid << 0
 
-        self.__AfterPull__ ='''
-    if( self.rx.ready = '1'  and self.rx.valid ='1') then 
-        self.data_isvalid := '1';
-    end if;
+   
+      
 
-    self.data_internal_was_read2 := '0';
-    self.rx.ready := '0';
+    def _onPush(self):
+        if self.data_internal_was_read2:
+            self.data_internal_isvalid2 << 0
 
-
-    if (self.data_isvalid ='1' and  self.data_internal_isvalid2 = '0') then
-        self.data_internal2:= self.rx.data ;
-        self.data_internal_isvalid2 := self.data_isvalid;
-        self.data_internal_isLast2 := self.rx.last;
-        self.data_isvalid:='0';
-
-    end if;
-        '''
-
-        self.__BeforePush__='''
-    if (self.data_internal_was_read2 = '1'   ) then
-      self.data_internal_isvalid2 := '0';
-    end if;
+        if not self.data_isvalid and not self.data_internal_isvalid2:
+            self.rx.ready << 1
 
 
-    if (self.data_isvalid = '0'   and self.data_internal_isvalid2 = '0' ) then 
-        self.rx.ready := '1';
-    end if;
-        '''
 
+    def _vhdl__to_bool(self, astParser):
+        return "isReceivingData(" + str(self) + ") "
+
+    def _vhdl__getValue(self,ReturnToObj=None,astParser=None):
+        buff = v_copy(self.rx.data)
+        buff.vhdl_name = str(self) + "_buff"
+        astParser.LocalVar.append(buff)
+        astParser.AddStatementBefore("read_data(" +str(self) +", " +str(buff) +' ) ')
+        return str(buff)
 
 class axisStream_master(v_class):
-    def __init__(self, AXiName,AxiType):
-        super().__init__("axisStream_"+ str(AXiName)+"_master")
-        self.tx = port_Master(axisStream(AXiName,AxiType))
+    def __init__(self, Axi_in):
+        super().__init__(Axi_in.type + "_master")
+        self.tx = port_Master(Axi_in)
         self.__v_classType__         = v_classType_t.Master_t
         self.__vectorPull__ = True
         self.__vectorPush__ = True
@@ -119,13 +127,13 @@ class axisStream_master(v_class):
         self.tx.data := {default};
     end if;
         '''.format(
-            default=AxiType.DefaultValue
+            default=Axi_in.data.DefaultValue
         )
 
 class axisStream_master_with_strean_counter(v_class):
-    def __init__(self, AXiName, AxiType):
-        super().__init__("axisStream_"+ str(AXiName)+"_master_with_counter")
-        self.AxiTX = port_Master(axisStream_master(AXiName,AxiType))
+    def __init__(self, Axi_in):
+        super().__init__(Axi_in.type + "_master_with_counter")
+        self.AxiTX = port_Master(axisStream_master(Axi_in))
         self.__v_classType__         = v_classType_t.Master_t
         self.Counter = v_int(0)
         self.SendingData = v_sl()
@@ -250,13 +258,13 @@ def main():
     sp = args.PackageName.split("_")
     AXiName,AxiType = arg2type(sp[2])
 
-
+    ax_t = axisStream(AXiName,AxiType)
     ax = v_package(args.PackageName,sourceFile=__file__,
     PackageContent = [
-        axisStream(AXiName,AxiType),
-        axisStream_slave(AXiName,AxiType),
-        axisStream_master(AXiName,AxiType),
-        axisStream_master_with_strean_counter(AXiName,AxiType)
+        ax_t,
+        axisStream_slave(ax_t),
+        axisStream_master(ax_t),
+        axisStream_master_with_strean_counter(ax_t)
     ]
     
     

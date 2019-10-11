@@ -19,16 +19,20 @@ class xgenAST:
         
         self.FuncArgs = list()
         self.LocalVar = list()
+        self.Context = None
         self.parent = None
         self.sourceFileName =sourceFileName
         self._unfold_argList ={
             "Call" : Unfold_call,
-            "Num" : unfold_num 
+            "Num" : unfold_num,
+            "Str" : unfold_Str
         }
 
-        self.functionNameVetoList = list()
-        self.functionNameVetoList.append("__init__")
-        self.functionNameVetoList.append("create")
+        self.functionNameVetoList = [
+        "__init__",
+        "create",
+        '_vhdl__to_bool']
+
         self.local_function ={}
         self._unfold_symbol_fun_arg={
     "port_in" : port_in_to_vhdl,
@@ -67,6 +71,9 @@ class xgenAST:
         self.ast_v_classes = list(get_subclasses(self.tree.body,'v_class'))
         self.ast_v_Entities = list(get_subclasses(self.tree.body,'v_entity'))
 
+    def AddStatementBefore(self,Statement):
+        if not self.Context == None:
+            self.Context.append(Statement)
 
     def get_variable(self,name, Node):
             

@@ -1,4 +1,5 @@
 from enum import Enum 
+import copy
 
 __VHDL__OPS_to2str= {
 "Gt": ">",
@@ -37,6 +38,10 @@ class vhdl_base:
     def to_arglist(self,name,parent):
         return ""
     
+
+    def get_vhdl_name(self,Inout):
+        return None
+        
     def isInOutType(self,Inout):
         return False
         
@@ -56,7 +61,13 @@ class vhdl_base:
         print("rshift")
   
     def _vhdl__reasign(self, rhs):
-        return str(self) + " := " +  str(rhs) 
+        return str(self) + " := " +  str(rhs)
+
+    def _vhdl__reasign_type(self):
+        return self
+
+    def _vhdl__getValue(self,ReturnToObj=None,astParser=None):
+        return str(self)
 
     def _vhdl__make_constant(self, name):
         return str(self) + " := " +  str(rhs) +";\n"
@@ -145,19 +156,29 @@ class v_classType_t(Enum):
 
     
 def port_out(symbol):
+    symbol= copy.deepcopy(symbol)
     symbol.setInout(InOut_t.output_t)
     return symbol
 
 def port_in(symbol):
+    symbol= copy.deepcopy(symbol)
     symbol.setInout(InOut_t.input_t)
     return symbol
 
 def port_Master(symbol):
+    symbol= copy.deepcopy(symbol)
     symbol.setInout(InOut_t.Master_t)
     return symbol
 
 def port_Slave(symbol):
+    symbol= copy.deepcopy(symbol)
     symbol.setInout(InOut_t.Slave_t)
+    return symbol
+
+def v_copy(symbol):
+    symbol= copy.deepcopy(symbol)
+    symbol.setInout(InOut_t.Internal_t)
+    symbol.vhdl_name = None
     return symbol
 
 def port(symbol):

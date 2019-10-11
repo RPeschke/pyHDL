@@ -10,7 +10,8 @@ def Node_line_col_2_str(astParser, Node):
     return  "Error in File: "+ astParser.sourceFileName+" line: "+str(Node.lineno) + ".\n"
 
 
-
+def unfold_Str(astParser, strNode):
+    return strNode.s
 def unfold_num(astParser, NumNode):
     return NumNode.n
 
@@ -46,6 +47,8 @@ def port_out_to_vhdl(astParser,Node):
     return port_out(astParser.unfold_argList(Node[0]) )
 
 def v_slv_to_vhdl(astParser,Node):
+    if len(Node) == 0:
+        return v_slv()
     if len(Node) == 1:
         return v_slv(astParser.unfold_argList(Node[0]) )
     if len(Node) == 2:
@@ -103,9 +106,14 @@ def body_unfold_functionDef(astParser,Node):
 
                 }
     )
+    localContext = astParser.Context
+
     ret = list()
+    astParser.Context = ret
     for x in Node.body:
         ret.append( astParser.Unfold_body(x))
+
+    astParser.Context = localContext
     return v_funDef(ret)
 
 
@@ -118,7 +126,10 @@ class v_return (v_ast_base):
         return "return "  + str(self.value) 
     
     def get_type(self):
-        return self.value.get_type()
+        ty =  self.value.get_type()
+        if "std_logic_vector" in ty:
+            return "std_logic_vector"
+        return ty
 
 def body_unfold_return(astParser,Node):
     return v_return(astParser.Unfold_body(Node.value) )
@@ -213,6 +224,20 @@ class v_Num(v_ast_base):
     def get_type(self):
         return "integer"
 
+    def _vhdl__getValue(self,ReturnToObj=None,astParser=None):
+        if ReturnToObj.type =="std_logic":
+            return  "'" + str(self.value)+ "'"
+        if  "std_logic_vector" in ReturnToObj.type:
+            if str(self) == '0':
+                return " (others => '0')"
+            
+            return  """std_logic_vector(to_unsigned({src}, {dest}'length))""".format(
+                    dest=str(ReturnToObj),
+                    src = str(self.value)
+            )
+
+        return "convert2"+ ReturnToObj.get_type().replace(" ","") + "(" + str(self) +")"
+        
 def body_unfold_Num(astParser,Node):
     return v_Num(Node.n)
 
@@ -309,7 +334,7 @@ def body_unfold_call(astParser,Node):
         if Node.func.id in astParser._unfold_symbol_fun_arg:
             return astParser._unfold_symbol_fun_arg[Node.func.id](astParser, Node.args)
         elif Node.func.id in astParser.local_function:
-            return astParser.local_function[Node.func.id](astParser.Unfold_body(Node.args[0]),astParser.Unfold_body(Node.args[1]))
+            return astParser.local_function[Node.func.id](astParser.Unfold_body(Node.args[0]))
         else:
             raise Exception("unknown function")
 
@@ -365,6 +390,8 @@ def body_LShift(astParser,Node):
     rhs =  astParser.Unfold_body(Node.right)
     lhs =  astParser.Unfold_body(Node.left)
     if issubclass( type(lhs),vhdl_base):
+        lhs = lhs._vhdl__reasign_type()
+        rhs = rhs._vhdl__getValue(lhs,astParser)
         return v_re_assigne(lhs, rhs)
 
     var = astParser.get_variable(lhs.Value, Node)
@@ -498,35 +525,45 @@ def body_if(astParser,Node):
     ifEsleIfElse = "if"
     test =v_type_to_bool(astParser, astParser.Unfold_body(Node.test))
     body = astParser.Unfold_body(Node.body)
+    localContext = astParser.Context
     oreEsle = list ()
+    astParser.Context  = oreEsle
     for x in Node.orelse:
         oreEsle.append(astParser.Unfold_body(x))
+    astParser.Context =localContext 
     return v_if(ifEsleIfElse, test, body,oreEsle)
 
 
 def body_list(astParser,Node):
+    localContext = astParser.Context
     ret = list()
+    astParser.Context  = ret
     for x in Node:
         l = astParser.Unfold_body(x)
         ret.append(l)
-
+    astParser.Context =localContext 
     return ret
 
 
 
 
 class v_boolOp(v_ast_base):
-    def __init__(self,lhs,rhs,op):
-        self.lhs = lhs
-        self.rhs = rhs
+    def __init__(self,elements,op):
+        self.elements = elements
+ 
         self.op = op
 
     def __str__(self):
         op = type(self.op).__name__
         if op == "And":
             op = " and "
-
-        return "( " + str(self.lhs)  + op +   str(self.rhs) +")" 
+        ret = "( "
+        start = ""
+        for x in self.elements:
+            ret += start + str(x) 
+            start = op
+        ret += ") "
+        return ret
 
     def get_type(self):
         return "boolean"
@@ -546,12 +583,15 @@ class v_boolOp(v_ast_base):
 
 
 def body_BoolOp(astParser, Node):
-    lhs = astParser.Unfold_body(Node.values[0])
-    lhs = v_type_to_bool(astParser,lhs)
-    rhs = astParser.Unfold_body(Node.values[1])
-    rhs = v_type_to_bool(astParser,rhs)
+    elements = list()
+    for x in Node.values:
+        e = astParser.Unfold_body(x)
+        e = v_type_to_bool(astParser,e)
+        elements.append(e)
+
+
     op = Node.op
-    return v_boolOp(lhs,rhs,op)
+    return v_boolOp(elements,op)
 
 class v_UnaryOP(v_ast_base):
     def __init__(self,obj,op):

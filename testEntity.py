@@ -19,17 +19,17 @@ class axiFifo(v_entity):
         self.clk    = port_in(v_sl())
         self.Axi_in = port_Slave(axisStream(32,v_slv(32)))
 
-        self.i_buff = v_slv(32,123)
+        self.i_buff = v_slv(32,123,varSigConst=varSig.signal_t)
 
     def _process1(self):
-        axiSalve = axisStream_slave(32,v_slv(32))
-        axiSalve.Connect(self.Axi_in )
+        axiSalve = axisStream_slave(self.Axi_in)
+
 
         #@rising_edge(self.clk)
         def _proc():
             if axiSalve:
-                axiSalve << 123
-        
+                self.i_buff << axiSalve
+       
         proc = _proc
         return proc
         
