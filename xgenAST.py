@@ -12,7 +12,31 @@ def get_subclasses(astList,BaseName):
         if  type(astObj).__name__ == 'ClassDef' and BaseName in [x.id  for x in astObj.bases]:
             yield astObj
 
+dataType_ = list()
+def dataType(astParser=None, args=None):
+    Name = None
+    if args:
+        Name = args[0]
 
+    if dataType_:
+        if Name == None:
+            return dataType_[-1]["symbol"]
+        
+        else:
+            for x in dataType_:
+                if x["name"] == Name:
+                    return x["symbol"]
+            raise Exception("unknown data type")
+
+    return v_slv()
+
+def AddDataType(dType,Name=""):
+    dataType_.append(
+        {
+            "name"   : Name,
+            "symbol" : copy.deepcopy( dType)
+        }
+    )
 class xgenAST:
 
     def __init__(self,sourceFileName):
@@ -26,12 +50,16 @@ class xgenAST:
             "Call" : Unfold_call,
             "Num" : unfold_num,
             "Str" : unfold_Str
+           
         }
 
         self.functionNameVetoList = [
         "__init__",
         "create",
-        '_vhdl__to_bool']
+        '_vhdl__to_bool',
+        '_vhdl__getValue',
+        "_vhdl__reasign"
+        ]
 
         self.local_function ={}
         self._unfold_symbol_fun_arg={
@@ -39,7 +67,9 @@ class xgenAST:
     "port_out" : port_out_to_vhdl,
     "v_slv"  : v_slv_to_vhdl,
     "v_sl"  : v_sl_to_vhdl,
-    "v_int" : v_int_to_vhdl
+    "v_int" : v_int_to_vhdl,
+    "dataType":dataType,
+     "rising_edge" : handle_rising_edge
     }
 
         self._Unfold_body={
@@ -125,8 +155,10 @@ class xgenAST:
 
                 }
             )
-            p=ClassInstance._process1()
-            self.local_function = p.__globals__
+            #p=ClassInstance._process1()
+            
+            #self.local_function = p.__globals__
+            self.local_function = ClassInstance.__init__.__globals__
             body = self.Unfold_body(f)  ## get local vars 
 
             header =""
@@ -149,11 +181,13 @@ class xgenAST:
             
             for x in f.body:
                 if type(x).__name__ == "FunctionDef":
-                    body = str(self.Unfold_body(x))  ## unfold function of intressed  
+                    b = self.Unfold_body(x)
+                    body = str(b)  ## unfold function of intressed  
                     break
             
             body =pull +"\n" + body +"\n" + push
-            proc = v_process(body=body, SensitivityList="clk",VariableList=header)
+            
+            proc = v_process(body=body, SensitivityList=b.dec[0].get_sensitivity_list(),prefix=b.dec[0].get_prefix(), VariableList=header)
             ClassInstance.__processList__.append(proc)
             
 

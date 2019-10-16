@@ -135,10 +135,10 @@ def InoutFlip(inOut):
         return InOut_t.output_t
     elif inOut ==   InOut_t.output_t:
         return InOut_t.input_t
-    elif InOut_t == InOut_t.Master_t:
+    elif inOut == InOut_t.Master_t:
         return InOut_t.Slave_t
     
-    elif InOut_t == InOut_t.Slave_t:
+    elif inOut == InOut_t.Slave_t:
         return InOut_t.Master_t
 
     else:

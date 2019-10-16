@@ -17,10 +17,10 @@ class axisStream(v_class):
 
         
         super().__init__("axisStream_"+str(AxiName))
-
+        AddDataType(  Axitype  )
         self.valid  = port_out( v_sl() )
         self.last   = port_out( v_sl() )
-        self.data   = port_out(copy.deepcopy( Axitype) )
+        self.data   = port_out( Axitype  )
         self.ready  = port_in( v_sl() )
     
 
@@ -41,12 +41,12 @@ class axisStream_slave(v_class):
         self.__vectorPush__ = True
 
 
-    def observe_data(self, dataOut = port_out(v_slv())):
+    def observe_data(self, dataOut = port_out(dataType())):
         if self.data_internal_isvalid2:
             dataOut << self.data_internal2
     
     
-    def read_data(self, dataOut = port_out(v_slv())):
+    def read_data(self, dataOut = port_out(dataType())):
         if self.data_internal_isvalid2:
             dataOut << self.data_internal2
             self.data_internal_was_read2 << 1
@@ -129,6 +129,11 @@ class axisStream_master(v_class):
         '''.format(
             default=Axi_in.data.DefaultValue
         )
+    def _vhdl__to_bool(self, astParser):
+        return "ready_to_send(" + str(self) + ") "
+    
+    def _vhdl__reasign(self, rhs):
+        return "send_data( "+str(self) + ", " +  str(rhs)+")"
 
 class axisStream_master_with_strean_counter(v_class):
     def __init__(self, Axi_in):

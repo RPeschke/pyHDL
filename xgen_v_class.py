@@ -479,7 +479,7 @@ class v_class(vhdl_base):
             
             args += ", " + x["vhdl_name"]
 
-        return "    pull( " +str(self) +args+");"
+        return "    pull( " +str(self) +args+");\n"
 
 
 
@@ -490,7 +490,7 @@ class v_class(vhdl_base):
             
             args += ", " + x["vhdl_name"]
 
-        return  "    push( " +str(self) +args+");"
+        return  "    push( " +str(self) +args+");\n"
 
     def Connect(self,Connections):
         self.__connection__.append(Connections)

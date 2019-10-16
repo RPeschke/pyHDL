@@ -76,8 +76,9 @@ class v_ast_base:
 
 
 class v_funDef(v_ast_base):
-    def __init__(self,BodyList):
+    def __init__(self,BodyList,dec=None):
         self.BodyList=BodyList
+        self.dec = dec
 
     def __str__(self):
         ret = "" 
@@ -106,6 +107,7 @@ def body_unfold_functionDef(astParser,Node):
 
                 }
     )
+    decorator_l = astParser.Unfold_body(Node.decorator_list)
     localContext = astParser.Context
 
     ret = list()
@@ -114,7 +116,7 @@ def body_unfold_functionDef(astParser,Node):
         ret.append( astParser.Unfold_body(x))
 
     astParser.Context = localContext
-    return v_funDef(ret)
+    return v_funDef(ret,decorator_l)
 
 
 
@@ -236,6 +238,9 @@ class v_Num(v_ast_base):
                     src = str(self.value)
             )
 
+        if ReturnToObj.type =="integer":
+            return  str(self.value)
+            
         return "convert2"+ ReturnToObj.get_type().replace(" ","") + "(" + str(self) +")"
         
 def body_unfold_Num(astParser,Node):
@@ -629,3 +634,22 @@ def body_subscript(astParser,Node):
 def body_index(astParser,Node):
     sl  = astParser.Unfold_body(Node.value)
     return sl 
+
+class v_decorator:
+    def __init__(self,name,argList):
+        self.name=name
+        self.argList=argList
+
+    def get_sensitivity_list(self):
+        return str(self.argList[0])
+
+    def get_prefix(self):
+        return self.name + "(" + str(self.argList[0]) +")"
+
+def handle_rising_edge(astParser, symb):
+    l = list()
+    for x in symb:
+        s = astParser.Unfold_body(x)
+        l.append(s)
+
+    return v_decorator("rising_edge", l )

@@ -2,6 +2,17 @@ from .xgenBase import *
 from .xgen_v_symbol import *
 from .axiStream import *
 
+
+def v_entity_getMember(entity):
+        ret = list()
+        for x in entity.__dict__.items():
+            t = getattr(entity, x[0])
+            if issubclass(type(t),vhdl_base):
+                ret.append({
+                        "name": x[0],
+                        "symbol": t
+                    })
+        return ret
 class v_entiy2text:
     def __init__(self, input_entity):
         self.entity = input_entity
@@ -107,23 +118,25 @@ class v_entiy2text:
 
         return ret 
     def getMember(self):
-        ret = list()
-        for x in self.entity.__dict__.items():
-            t = getattr(self.entity, x[0])
-            if issubclass(type(t),vhdl_base):
-                ret.append({
-                        "name": x[0],
-                        "symbol": t
-                    })
-
-
-        return ret
+        return v_entity_getMember(self.entity)
 class v_entity:
     def __init__(self,name,srcFileName=None):
         self.name = name
         self.srcFileName = srcFileName
         self.__processList__ = list()
         self.Inout = ""
+
+    def __call__(self):
+        ret = v_entity(self.name)
+        
+        mem = v_entity_getMember(self)
+        for x in mem:
+            if x["symbol"].Inout == InOut_t.Internal_t:
+                continue
+            obj = copy.deepcopy( x["symbol"])
+            obj.Inout =  InoutFlip(obj.Inout)
+            setattr(ret, x["name"], obj)
+        return ret
 
     def get_definition(self):
         to_text=v_entiy2text(self)

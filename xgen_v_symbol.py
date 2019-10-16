@@ -120,6 +120,9 @@ class v_symbol(vhdl_base):
         elif self.type == "integer":
             if str(rhs) == '0':
                 return str(self) + asOp+ " 0"
+            elif type(rhs).__name__ == "str":
+                return str(self) + asOp+ str(rhs)
+                
             elif rhs.type == "integer":
                 return str(self) + asOp+ str(rhs)
             elif "std_logic_vector" in rhs.type:
