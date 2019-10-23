@@ -105,7 +105,7 @@ class v_symbol(vhdl_base):
             if type(rhs).__name__=="v_symbol":
                 return str(self) + asOp + rhs._vhdl__getValue(self.type) 
             
-            return str(self) + asOp+"'" +  str(rhs) +"'"
+            return str(self) + asOp+  str(rhs) 
         elif "std_logic_vector" in self.type:
             if str(rhs) == '0':
                 return str(self) + asOp+ " (others => '0')"

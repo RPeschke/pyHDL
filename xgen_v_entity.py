@@ -2,6 +2,13 @@ from .xgenBase import *
 from .xgen_v_symbol import *
 from .axiStream import *
 
+def rising_edge(symbol):
+    def decorator_rising_edge(func):
+        @functools.wraps(func)
+        def wrapper_rising_edge(getSymb=None):
+            return func()
+        return wrapper_rising_edge
+    return decorator_rising_edge
 
 def v_entity_getMember(entity):
         ret = list()
@@ -17,8 +24,8 @@ class v_entiy2text:
     def __init__(self, input_entity):
         self.entity = input_entity
         self.astTree = None
-        if input_entity.srcFileName:
-            self.astTree = xgenAST(input_entity.srcFileName)
+        if input_entity._srcFileName:
+            self.astTree = xgenAST(input_entity._srcFileName)
         
         self.getProcessBlocks()
 
@@ -42,7 +49,7 @@ class v_entiy2text:
          
     
     def get_declaration(self):
-        ret = "entity " + self.entity.name + " is \nport(\n" 
+        ret = "entity " + self.entity._name + " is \nport(\n" 
         members= self.getMember()
         start = "  "
         for x in members:
@@ -87,7 +94,7 @@ class v_entiy2text:
 
     def get_archhitecture(self):
 
-        ret = "architecture rtl of "+ self.entity.name +" is\n\n"
+        ret = "architecture rtl of "+ self.entity._name +" is\n\n"
         ret += self.get_archhitecture_header()
         ret += "\nbegin\n"
         for x in self.entity.__processList__:
@@ -121,24 +128,27 @@ class v_entiy2text:
         return v_entity_getMember(self.entity)
 class v_entity:
     def __init__(self,name,srcFileName=None):
-        self.name = name
-        self.srcFileName = srcFileName
+        self._name = name
+        self._srcFileName = srcFileName
         self.__processList__ = list()
         self.Inout = ""
 
     def __call__(self):
-        ret = v_entity(self.name)
-        
-        mem = v_entity_getMember(self)
+        ret = copy.deepcopy(self)
+        mem = v_entity_getMember(ret)
         for x in mem:
-            if x["symbol"].Inout == InOut_t.Internal_t:
+            if not issubclass(type(ret.__dict__[x["name"]]), vhdl_base):
+                del ret.__dict__[x["name"]]
                 continue
-            obj = copy.deepcopy( x["symbol"])
-            obj.Inout =  InoutFlip(obj.Inout)
-            setattr(ret, x["name"], obj)
+
+            if x["symbol"].Inout == InOut_t.Internal_t:
+                del ret.__dict__[x["name"]]
+                continue
+            ret.__dict__[x["name"]].Inout = InoutFlip( ret.__dict__[x["name"]].Inout )
+            
         return ret
 
-    def get_definition(self):
+    def _get_definition(self):
         to_text=v_entiy2text(self)
 
         return to_text.get_definition()

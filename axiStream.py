@@ -33,7 +33,7 @@ class axisStream_slave(v_class):
         self.rx = port_Slave(Axi_in)
         self.__v_classType__         = v_classType_t.Slave_t
         self.data_isvalid            = v_sl()
-        self.data_internal2          = v_copy(Axi_in)
+        self.data_internal2          = v_copy(Axi_in.data)
         self.data_internal_isvalid2  = v_sl()
         self.data_internal_was_read2 = v_sl()
         self.data_internal_isLast2   = v_sl()
@@ -256,8 +256,8 @@ def arg2type(AXiName):
 def main():
     
     parser = argparse.ArgumentParser(description='Generate Packages')
-    parser.add_argument('--OutputPath',    help='Path to where the build system is located',default="build/xgen/xgen_axiStream_zerosupression.vhd")
-    parser.add_argument('--PackageName',   help='package Name',default="xgen_axiStream_zerosupression")
+    parser.add_argument('--OutputPath',    help='Path to where the build system is located',default="build/xgen/xgen_axiStream_32.vhd")
+    parser.add_argument('--PackageName',   help='package Name',default="xgen_axiStream_32")
    
     args = parser.parse_args()
     sp = args.PackageName.split("_")

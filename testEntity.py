@@ -13,18 +13,7 @@ from CodeGen.axiStream import *
 from CodeGen.xgen_v_entity import *
 
 
-def test():
-    print("SDAads")
 
-
-
-def rising_edge(symbol):
-    def decorator_rising_edge(func):
-        @functools.wraps(func)
-        def wrapper_rising_edge(getSymb=None):
-            return func()
-        return wrapper_rising_edge
-    return decorator_rising_edge
 
 
 class axiFifo(v_entity):
@@ -35,6 +24,8 @@ class axiFifo(v_entity):
         self.Axi_out = port_Master(axisStream(32,v_slv(32)))
 
         self.i_buff = v_slv(32,123,varSigConst=varSig.signal_t)
+
+
 
     def _process1(self):
         axiSalve = axisStream_slave(self.Axi_in)
@@ -53,5 +44,9 @@ class axiFifo(v_entity):
         
 
 ax = axiFifo()
+
+
 b = ax()
-print(ax.get_definition())
+
+
+print(ax._get_definition())
