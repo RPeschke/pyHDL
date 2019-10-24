@@ -5,6 +5,7 @@ parentdir = os.path.dirname(currentdir)
 sys.path.insert(0,parentdir) 
 
 from CodeGen.xgenBase import *
+from CodeGen.xgenPackage import *
 
 class B2TT(v_class):
     def __init__(self):
