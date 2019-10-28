@@ -73,7 +73,9 @@ class v_ast_base:
 
     def get_type(self):
         return ""
-
+        
+    def _vhdl__getValue(self,ReturnToObj=None,astParser=None):
+        return str(self)    
 
 class v_funDef(v_ast_base):
     def __init__(self,BodyList,dec=None):
@@ -383,7 +385,7 @@ class v_re_assigne(v_ast_base):
         self.rhs = rhs
         
 
-        
+ 
 
     def __str__(self):
         if issubclass(type(self.lhs),vhdl_base):
