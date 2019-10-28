@@ -6,6 +6,7 @@ sys.path.insert(0,parentdir)
 
 from CodeGen.xgenBase import *
 from CodeGen.xgenPackage import *
+from CodeGen.klm_scrod_bus import *
 
 from enum import Enum 
 import copy 
@@ -27,18 +28,7 @@ class SerialDataConfig(v_class):
 
    
 
-class SerialDataRout(v_class):
-    def __init__(self):
-        super().__init__("SerialDataRout")
-        self.data_out         = port_out( v_slv(16) )  # one bit per Channel
-        
-        #sr = Shift Register 
-        self.sr_clear         = port_in( v_sl() )
-        self.sr_Clock         = port_in( v_slv(5) )
-        self.sr_select        = port_in( v_sl() )
 
-        self.SampleSelect     = port_in( v_slv(5) )
-        self.SampleSelectAny  = port_in(v_slv(5) )
 
 
 class SerialDataRout_s_state(Enum):
@@ -63,7 +53,7 @@ class readOutConfig(v_class):
 class SerialDataRout_s(v_class):
     def __init__(self):
         super().__init__("SerialDataRout_s")
-        self.rx = port_Slave(SerialDataRout())
+        self.rx = port_Slave(TXShiftRegisterSignals())
         self.__v_classType__         = v_classType_t.Slave_t
 
         self.state  = v_enum(SerialDataRout_s_state.idle)
@@ -220,7 +210,7 @@ def main():
         Bitwidth,
         SerialDataRout_s_state,
         SerialDataConfig(),
-        SerialDataRout(),
+        #SerialDataRout(),
         readOutConfig(),
         SerialDataRout_s(),
         TX_timeSpan(),
