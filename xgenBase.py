@@ -13,7 +13,13 @@ def ops2str(ops):
         
     raise Exception("unable to find Binary Operator")
 
-class vhdl_base:
+
+
+
+class vhdl_base0:
+    pass
+
+class vhdl_base(vhdl_base0):
     def includes(self, name,parent):
         return ""
 
@@ -67,7 +73,7 @@ class vhdl_base:
         return self
 
     def _vhdl__getValue(self,ReturnToObj=None,astParser=None):
-        return str(self)
+        return self
 
     def _vhdl__make_constant(self, name):
         return str(self) + " := " +  str(rhs) +";\n"
@@ -90,6 +96,7 @@ class vhdl_base:
         return VarSymb +" " +str(self) + " : " +self.type +" := " + self.type+"_null;\n"
         #return " -- No Generic symbol definition for object " + self.getName()
 
+    
     def _vhdl__Pull(self):
         return ""
 
@@ -102,6 +109,9 @@ class vhdl_base:
 
     def _vhdl_get_adtribute(self,attName):
         return str(self) + "." +str(attName)
+
+    def _vhdl_make_port(self, name):
+        return  name + " => " + str(self)
 
 def optional_concatonat(first, delimer, Second):
     if first and Second:
@@ -123,6 +133,30 @@ class varSig(Enum):
     variable_t = 1
     signal_t =2 
     const_t =3
+
+v_defaults ={
+"defVarSig" : varSig.variable_t
+}
+
+
+def getDefaultVarSig():
+    return v_defaults["defVarSig"]
+
+def setDefaultVarSig(new_defVarSig):
+    v_defaults["defVarSig"] = new_defVarSig
+
+
+
+
+def get_assiment_op(varSigConst):
+    if varSigConst== varSig.const_t:
+        raise Exception("cannot asign to constant")
+    elif varSigConst== varSig.signal_t:
+        asOp = " <= "
+    else: 
+        asOp = " := "
+
+    return asOp
 
 def InOut_t2str(inOut):
     if inOut == InOut_t.input_t:

@@ -5,6 +5,9 @@ from .xgen_v_class import *
 
 class v_symbol(vhdl_base):
     def __init__(self, v_type, DefaultValue, Inout = InOut_t.Internal_t,includes="",value=None,varSigConst=varSig.variable_t):
+        if not varSigConst:
+            varSigConst = getDefaultVarSig()
+
         self.type = v_type
         self.DefaultValue = DefaultValue
         self.Inout = Inout
@@ -12,6 +15,7 @@ class v_symbol(vhdl_base):
         self.vhdl_name = None
         self.value = value
         self.varSigConst=varSigConst
+        self.__Driver__ = None 
 
     def length(self):
         return str(self)+"'length"
@@ -89,28 +93,32 @@ class v_symbol(vhdl_base):
         return ""
 
     def __str__(self):
+        if self.__Driver__ :
+            return str(self.__Driver__)
+
         if self.vhdl_name:
             return self.vhdl_name
 
         return str(self.value)
+    def __lshift__(self, rhs):
+        if self.__Driver__ :
+            raise Exception("symbol has already a driver", str(self))
+        self.__Driver__ = rhs
 
     def _vhdl__reasign(self, rhs):
-        if self.varSigConst== varSig.const_t:
-            raise Exception("cannot asign to constant")
-        elif self.varSigConst== varSig.signal_t:
-            asOp = " <= "
-        else: 
-            asOp = " := "
+        self.__Driver__ = rhs
+        asOp = get_assiment_op(self.varSigConst)
+        
         if self.type == "std_logic":
             if type(rhs).__name__=="v_symbol":
-                return str(self) + asOp + rhs._vhdl__getValue(self.type) 
+                return str(self) + asOp + str(rhs._vhdl__getValue(self.type)) 
             
             return str(self) + asOp+  str(rhs) 
         elif "std_logic_vector" in self.type:
             if str(rhs) == '0':
                 return str(self) + asOp+ " (others => '0')"
             elif  issubclass(type(rhs),vhdl_base):
-                return str(self) + asOp +  rhs._vhdl__getValue(self.type) 
+                return str(self) + asOp +  str(rhs._vhdl__getValue(self.type)) 
             elif  type(rhs).__name__=="v_Num":
                 return  """{dest} {asOp} std_logic_vector(to_unsigned({src}, {dest}'length))""".format(
                     dest=str(self),
@@ -163,7 +171,9 @@ class v_symbol(vhdl_base):
         return "pyhdl_to_bool(" + str(self) + ") "
 
     def _vhdl__DefineSymbol(self,VarSymb="variable"):
- 
+        
+        if  self.__Driver__:
+            return ""
         name = self.vhdl_name
 
             
@@ -188,10 +198,11 @@ library UNISIM;
   
 """
  
-def v_sl(Inout=InOut_t.Internal_t,Default="'0'",varSigConst=varSig.variable_t):
+def v_sl(Inout=InOut_t.Internal_t,Default="'0'",varSigConst=None):
+
     return v_symbol(v_type= "std_logic", DefaultValue=Default, Inout = Inout,includes=slv_includes,varSigConst=varSigConst)
 
-def v_slv(BitWidth=None,Default="(others => '0')", Inout=InOut_t.Internal_t,varSigConst=varSig.variable_t):
+def v_slv(BitWidth=None,Default="(others => '0')", Inout=InOut_t.Internal_t,varSigConst=None):
 
 
     value = Default
@@ -208,6 +219,6 @@ def v_slv(BitWidth=None,Default="(others => '0')", Inout=InOut_t.Internal_t,varS
 
     return v_symbol(v_type=v_type, DefaultValue=Default,value=value,Inout=Inout,includes=slv_includes,varSigConst=varSigConst)
 
-def v_int(Default="0", Inout=InOut_t.Internal_t, varSigConst=varSig.variable_t):
+def v_int(Default="0", Inout=InOut_t.Internal_t, varSigConst=None):
     return v_symbol(v_type= "integer", DefaultValue=str(Default), Inout = Inout,includes=slv_includes,varSigConst=varSigConst)
 

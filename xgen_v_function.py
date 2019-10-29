@@ -129,3 +129,19 @@ class v_process(vhdl_base):
             ret += "\n  end if;"
         ret += "\n end process;\n"
         return ret
+
+
+class v_Arch(vhdl_base):
+    def __init__(self,body="", Header="",prefix=None,name=None,IsEmpty=False):
+        self.body = body 
+        self.Header = Header
+        self.name = name
+        self.IsEmpty = IsEmpty
+        self.prefix = prefix
+
+
+    def getBody(self, name,parent):
+        return self.body
+
+    def getHeader(self, name, parent):
+        return self.Header

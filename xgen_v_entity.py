@@ -2,6 +2,15 @@ from .xgenBase import *
 from .xgen_v_symbol import *
 from .axiStream import *
 
+def process(func=None):
+   def func_wrapper():
+       return func()
+   return func_wrapper
+
+
+def v_create(entity):
+    return entity()
+
 def rising_edge(symbol):
     def decorator_rising_edge(func):
         @functools.wraps(func)
@@ -15,6 +24,22 @@ def v_entity_getMember(entity):
         for x in entity.__dict__.items():
             t = getattr(entity, x[0])
             if issubclass(type(t),vhdl_base):
+                ret.append({
+                        "name": x[0],
+                        "symbol": t
+                    })
+        return ret
+
+def v_entity_getMember_expand(entity):
+        ret = list()
+        for x in entity.__dict__.items():
+            t = getattr(entity, x[0])
+            if issubclass(type(t),v_class):
+                ret.append({
+                        "name": x[0],
+                        "symbol": t
+                    })
+            elif issubclass(type(t),vhdl_base):
                 ret.append({
                         "name": x[0],
                         "symbol": t
@@ -120,18 +145,22 @@ class v_entiy2text:
             if "_proc" in x:
                 print(x)
         
-        self.astTree.extractFunctionsForEntity(self.entity,None)
+        self.astTree.extractArchetectureForEntity(self.entity,None)
 
 
         return ret 
     def getMember(self):
         return v_entity_getMember(self.entity)
-class v_entity:
-    def __init__(self,name,srcFileName=None):
+class v_entity(vhdl_base0):
+    def __init__(self,srcFileName=None):
+        setDefaultVarSig(varSig.signal_t)
+        name = type(self).__name__
         self._name = name
         self._srcFileName = srcFileName
         self.__processList__ = list()
         self.Inout = ""
+        self.vhdl_name = None
+        self.type = "entity"
 
     def __call__(self):
         ret = copy.deepcopy(self)
@@ -154,5 +183,43 @@ class v_entity:
         return to_text.get_definition()
 
     def _vhdl_get_adtribute(self,attName):
+        if self.vhdl_name:
+            return self.vhdl_name +"_"+ attName
+        
         return attName
 
+    def set_vhdl_name(self,name):
+        self.vhdl_name = name   
+
+    def _vhdl__DefineSymbol(self,VarSymb="variable"):
+        ret =""
+        mem = v_entity_getMember(self)
+        for x in mem:
+            if not x["symbol"].vhdl_name:
+                x["symbol"].set_vhdl_name(self.vhdl_name +"_"+ x["name"])
+
+            ret += x["symbol"]._vhdl__DefineSymbol(VarSymb)
+
+        return ret 
+
+    def _vhdl__create(self, name):
+        ret = str(name) +" : entity work." + self._name+" port map ( \n"
+
+        start = "    "
+        mem = v_entity_getMember(self)
+        for x in mem:
+            if not x["symbol"].vhdl_name:
+                x["symbol"].set_vhdl_name(self.vhdl_name+"_"+ x["name"])
+
+            ret +=start + x["symbol"]._vhdl_make_port( x["name"] )
+            start = ",\n    "
+
+        ret += "\n)"
+        return ret
+
+class v_clk_entity(v_entity):
+    def __init__(self,srcFileName=None,clk=None):
+        super().__init__(srcFileName)
+        self.clk    =  port_in(v_sl())
+        if clk:
+            self.clk <<  clk

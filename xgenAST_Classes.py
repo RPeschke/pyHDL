@@ -109,6 +109,9 @@ def body_unfold_functionDef(astParser,Node):
 
                 }
     )
+    if len(Node.decorator_list) == 1 and Node.decorator_list[0].func.id== "process":
+        pass
+
     decorator_l = astParser.Unfold_body(Node.decorator_list)
     localContext = astParser.Context
 
@@ -270,6 +273,9 @@ class v_variable_cration(v_ast_base):
 
     def __str__(self):
         #return str(self.lhs.vhdl_name) +" := "+ str(self.lhs.get_value()) 
+        if self.lhs.type == "entity":
+            return self.lhs._vhdl__create(self.rhs)
+
         return ""
 
 
@@ -336,12 +342,19 @@ class v_call(v_ast_base):
     def get_type(self):
         return self.symbol.type
 
+def body_unfold_call_local_func(astParser,Node):
+    if len(Node.args) == 0:
+        return astParser.local_function[Node.func.id]()
+    elif len(Node.args) == 1:
+        return astParser.local_function[Node.func.id](astParser.Unfold_body(Node.args[0]))
+
+
 def body_unfold_call(astParser,Node):
     if hasattr(Node.func, 'id'):
         if Node.func.id in astParser._unfold_symbol_fun_arg:
             return astParser._unfold_symbol_fun_arg[Node.func.id](astParser, Node.args)
         elif Node.func.id in astParser.local_function:
-            return astParser.local_function[Node.func.id](astParser.Unfold_body(Node.args[0]))
+            return body_unfold_call_local_func( astParser ,Node)
         else:
             raise Exception("unknown function")
 
@@ -367,7 +380,11 @@ def body_unfold_call(astParser,Node):
         r.set_vhdl_name(vhdl)
         ret = v_call(memFunc,r, vhdl)
         return ret
-    
+
+    elif hasattr(Node.func, 'func'):
+        return body_unfold_call(astParser,Node.func)
+
+
     raise Exception("Unknown call type")
 
 
@@ -377,6 +394,19 @@ def body_unfold_call(astParser,Node):
 def body_expr(astParser,Node):
     return    astParser.Unfold_body(Node.value)
 
+
+def body_RShift(astParser,Node):
+    rhs =  astParser.Unfold_body(Node.right)
+    lhs =  astParser.Unfold_body(Node.left)
+    if issubclass( type(lhs),vhdl_base):
+        rhs = rhs._vhdl__reasign_type()
+        lhs = lhs._vhdl__getValue(lhs,astParser)
+        lhs >> rhs
+        return v_re_assigne(rhs, lhs)
+
+    var = astParser.get_variable(rhs.Value, Node)
+
+    return v_re_assigne(lhs, var)
 
 
 class v_re_assigne(v_ast_base):
@@ -399,6 +429,7 @@ def body_LShift(astParser,Node):
     if issubclass( type(lhs),vhdl_base):
         lhs = lhs._vhdl__reasign_type()
         rhs = rhs._vhdl__getValue(lhs,astParser)
+        lhs << rhs
         return v_re_assigne(lhs, rhs)
 
     var = astParser.get_variable(lhs.Value, Node)
@@ -655,3 +686,7 @@ def handle_rising_edge(astParser, symb):
         l.append(s)
 
     return v_decorator("rising_edge", l )
+
+
+def handle_v_create(astParser, symb):
+    print("asd")

@@ -3,7 +3,7 @@ from .xgen_v_function import *
 
 class v_class(vhdl_base):
 
-    def __init__(self,Name):
+    def __init__(self,Name,varSigConst=None):
         self.name = Name
         self.type = Name
         self.__v_classType__ = v_classType_t.transition_t 
@@ -21,7 +21,11 @@ class v_class(vhdl_base):
         self.__connection__ = list()
         self.Inout  = InOut_t.Internal_t
         self.vhdl_name =None
-        self.varSigConst = varSig.variable_t
+        self.__Driver__ = None
+        
+        if not varSigConst:
+            varSigConst = getDefaultVarSig()
+        self.varSigConst = varSigConst
 
     def set_vhdl_name(self,name):
         if self.vhdl_name and self.vhdl_name != name:
@@ -471,6 +475,9 @@ class v_class(vhdl_base):
     
 
     def __str__(self):
+        if self.__Driver__:
+            return str(self.__Driver__)
+
         return self.vhdl_name
 
     def _vhdl__Pull(self):
@@ -484,6 +491,34 @@ class v_class(vhdl_base):
 
 
 
+
+    def _vhdl__reasign(self, rhs):
+        
+        asOp = get_assiment_op(self.varSigConst)
+        if self.Inout == InOut_t.Slave_t:
+            raise Exception("cannot assign to slave")
+        elif self.Inout == InOut_t.input_t:
+            raise Exception("cannot assign to input")
+        
+        if rhs.Inout == InOut_t.Master_t:
+            raise Exception("cannot read from Master")
+        elif rhs.Inout == InOut_t.output_t:
+            raise Exception("cannot read from Output")
+
+        if rhs.type != self.type:
+            raise Exception("cannot assigne different types.", str(self), rhs.type, self.type )
+
+
+        t = self.getTypes()
+        if len(t) ==3:
+            ret ="---------------------------------------------------------------------\n--  " + str(self) +" << " + str (rhs)+"\n" 
+            #ret += "pyHDL_Connect( " +self.get_vhdl_name(InOut_t.input_t) +", " + self.get_vhdl_name(InOut_t.output_t)+", " +rhs.get_vhdl_name(InOut_t.input_t) +", "+ rhs.get_vhdl_name(InOut_t.output_t) +")"
+            ret += self.get_vhdl_name(InOut_t.input_t) + asOp + rhs.get_vhdl_name(InOut_t.input_t) +";\n" 
+            ret += rhs.get_vhdl_name(InOut_t.output_t) + asOp + self.get_vhdl_name(InOut_t.output_t)
+            return ret 
+
+        return str(self) + asOp +  str(rhs)
+
     def _vhdl__push(self):
         args = ""
         for x in self.getMemberArgsImpl(InOut_t.output_t,""):
@@ -491,6 +526,28 @@ class v_class(vhdl_base):
             args += ", " + x["vhdl_name"]
 
         return  "    push( " +str(self) +args+");\n"
+    
+    def _vhdl__DefineSymbol(self,VarSymb="variable"):
+        if self.__Driver__:
+            return ""
+        t = self.getTypes()
+        if len(t) ==3:
+            ret = ""
+            ret += VarSymb + " " +str(self) + "_m2s : " + t["m2s"] +" := " + t["m2s"]+"_null;\n"
+            ret += VarSymb + " " +str(self) + "_s2m : " + t["s2m"] +" := " + t["s2m"]+"_null;\n"
+            return ret
+
+        return VarSymb +" " +str(self) + " : " +self.type +" := " + self.type+"_null;\n"
+    
+    def _vhdl_make_port(self, name):
+        t = self.getTypes()
+        if len(t) ==3:
+            ret = ""
+            ret += name + "_m2s => " + str(self)+"_m2s, \n    "
+            ret += name + "_s2m => " + str(self)+"_s2m"
+            return ret
+            
+        return  name + " => " + str(self)
 
     def Connect(self,Connections):
         self.__connection__.append(Connections)

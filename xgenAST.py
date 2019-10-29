@@ -70,6 +70,7 @@ class xgenAST:
     "v_int" : v_int_to_vhdl,
     "dataType":dataType,
      "rising_edge" : handle_rising_edge
+  #   "v_create"    : handle_v_create
     }
 
         self._Unfold_body={
@@ -84,6 +85,7 @@ class xgenAST:
             "Expr"          : body_expr,
             "BinOp"         : body_BinOP,
             "LShift"        : body_LShift,
+            'RShift'        : body_RShift,
             "Str"           : body_unfold_str,
             'NameConstant'  : body_Named_constant,
             "If"            : body_if,
@@ -100,7 +102,8 @@ class xgenAST:
 
         self.ast_v_classes = list(get_subclasses(self.tree.body,'v_class'))
         self.ast_v_Entities = list(get_subclasses(self.tree.body,'v_entity'))
-
+        self.ast_v_Entities.extend( list(get_subclasses(self.tree.body,'v_clk_entity')))
+    
     def AddStatementBefore(self,Statement):
         if not self.Context == None:
             self.Context.append(Statement)
@@ -135,6 +138,42 @@ class xgenAST:
             ret += x._vhdl__DefineSymbol()
         
         return ret
+
+    def extractArchetectureForEntity(self, ClassInstance, parent):
+        setDefaultVarSig(varSig.signal_t)
+
+        ClassName  = type(ClassInstance).__name__
+        cl = self.getClassByName(ClassName)
+        for f in cl.body:
+            self.local_function ={}
+            if  f.name in self.functionNameVetoList:
+                continue
+            print(f.name)
+            self.parent = parent
+            self.FuncArgs = list()
+            self.LocalVar = list()
+            self.FuncArgs.append(
+                {
+                    "name":"self",
+                    "symbol": ClassInstance,
+                    "ScopeType": InOut_t.InOut_tt
+
+                }
+            )
+            #p=ClassInstance._process1()
+            
+            #self.local_function = p.__globals__
+            self.local_function = ClassInstance.__init__.__globals__
+            body = self.Unfold_body(f)  ## get local vars 
+
+            header =""
+            for x in self.LocalVar:
+                if x.type == "undef":
+                    continue
+                header += x._vhdl__DefineSymbol("signal")
+            
+            proc = v_Arch(body=str(body),Header=header)
+            ClassInstance.__processList__.append(proc)
 
     def extractFunctionsForEntity(self, ClassInstance, parent):
         ClassName  = type(ClassInstance).__name__
