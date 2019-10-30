@@ -66,7 +66,7 @@ class vhdl_base(vhdl_base0):
     def __rshift__(self, rhs):
         print("rshift")
   
-    def _vhdl__reasign(self, rhs):
+    def _vhdl__reasign(self, rhs, context=None):
         return str(self) + " := " +  str(rhs)
 
     def _vhdl__reasign_type(self):
@@ -145,8 +145,13 @@ def getDefaultVarSig():
 def setDefaultVarSig(new_defVarSig):
     v_defaults["defVarSig"] = new_defVarSig
 
+def get_varSig(varSigConst):
+    if varSigConst == varSig.signal_t:
+        return "signal"
+    elif varSigConst == varSig.variable_t:
+        return  "variable"
 
-
+    raise Exception("unknown type")
 
 def get_assiment_op(varSigConst):
     if varSigConst== varSig.const_t:

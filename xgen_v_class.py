@@ -473,12 +473,15 @@ class v_class(vhdl_base):
         ret += "-------------------------------------------------------------------------\n\n\n"
         return ret
     
-
     def __str__(self):
-        if self.__Driver__:
+        if self.__Driver__ and str( self.__Driver__) != 'process':
             return str(self.__Driver__)
 
-        return self.vhdl_name
+        if self.vhdl_name:
+            return self.vhdl_name
+
+        return str(self.value)
+
 
     def _vhdl__Pull(self):
         args = ""
@@ -490,9 +493,12 @@ class v_class(vhdl_base):
 
 
 
+    def __lshift__(self, rhs):
+        if self.__Driver__ :
+            raise Exception("symbol has already a driver", str(self))
+        self.__Driver__ = rhs
 
-
-    def _vhdl__reasign(self, rhs):
+    def _vhdl__reasign(self, rhs, context=None):
         
         asOp = get_assiment_op(self.varSigConst)
         if self.Inout == InOut_t.Slave_t:
@@ -510,7 +516,7 @@ class v_class(vhdl_base):
 
 
         t = self.getTypes()
-        if len(t) ==3:
+        if len(t) ==3 and self.__v_classType__ ==  v_classType_t.transition_t:
             ret ="---------------------------------------------------------------------\n--  " + str(self) +" << " + str (rhs)+"\n" 
             #ret += "pyHDL_Connect( " +self.get_vhdl_name(InOut_t.input_t) +", " + self.get_vhdl_name(InOut_t.output_t)+", " +rhs.get_vhdl_name(InOut_t.input_t) +", "+ rhs.get_vhdl_name(InOut_t.output_t) +")"
             ret += self.get_vhdl_name(InOut_t.input_t) + asOp + rhs.get_vhdl_name(InOut_t.input_t) +";\n" 
@@ -527,11 +533,14 @@ class v_class(vhdl_base):
 
         return  "    push( " +str(self) +args+");\n"
     
-    def _vhdl__DefineSymbol(self,VarSymb="variable"):
+    def _vhdl__DefineSymbol(self,VarSymb=None):
+        if not VarSymb:
+            VarSymb = get_varSig(self.varSigConst)
+
         if self.__Driver__:
             return ""
         t = self.getTypes()
-        if len(t) ==3:
+        if len(t) ==3 and self.__v_classType__ ==  v_classType_t.transition_t:
             ret = ""
             ret += VarSymb + " " +str(self) + "_m2s : " + t["m2s"] +" := " + t["m2s"]+"_null;\n"
             ret += VarSymb + " " +str(self) + "_s2m : " + t["s2m"] +" := " + t["s2m"]+"_null;\n"
@@ -541,7 +550,7 @@ class v_class(vhdl_base):
     
     def _vhdl_make_port(self, name):
         t = self.getTypes()
-        if len(t) ==3:
+        if len(t) ==3 and self.__v_classType__ ==  v_classType_t.transition_t:
             ret = ""
             ret += name + "_m2s => " + str(self)+"_m2s, \n    "
             ret += name + "_s2m => " + str(self)+"_s2m"

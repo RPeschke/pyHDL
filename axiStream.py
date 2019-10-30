@@ -94,7 +94,7 @@ class axisStream_slave(v_class):
         buff.vhdl_name = str(self) + "_buff"
         astParser.LocalVar.append(buff)
         astParser.AddStatementBefore("read_data(" +str(self) +", " +str(buff) +' ) ')
-        return str(buff)
+        return buff
 
 class axisStream_master(v_class):
     def __init__(self, Axi_in):

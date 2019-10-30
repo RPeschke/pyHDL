@@ -43,7 +43,7 @@ class axiFifo(v_clk_entity):
                     axiMaster << i_buff
 
 
-            return proc
+
 
 
 class tb_entity(v_entity):
@@ -53,20 +53,20 @@ class tb_entity(v_entity):
     def architecture(self):
         clk = v_sl(varSigConst=varSig.signal_t)
         ax1 = v_create( axiFifo(clk))
-        ax2 = v_create( axiFifo(clk) )
+        ax2 = v_create( axiFifo(clk))
 
 
         ax2.Axi_in << ax1.Axi_out         
 
 
-#ax = tb_entity()
+ax = tb_entity()
 
 
 
 
 
-#print(ax._get_definition())
+print(ax._get_definition())
 
 axB= axiFifo()
 
-print(axB._get_definition())
+#print(axB._get_definition())

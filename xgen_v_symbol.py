@@ -93,7 +93,7 @@ class v_symbol(vhdl_base):
         return ""
 
     def __str__(self):
-        if self.__Driver__ :
+        if self.__Driver__ and str( self.__Driver__) != 'process':
             return str(self.__Driver__)
 
         if self.vhdl_name:
@@ -105,8 +105,9 @@ class v_symbol(vhdl_base):
             raise Exception("symbol has already a driver", str(self))
         self.__Driver__ = rhs
 
-    def _vhdl__reasign(self, rhs):
+    def _vhdl__reasign(self, rhs, context=None):
         self.__Driver__ = rhs
+        
         asOp = get_assiment_op(self.varSigConst)
         
         if self.type == "std_logic":
@@ -170,9 +171,12 @@ class v_symbol(vhdl_base):
 
         return "pyhdl_to_bool(" + str(self) + ") "
 
-    def _vhdl__DefineSymbol(self,VarSymb="variable"):
+    def _vhdl__DefineSymbol(self,VarSymb=None):
         
-        if  self.__Driver__:
+        if not VarSymb:
+            VarSymb = get_varSig(self.varSigConst)
+
+        if  self.__Driver__ and str(self.__Driver__ ) != 'process':
             return ""
         name = self.vhdl_name
 

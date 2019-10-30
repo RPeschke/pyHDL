@@ -43,6 +43,10 @@ class xgenAST:
         
         self.FuncArgs = list()
         self.LocalVar = list()
+        self.varScope = list()
+
+        self.ContextName = list()
+        self.ContextName.append("global")
         self.Context = None
         self.parent = None
         self.sourceFileName =sourceFileName
@@ -107,6 +111,22 @@ class xgenAST:
     def AddStatementBefore(self,Statement):
         if not self.Context == None:
             self.Context.append(Statement)
+
+    def push_scope(self,NewContextName=None):
+        
+        if not NewContextName:
+            NewContextName = self.ContextName[-1]
+        self.ContextName.append(NewContextName)
+
+        self.varScope.append(self.LocalVar)
+        self.LocalVar = list()
+
+    def pop_scope(self):
+        self.LocalVar =  self.varScope[-1]
+        del self.varScope[-1]
+        del self.ContextName[-1]
+        
+
 
     def get_variable(self,name, Node):
             
@@ -241,6 +261,7 @@ class xgenAST:
             self.parent = parent
             self.FuncArgs = list()
             self.LocalVar = list()
+            
             ArglistProcedure = ""
             Arglist = list(self.get_func_args_list(f))
             for x in Arglist:
@@ -290,6 +311,11 @@ class xgenAST:
         for x in self.LocalVar:
             if x.vhdl_name == SymbolName:
                 return x
+
+        for x in self.varScope:
+            for y in x:
+                if y.vhdl_name == SymbolName:
+                    return y
 
         if self.parent:
             ret = self.parent.getInstantByName(SymbolName)
