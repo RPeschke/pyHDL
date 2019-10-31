@@ -7,9 +7,25 @@ def process(func=None):
        return func()
    return func_wrapper
 
+def timed(func=None):
+    def func_wrapper():
+       return func()
+    return func_wrapper
 
 def v_create(entity):
     return entity()
+
+class wait_for():
+    def __init__(self,time,unit="ns"):
+        self.time =time 
+        self.unit = unit
+
+    def get_time(self):
+        return self.time
+
+    def __str__(self):
+        return " " + str(self.time) +" " + self.unit
+
 
 def rising_edge(symbol):
     def decorator_rising_edge(func):
@@ -74,32 +90,35 @@ class v_entiy2text:
          
     
     def get_declaration(self):
-        ret = "entity " + self.entity._name + " is \nport(\n" 
+        ret = "entity " + self.entity._name + " is \n" 
         members= self.getMember()
         start = "  "
-        for x in members:
-            sym = x["symbol"]
-            if sym.Inout == InOut_t.Internal_t:
-                continue
-            elif sym.Inout == InOut_t.input_t or sym.Inout == InOut_t.output_t:
-                ret +=start+ x["name"] + " : "+ InOut_t2str(sym.Inout) + " " + sym.type + " := " + sym.DefaultValue 
-                start = ";\n  "
-            elif sym.Inout == InOut_t.Slave_t:
-                types = sym.getTypes()
-                #ret += start+"-- " +x["name"]+" \n  "
-                ret += start+x["name"] + "_m2s : in  " +types["m2s"] + " := " + types["m2s"] + "_null"
-                start = ";\n  "   
-                ret +=start+ x["name"] + "_s2m : out " +types["s2m"] + " := " + types["s2m"] + "_null"
-                
-            elif sym.Inout == InOut_t.Master_t:
-                types = sym.getTypes()
-                #ret += "-- <" +x["name"]+">\n  "
-                ret +=start+ x["name"] + "_m2s : out " +types["m2s"] + " := " + types["m2s"] + "_null"
-                start = ";\n  " 
-                ret +=start+ x["name"] + "_s2m : in  " +types["s2m"] + " := " + types["s2m"] + "_null"
-                #ret += "-- </" +x["name"]+">\n  "
-
-        ret += "\n);\nend entity;\n\n"
+        if len(members)>0:
+            ret+="port(\n"
+            for x in members:
+                sym = x["symbol"]
+                if sym.Inout == InOut_t.Internal_t:
+                    continue
+                elif sym.Inout == InOut_t.input_t or sym.Inout == InOut_t.output_t:
+                    ret +=start+ x["name"] + " : "+ InOut_t2str(sym.Inout) + " " + sym.type + " := " + sym.DefaultValue 
+                    start = ";\n  "
+                elif sym.Inout == InOut_t.Slave_t:
+                    types = sym.getTypes()
+                    #ret += start+"-- " +x["name"]+" \n  "
+                    ret += start+x["name"] + "_m2s : in  " +types["m2s"] + " := " + types["m2s"] + "_null"
+                    start = ";\n  "   
+                    ret +=start+ x["name"] + "_s2m : out " +types["s2m"] + " := " + types["s2m"] + "_null"
+                    
+                elif sym.Inout == InOut_t.Master_t:
+                    types = sym.getTypes()
+                    #ret += "-- <" +x["name"]+">\n  "
+                    ret +=start+ x["name"] + "_m2s : out " +types["m2s"] + " := " + types["m2s"] + "_null"
+                    start = ";\n  " 
+                    ret +=start+ x["name"] + "_s2m : in  " +types["s2m"] + " := " + types["s2m"] + "_null"
+                    #ret += "-- </" +x["name"]+">\n  "
+        
+            ret+="\n);\n"
+        ret += "end entity;\n\n"
         return ret 
 
     def get_archhitecture_header(self):

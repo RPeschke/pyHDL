@@ -51,15 +51,27 @@ class tb_entity(v_entity):
         super().__init__(__file__)
     
     def architecture(self):
-        clk = v_sl(varSigConst=varSig.signal_t)
+        clk = v_sl()
         ax1 = v_create( axiFifo(clk))
         ax2 = v_create( axiFifo(clk))
 
 
-        ax2.Axi_in << ax1.Axi_out         
+        ax2.Axi_in << ax1.Axi_out   
+
+
+        @process()
+        def p1():
+
+            @timed()
+            def proc():
+                clk << 1
+                yield wait_for(10)
+                clk << 0
+                yield wait_for(10)
 
 
 ax = tb_entity()
+
 
 
 

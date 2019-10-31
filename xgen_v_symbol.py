@@ -103,10 +103,12 @@ class v_symbol(vhdl_base):
     def __lshift__(self, rhs):
         if self.__Driver__ :
             raise Exception("symbol has already a driver", str(self))
-        self.__Driver__ = rhs
+        if issubclass(type(rhs),vhdl_base0):
+            self.__Driver__ = rhs
 
     def _vhdl__reasign(self, rhs, context=None):
-        self.__Driver__ = rhs
+        if issubclass(type(rhs),vhdl_base0):
+            self.__Driver__ = rhs
         
         asOp = get_assiment_op(self.varSigConst)
         

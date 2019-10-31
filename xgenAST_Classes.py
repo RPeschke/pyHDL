@@ -87,9 +87,13 @@ class v_process_Def(v_ast_base):
         ret = self.name + " : process" 
         for x in self.BodyList:
             x_str =str(x) 
+            sp_x_str = x_str.split("\n")[-1].strip()
             if x_str:
                 x_str = x_str.replace("\n", "\n  ")
-                ret += x_str+";\n  "
+                ret += x_str
+                if sp_x_str:
+                    ret += ";"
+                ret += "\n  "  
 
         ret += "end process"
         return ret
@@ -144,7 +148,7 @@ class v_process_body_Def(v_ast_base):
                 x_str = x_str.replace("\n", "\n  ")
                 ret += x_str+";\n  "
         ret += push
-        ret += "end if"
+        ret += "end if;"
         return ret
 
 def body_unfold_porcess_body(astParser,Node):
@@ -166,6 +170,58 @@ def body_unfold_porcess_body(astParser,Node):
     return v_process_body_Def(ret,Node.name,astParser.LocalVar,decorator_l)
 
 
+class v_process_body_timed_Def(v_ast_base):
+    def __init__(self,BodyList,name,LocalVar,dec=None):
+        self.BodyList=BodyList
+        self.dec = dec
+        self.name = name
+        self.LocalVar = LocalVar
+    
+    def __str__(self):
+        pull =""
+        for x in self.LocalVar:
+            if x.type == "undef":
+                continue
+            pull += x._vhdl__Pull()
+        push =""
+        for x in self.LocalVar:
+            if x.type == "undef":
+                continue
+            push += x._vhdl__push()
+        
+        ret =  "\n"
+        
+        for x in self.LocalVar:
+            ret += x._vhdl__DefineSymbol("variable")
+        ret += "begin\n  " 
+        
+        ret += pull
+        for x in self.BodyList:
+            x_str =str(x) 
+            if x_str:
+                x_str = x_str.replace("\n", "\n  ")
+                ret += x_str+";\n  "
+        ret += push
+
+        return ret
+
+def body_unfold_porcess_body_timed(astParser,Node):
+    localContext = astParser.Context
+    
+
+    dummy_DefaultVarSig = getDefaultVarSig()
+    setDefaultVarSig(varSig.variable_t)
+    decorator_l = astParser.Unfold_body(Node.decorator_list)
+
+    ret = list()
+    astParser.Context = ret
+    for x in Node.body:
+        ret.append( astParser.Unfold_body(x))
+
+    astParser.Context = localContext
+    setDefaultVarSig(dummy_DefaultVarSig)
+
+    return v_process_body_timed_Def(ret,Node.name,astParser.LocalVar,decorator_l)
 class v_funDef(v_ast_base):
     def __init__(self,BodyList,dec=None):
         self.BodyList=BodyList
@@ -202,6 +258,9 @@ def body_unfold_functionDef(astParser,Node):
         return body_unfold_porcess(astParser,Node)
     elif len(Node.decorator_list) == 1 and Node.decorator_list[0].func.id== "rising_edge":
         return body_unfold_porcess_body(astParser,Node)
+
+    elif len(Node.decorator_list) == 1 and Node.decorator_list[0].func.id== "timed":
+        return body_unfold_porcess_body_timed(astParser,Node)
 
     decorator_l = astParser.Unfold_body(Node.decorator_list)
     localContext = astParser.Context
@@ -521,7 +580,7 @@ def body_LShift(astParser,Node):
     if issubclass( type(lhs),vhdl_base):
         lhs = lhs._vhdl__reasign_type()
         rhs = rhs._vhdl__getValue(lhs,astParser)
-        if astParser.ContextName[-1] == 'process':
+        if astParser.ContextName[-1] == 'process' and issubclass( type(rhs),vhdl_base):
             rhs.__Driver__ = 'process'
 
         lhs << rhs
@@ -785,3 +844,18 @@ def handle_rising_edge(astParser, symb):
 
 def handle_v_create(astParser, symb):
     print("asd")
+
+
+class v_yield(v_ast_base):
+    def __init__(self,Arg):
+        self.arg = Arg
+
+    def __str__(self):
+
+
+        return   "wait for " + str(self.arg) 
+        
+def body_unfold_yield(astParser,Node):
+    
+    arg = astParser.Unfold_body(Node.value)
+    return v_yield(arg)

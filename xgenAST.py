@@ -98,8 +98,8 @@ class xgenAST:
             "UnaryOp"       : body_UnaryOP,
             "Add"           : body_add,
             'Subscript'     : body_subscript,
-            "Index"          : body_index
-
+            "Index"         : body_index,
+            'Yield'         : body_unfold_yield
         }
         with open(sourceFileName, "r") as source:
             self.tree = ast.parse(source.read())
