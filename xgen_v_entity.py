@@ -1,16 +1,44 @@
 from .xgenBase import *
 from .xgen_v_symbol import *
 from .axiStream import *
+import  functools 
 
-def process(func=None):
-   def func_wrapper():
-       return func()
-   return func_wrapper
 
-def timed(func=None):
-    def func_wrapper():
-       return func()
-    return func_wrapper
+
+def process():
+    def decorator_processd(func):
+        @functools.wraps(func)
+        def wrapper_process(getSymb=None):
+            return func()
+        localVarSig = getDefaultVarSig()
+
+        setDefaultVarSig(varSig.variable_t)
+        func()
+        setDefaultVarSig(localVarSig)
+        funcrec = inspect.stack()
+
+        for x in funcrec:
+            #print (x.function)
+            if x.function == "architecture":
+                f_locals = x.frame.f_locals
+                for y in f_locals:
+                    if y != "self" and issubclass(type(f_locals[y]), vhdl_base0):
+                        f_locals["self"]._add_symbol(y,f_locals[y])
+                        print(y)
+
+        return wrapper_process
+    return decorator_processd
+
+
+def timed():
+    def decorator_timed(func):
+        @functools.wraps(func)
+        def wrapper_timed(getSymb=None):
+            return func()
+
+        gsimulation.timmed_process.append(func)
+        return wrapper_timed
+    return decorator_timed
 
 def v_create(entity):
     return entity()
@@ -31,7 +59,9 @@ def rising_edge(symbol):
     def decorator_rising_edge(func):
         @functools.wraps(func)
         def wrapper_rising_edge(getSymb=None):
-            return func()
+            if symbol.value == 1:
+                return func()
+        symbol._update_list.append(wrapper_rising_edge)
         return wrapper_rising_edge
     return decorator_rising_edge
 
@@ -180,6 +210,34 @@ class v_entity(vhdl_base0):
         self.Inout = ""
         self.vhdl_name = None
         self.type = "entity"
+        self.__local_symbols__ = list()
+
+    def set_simulation_param(self, name,writer):
+        mem = v_entity_getMember(self)
+        for x in mem:
+            x["symbol"].set_simulation_param(name+"_"+x["name"],writer)
+            #print(x)
+
+        for x in self.__local_symbols__:
+            x["symbol"].set_simulation_param(name+"_"+x["name"],writer)
+            #print (x)
+
+
+    def _add_symbol(self, name,symb):
+        for x in self.__local_symbols__:
+            if symb is x["symbol"]:
+                return
+
+        self.__local_symbols__.append(
+            {
+                "name" : name,
+                "symbol" : symb
+            }
+        )
+
+
+    def architecture(self):
+        pass
 
     def __call__(self):
         ret = copy.deepcopy(self)

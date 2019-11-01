@@ -1,7 +1,12 @@
 from .xgenBase import *
 from .xgen_v_class import *
 
+from .xgen_simulation import *
 
+gStorage = list()
+gIndex = {
+    "id" : 0
+}
 
 class v_symbol(vhdl_base):
     def __init__(self, v_type, DefaultValue, Inout = InOut_t.Internal_t,includes="",value=None,varSigConst=varSig.variable_t):
@@ -9,13 +14,17 @@ class v_symbol(vhdl_base):
             varSigConst = getDefaultVarSig()
 
         self.type = v_type
-        self.DefaultValue = DefaultValue
+        self.DefaultValue = str(DefaultValue)
         self.Inout = Inout
         self.inc = includes
         self.vhdl_name = None
         self.value = value
+        self.nextValue  = value
         self.varSigConst=varSigConst
         self.__Driver__ = None 
+        self._update_list = list()
+        self.__vcd_varobj__ = None
+        self.__vcd_writer__ = None
 
     def length(self):
         return str(self)+"'length"
@@ -100,11 +109,68 @@ class v_symbol(vhdl_base):
             return self.vhdl_name
 
         return str(self.value)
+
+    def set_simulation_param(self, name,writer):
+        
+        for x in gStorage:
+            if str(x["id"]) == self.vhdl_name:
+                print( "set_simulation_param", self.vhdl_name, name)
+                x["symbol"].vhdl_name = name
+                x["symbol"].__vcd_varobj__ = writer.register_var('a', name, 'integer', size=32)
+                x["symbol"].__vcd_writer__ = writer
+                return 
+        print( "set_simulation_param", self.vhdl_name, name)
+        self.__vcd_varobj__ = writer.register_var('a', name, 'integer', size=32)
+        self.__vcd_writer__ = writer 
+        self.vhdl_name = name
+        
+
+    def update(self):
+        print("update", self.vhdl_name)
+        self.value = self.nextValue
+        if self.__vcd_writer__:
+            self.__vcd_writer__.change(self.__vcd_varobj__, self.value)
+
+        #print("update",self.value)
+
+    def __add__(self,rhs):
+        
+        return self.value + rhs 
+
     def __lshift__(self, rhs):
         if self.__Driver__ :
             raise Exception("symbol has already a driver", str(self))
         if issubclass(type(rhs),vhdl_base0):
             self.__Driver__ = rhs
+            closure1 = dict(x=self)
+            gIndex["id"] = gIndex["id"] + 1
+            ID = gIndex["id"] 
+            gStorage.append({
+                "id" : gIndex["id"],
+                "symbol" : self
+            })
+            self.vhdl_name= str(ID)
+            print("__lshift__",self.vhdl_name)
+            def update1():
+                self.nextValue = rhs.value
+                self.update()
+
+
+
+
+            rhs._update_list.append(update1)
+        else:
+            self.nextValue = rhs
+            if self.varSigConst == varSig.signal_t and self.nextValue != self.value:
+                def update():
+                    self.update()
+
+                gsimulation.append_updateList(update)
+                for x in self._update_list:
+                    gsimulation.append_updateList(x)
+            else:
+                self.value = self.nextValue
+
 
     def _vhdl__reasign(self, rhs, context=None):
         if issubclass(type(rhs),vhdl_base0):
@@ -204,15 +270,29 @@ library UNISIM;
   
 """
  
-def v_sl(Inout=InOut_t.Internal_t,Default="'0'",varSigConst=None):
+def v_sl(Inout=InOut_t.Internal_t,Default=0,varSigConst=None):
+    value = Default
+    if type(Default).__name__ == "int":
+        Default = "'" + str(Default) +"'"
+    
 
-    return v_symbol(v_type= "std_logic", DefaultValue=Default, Inout = Inout,includes=slv_includes,varSigConst=varSigConst)
+    return v_symbol(
+        v_type= "std_logic", 
+        DefaultValue=Default, 
+        Inout = Inout,
+        includes=slv_includes,
+        value = value,
+        varSigConst=varSigConst
+    )
 
-def v_slv(BitWidth=None,Default="(others => '0')", Inout=InOut_t.Internal_t,varSigConst=None):
+def v_slv(BitWidth=None,Default=0, Inout=InOut_t.Internal_t,varSigConst=None):
 
 
     value = Default
-    if type(Default).__name__ == "int":
+    if str(Default) == '0':
+        Default = "(others => '0')"
+
+    elif type(Default).__name__ == "int":
         Default =  'x"'+ hex(Default)[2:].zfill(int( int(BitWidth)/4))+'"'  
     
     v_type = ""
@@ -223,8 +303,21 @@ def v_slv(BitWidth=None,Default="(others => '0')", Inout=InOut_t.Internal_t,varS
     else: 
         v_type = "std_logic_vector(" + str(BitWidth ) + " -1 downto 0)"
 
-    return v_symbol(v_type=v_type, DefaultValue=Default,value=value,Inout=Inout,includes=slv_includes,varSigConst=varSigConst)
+    return v_symbol(
+        v_type=v_type, 
+        DefaultValue=Default,
+        value=value,
+        Inout=Inout,
+        includes=slv_includes,
+        varSigConst=varSigConst
+    )
 
 def v_int(Default="0", Inout=InOut_t.Internal_t, varSigConst=None):
-    return v_symbol(v_type= "integer", DefaultValue=str(Default), Inout = Inout,includes=slv_includes,varSigConst=varSigConst)
+    return v_symbol(
+        v_type= "integer", 
+        DefaultValue=str(Default), 
+        Inout = Inout,
+        includes=slv_includes,
+        varSigConst=varSigConst
+    )
 

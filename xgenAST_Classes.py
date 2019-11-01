@@ -77,6 +77,15 @@ class v_ast_base:
     def _vhdl__getValue(self,ReturnToObj=None,astParser=None):
         return str(self)    
 
+
+class v_noop(v_ast_base):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def __str__(self):
+
+        return ""
+
 class v_process_Def(v_ast_base):
     def __init__(self,BodyList,name,dec=None):
         self.BodyList=BodyList
@@ -84,7 +93,7 @@ class v_process_Def(v_ast_base):
         self.name = name
     
     def __str__(self):
-        ret = self.name + " : process" 
+        ret = "\n-----------------------------------\n" + self.name + " : process" 
         for x in self.BodyList:
             x_str =str(x) 
             sp_x_str = x_str.split("\n")[-1].strip()
@@ -148,7 +157,7 @@ class v_process_body_Def(v_ast_base):
                 x_str = x_str.replace("\n", "\n  ")
                 ret += x_str+";\n  "
         ret += push
-        ret += "end if;"
+        ret += "end if;\n"
         return ret
 
 def body_unfold_porcess_body(astParser,Node):
@@ -476,7 +485,8 @@ def  body_unfold_Name(astParser,Node):
     ret = astParser.getInstantByName(Node.id)
     return ret
 
-
+def handle_print(astParser,args):
+    return v_noop()
 
 
 class v_call(v_ast_base):

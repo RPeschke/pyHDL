@@ -73,7 +73,8 @@ class xgenAST:
     "v_sl"  : v_sl_to_vhdl,
     "v_int" : v_int_to_vhdl,
     "dataType":dataType,
-     "rising_edge" : handle_rising_edge
+     "rising_edge" : handle_rising_edge,
+     "print"       : handle_print
   #   "v_create"    : handle_v_create
     }
 

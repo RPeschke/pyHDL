@@ -17,7 +17,8 @@ def ops2str(ops):
 
 
 class vhdl_base0:
-    pass
+    def set_simulation_param(self, name,writer):
+        pass
 
 class vhdl_base(vhdl_base0):
     def includes(self, name,parent):
