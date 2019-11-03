@@ -112,13 +112,7 @@ class v_symbol(vhdl_base):
 
     def set_simulation_param(self, name,writer):
         
-        for x in gStorage:
-            if str(x["id"]) == self.vhdl_name:
-                print( "set_simulation_param", self.vhdl_name, name)
-                x["symbol"].vhdl_name = name
-                x["symbol"].__vcd_varobj__ = writer.register_var('a', name, 'integer', size=32)
-                x["symbol"].__vcd_writer__ = writer
-                return 
+
         print( "set_simulation_param", self.vhdl_name, name)
         self.__vcd_varobj__ = writer.register_var('a', name, 'integer', size=32)
         self.__vcd_writer__ = writer 
@@ -142,14 +136,8 @@ class v_symbol(vhdl_base):
             raise Exception("symbol has already a driver", str(self))
         if issubclass(type(rhs),vhdl_base0):
             self.__Driver__ = rhs
-            closure1 = dict(x=self)
-            gIndex["id"] = gIndex["id"] + 1
-            ID = gIndex["id"] 
-            gStorage.append({
-                "id" : gIndex["id"],
-                "symbol" : self
-            })
-            self.vhdl_name= str(ID)
+
+
             print("__lshift__",self.vhdl_name)
             def update1():
                 self.nextValue = rhs.value

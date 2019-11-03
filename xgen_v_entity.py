@@ -240,19 +240,18 @@ class v_entity(vhdl_base0):
         pass
 
     def __call__(self):
-        ret = copy.deepcopy(self)
-        mem = v_entity_getMember(ret)
+        mem = v_entity_getMember(self)
         for x in mem:
-            if not issubclass(type(ret.__dict__[x["name"]]), vhdl_base):
-                del ret.__dict__[x["name"]]
+            if not issubclass(type(self.__dict__[x["name"]]), vhdl_base):
+                del self.__dict__[x["name"]]
                 continue
 
             if x["symbol"].Inout == InOut_t.Internal_t:
-                del ret.__dict__[x["name"]]
+                del self.__dict__[x["name"]]
                 continue
-            ret.__dict__[x["name"]].Inout = InoutFlip( ret.__dict__[x["name"]].Inout )
+            self.__dict__[x["name"]].Inout = InoutFlip( self.__dict__[x["name"]].Inout )
             
-        return ret
+        return self
 
     def _get_definition(self):
         to_text=v_entiy2text(self)
