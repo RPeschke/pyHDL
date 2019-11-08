@@ -195,6 +195,8 @@ ax = tb_entity()
 gsimulation.run_timed(ax, 1000,"example2.vcd")
 ```
 
+![example2](pictures/example2.png)
+
 Each individual entity can be converted to VHDL by using the following command:
 
 
@@ -230,11 +232,12 @@ clkgen : entity work.clk_generator port map (
   );
   ---------------------------------------------------------------------
   --  axFil_Axi_in << Axi_out
-  axFil_Axi_in_s2m <= Axi_out_s2m;
-  Axi_out_m2s <= axFil_Axi_in_m2s;
+  axFil_Axi_in_m2s <= Axi_out_m2s;
+  Axi_out_s2m <= axFil_Axi_in_s2m;
   
   -----------------------------------
   p2 : process(clkgen_clk) is
+    variable v_Axi_out : axisStream_32_master := axisStream_32_master_null;
     begin
       if rising_edge(clkgen_clk) then 
         pull( v_Axi_out, Axi_out_s2m);

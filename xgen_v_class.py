@@ -554,8 +554,8 @@ class v_class(vhdl_base):
         if len(t) ==3 and self.__v_classType__ ==  v_classType_t.transition_t:
             ret ="---------------------------------------------------------------------\n--  " + str(self) +" << " + str (rhs)+"\n" 
             #ret += "pyHDL_Connect( " +self.get_vhdl_name(InOut_t.input_t) +", " + self.get_vhdl_name(InOut_t.output_t)+", " +rhs.get_vhdl_name(InOut_t.input_t) +", "+ rhs.get_vhdl_name(InOut_t.output_t) +")"
-            ret += self.get_vhdl_name(InOut_t.input_t) + asOp + rhs.get_vhdl_name(InOut_t.input_t) +";\n" 
-            ret += rhs.get_vhdl_name(InOut_t.output_t) + asOp + self.get_vhdl_name(InOut_t.output_t)
+            ret += self.get_vhdl_name(InOut_t.output_t) + asOp + rhs.get_vhdl_name(InOut_t.output_t) +";\n" 
+            ret += rhs.get_vhdl_name(InOut_t.input_t) + asOp + self.get_vhdl_name(InOut_t.input_t)
             return ret 
 
         return str(self) + asOp +  str(rhs)
@@ -572,7 +572,7 @@ class v_class(vhdl_base):
         if not VarSymb:
             VarSymb = get_varSig(self.varSigConst)
 
-        if self.__Driver__:
+        if self.__Driver__ and str( self.__Driver__) != 'process':
             return ""
         t = self.getTypes()
         if len(t) ==3 and self.__v_classType__ ==  v_classType_t.transition_t:
