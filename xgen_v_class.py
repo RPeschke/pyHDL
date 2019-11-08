@@ -22,6 +22,8 @@ class v_class(vhdl_base):
         self.Inout  = InOut_t.Internal_t
         self.vhdl_name =None
         self.__Driver__ = None
+        self._update_list = list()
+
         
         if not varSigConst:
             varSigConst = getDefaultVarSig()
@@ -33,7 +35,11 @@ class v_class(vhdl_base):
         else:
             self.vhdl_name = name
 
-    def get_value(self):
+    def _sim_append_update_list(self,up):
+        self._update_list.append(up)
+
+
+    def _sim_get_value(self):
         raise Exception("not yet implemented")
 
     def getName(self):
@@ -221,6 +227,10 @@ class v_class(vhdl_base):
             
         return members_args
      
+    def set_simulation_param(self,module, name,writer):
+        members = self.getMember() 
+        for x in members:
+            x["symbol"].set_simulation_param(module, name+"_"+ x["name"], writer)
 
     def getMemberArgs(self,InOut_Filter,InOut,suffix=""):
         members = self.getMember(InOut_Filter) 
@@ -491,12 +501,36 @@ class v_class(vhdl_base):
 
         return "    pull( " +str(self) +args+");\n"
 
+    def _connect(self,rhs):
+        if self.Inout != rhs.Inout:
+            raise Exception("Unable to connect different InOut types")
+        
+        if type(self).__name__ != type(rhs).__name__:
+            raise Exception("Unable to connect different types")
+
+        if self.Inout == InOut_t.Master_t:
+            inputtype = InOut_t.input_t
+            outputtype = InOut_t.output_t
+        elif self.Inout == InOut_t.Slave_t:
+            inputtype  = InOut_t.output_t
+            outputtype = InOut_t.input_t
+
+        self_members = self.getMember(inputtype)
+        rhs_members = rhs.getMember(inputtype)
+        for i in range(len(self_members)):
+            self_members[i]['symbol']._connect(rhs_members[i]['symbol'])
+        
+        self_members = self.getMember(outputtype)
+        rhs_members = rhs.getMember(outputtype)
+        for i in range(len(self_members)):
+            rhs_members[i]['symbol']._connect(self_members[i]['symbol'])
+
 
 
     def __lshift__(self, rhs):
         if self.__Driver__ :
             raise Exception("symbol has already a driver", str(self))
-        self.__Driver__ = rhs
+        #self.__Driver__ = rhs
 
     def _vhdl__reasign(self, rhs, context=None):
         

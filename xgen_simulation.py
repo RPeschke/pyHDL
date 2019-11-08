@@ -21,6 +21,10 @@ class v_simulation():
         self.writer= None
         self.CurrentTime = 0
 
+    def isRunning(self):
+        return self.CurrentTime >0
+
+        
     def append_updateList(self,obj):
         self.updateList.append(obj)
 
@@ -36,7 +40,7 @@ class v_simulation():
         objName = getNameOf(testBench)
         with open(FileName,"w") as f:
             self.writer =  VCDWriter(f, timescale='1 ns', date='today')
-            testBench.set_simulation_param(objName, self)
+            testBench.set_simulation_param("", objName, self)
             p_list = list()
             for t in self.timmed_process:
                 p_list.append({
@@ -65,5 +69,6 @@ class v_simulation():
                         x()
         
         self.writer= None
+        self.CurrentTime =0
 
 gsimulation = v_simulation()

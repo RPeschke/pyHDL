@@ -3,10 +3,7 @@ from .xgen_v_class import *
 
 from .xgen_simulation import *
 
-gStorage = list()
-gIndex = {
-    "id" : 0
-}
+
 
 class v_symbol(vhdl_base):
     def __init__(self, v_type, DefaultValue, Inout = InOut_t.Internal_t,includes="",value=None,varSigConst=varSig.variable_t):
@@ -23,13 +20,16 @@ class v_symbol(vhdl_base):
         self.varSigConst=varSigConst
         self.__Driver__ = None 
         self._update_list = list()
+        self._Pull_update_list = list()
+        self._Push_update_list = list()
         self.__vcd_varobj__ = None
         self.__vcd_writer__ = None
+        self.__UpdateFlag__ = False
 
     def length(self):
         return str(self)+"'length"
 
-    def get_value(self):
+    def _sim_get_value(self):
         return self.value
 
 
@@ -102,7 +102,7 @@ class v_symbol(vhdl_base):
         return ""
 
     def __str__(self):
-        if self.__Driver__ and str( self.__Driver__) != 'process':
+        if self.__Driver__ != None and str( self.__Driver__) != 'process':
             return str(self.__Driver__)
 
         if self.vhdl_name:
@@ -110,11 +110,11 @@ class v_symbol(vhdl_base):
 
         return str(self.value)
 
-    def set_simulation_param(self, name,writer):
+    def set_simulation_param(self,module, name,writer):
         
 
         print( "set_simulation_param", self.vhdl_name, name)
-        self.__vcd_varobj__ = writer.register_var('a', name, 'integer', size=32)
+        self.__vcd_varobj__ = writer.register_var(module, name, 'integer', size=32)
         self.__vcd_writer__ = writer 
         self.vhdl_name = name
         
@@ -123,41 +123,94 @@ class v_symbol(vhdl_base):
         print("update", self.vhdl_name)
         self.value = self.nextValue
         if self.__vcd_writer__:
-            self.__vcd_writer__.change(self.__vcd_varobj__, self.value)
-
+            self.__vcd_writer__.change(self.__vcd_varobj__, self._sim_get_value())
+        
+        for x in self._update_list:
+            gsimulation.append_updateList(x)
         #print("update",self.value)
+        self.__UpdateFlag__ = False
 
     def __add__(self,rhs):
         
         return self.value + rhs 
 
-    def __lshift__(self, rhs):
-        if self.__Driver__ :
+    def _sim_append_update_list(self,up):
+        self._update_list.append(up)
+    
+    def _sim_append_Pull_update_list(self,up):
+        self._Pull_update_list.append(up)
+
+    def _sim_append_Push_update_list(self,up):
+        self._Push_update_list.append(up)
+
+    def _sim_run_pull(self):
+        for x in self._Pull_update_list:
+            x()
+
+    def _sim_run_push(self):
+            for x in self._Push_update_list:
+                x()
+
+    def _connect(self,rhs):
+        if self.Inout != rhs.Inout:
+            raise Exception("Unable to connect different InOut types")
+        if self.__Driver__ != None and not isConverting2VHDL():#todo: there is a bug with double assigment in the conversion to vhdl
             raise Exception("symbol has already a driver", str(self))
-        if issubclass(type(rhs),vhdl_base0):
-            self.__Driver__ = rhs
+        self.__Driver__ = rhs
+        print("_connect",self.vhdl_name)
+        def update1():
+            self.nextValue = rhs.value
+            self.update()
 
+        rhs._update_list.append(update1)
 
-            print("__lshift__",self.vhdl_name)
-            def update1():
-                self.nextValue = rhs.value
-                self.update()
+    def __bool__(self):
+        
+        return self.value > 0
 
+    def __lshift__(self, rhs):
+        if gsimulation.isRunning():
+            
+            if issubclass(type(rhs),vhdl_base0):
+                self.nextValue = rhs._sim_get_value()
+            
+            else:
+                self.nextValue = rhs
 
-
-
-            rhs._update_list.append(update1)
-        else:
-            self.nextValue = rhs
             if self.varSigConst == varSig.signal_t and self.nextValue != self.value:
                 def update():
                     self.update()
 
-                gsimulation.append_updateList(update)
-                for x in self._update_list:
-                    gsimulation.append_updateList(x)
+                if not self.__UpdateFlag__:
+                    gsimulation.append_updateList(update)
+                    self.__UpdateFlag__ = True
+                
             else:
                 self.value = self.nextValue
+            
+        else:
+            
+
+            if self.__Driver__ != None and not isConverting2VHDL():#todo: there is a bug with double assigment in the conversion to vhdl
+                raise Exception("symbol has already a driver", str(self))
+            if issubclass(type(rhs),vhdl_base0):
+                self.__Driver__ = rhs
+
+
+                print("__lshift__",self.vhdl_name)
+                def update1():
+                    self.nextValue = rhs.value
+                    self.update()
+
+
+
+
+                rhs._update_list.append(update1)
+            else:
+                self.nextValue = rhs
+                self.value = rhs
+
+
 
 
     def _vhdl__reasign(self, rhs, context=None):
@@ -232,7 +285,7 @@ class v_symbol(vhdl_base):
         if not VarSymb:
             VarSymb = get_varSig(self.varSigConst)
 
-        if  self.__Driver__ and str(self.__Driver__ ) != 'process':
+        if  self.__Driver__ != None and str(self.__Driver__ ) != 'process':
             return ""
         name = self.vhdl_name
 
@@ -257,6 +310,22 @@ library UNISIM;
   use ieee.std_logic_unsigned.all;
   
 """
+
+
+def v_bool(Inout=InOut_t.Internal_t,Default=0,varSigConst=None):
+    value = Default
+    if type(Default).__name__ == "int":
+        Default = "'" + str(Default) +"'"
+    
+
+    return v_symbol(
+        v_type= "boolean", 
+        DefaultValue=Default, 
+        Inout = Inout,
+        includes=slv_includes,
+        value = value,
+        varSigConst=varSigConst
+    )
  
 def v_sl(Inout=InOut_t.Internal_t,Default=0,varSigConst=None):
     value = Default

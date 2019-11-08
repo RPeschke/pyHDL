@@ -14,10 +14,17 @@ def ops2str(ops):
     raise Exception("unable to find Binary Operator")
 
 
+gStatus = {
+    "isConverting2VHDL" : False
+}
 
+def isConverting2VHDL():
+    return gStatus["isConverting2VHDL"]
 
+def set_isConverting2VHDL(newStatus):
+    gStatus["isConverting2VHDL"] = newStatus
 class vhdl_base0:
-    def set_simulation_param(self, name,writer):
+    def set_simulation_param(self,module, name,writer):
         pass
 
 class vhdl_base(vhdl_base0):
@@ -66,6 +73,9 @@ class vhdl_base(vhdl_base0):
 
     def __rshift__(self, rhs):
         print("rshift")
+
+    def _sim_append_update_list(self,up):
+        raise Exception("update not implemented")
   
     def _vhdl__reasign(self, rhs, context=None):
         return str(self) + " := " +  str(rhs)
@@ -113,6 +123,25 @@ class vhdl_base(vhdl_base0):
 
     def _vhdl_make_port(self, name):
         return  name + " => " + str(self)
+
+    def _connect(self,rhs):
+        raise Exception("not implemented")
+    
+    def _sim_get_push_pull(self):
+        ret = {
+            "_onPull" : None,
+            "_onPush" : None
+        }
+        if hasattr(self, "_onPull"):
+            ret["_onPull"] =  getattr(self, '_onPull')
+        if hasattr(self, "_onPush"):
+            ret["_onPush"] =  getattr(self, '_onPush')
+        
+        return ret 
+
+    def _sim_get_value(self):
+        raise Exception("not implemented")
+
 
 def optional_concatonat(first, delimer, Second):
     if first and Second:
@@ -196,30 +225,34 @@ class v_classType_t(Enum):
 
     
 def port_out(symbol):
-    symbol= copy.deepcopy(symbol)
-    symbol.setInout(InOut_t.output_t)
-    return symbol
+    ret= copy.deepcopy(symbol)
+    ret.setInout(InOut_t.output_t)
+    ret.varSigConst=getDefaultVarSig()
+    return ret
 
 def port_in(symbol):
-    symbol= copy.deepcopy(symbol)
-    symbol.setInout(InOut_t.input_t)
-    return symbol
+    ret= copy.deepcopy(symbol)
+    ret.setInout(InOut_t.input_t)
+    ret.varSigConst=getDefaultVarSig()
+    return ret
 
 def port_Master(symbol):
-    symbol= copy.deepcopy(symbol)
-    symbol.setInout(InOut_t.Master_t)
-    return symbol
+    ret= copy.deepcopy(symbol)
+    ret.setInout(InOut_t.Master_t)
+    ret.varSigConst=getDefaultVarSig()
+    return ret
 
 def port_Slave(symbol):
-    symbol= copy.deepcopy(symbol)
-    symbol.setInout(InOut_t.Slave_t)
-    return symbol
+    ret= copy.deepcopy(symbol)
+    ret.setInout(InOut_t.Slave_t)
+    ret.varSigConst=getDefaultVarSig()
+    return ret
 
 def v_copy(symbol):
-    symbol= copy.deepcopy(symbol)
-    symbol.setInout(InOut_t.Internal_t)
-    symbol.vhdl_name = None
-    return symbol
+    ret= copy.deepcopy(symbol)
+    ret.setInout(InOut_t.Internal_t)
+    ret.vhdl_name = None
+    return ret
 
 def port(symbol):
     if issubclass(type(symbol),v_class):

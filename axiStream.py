@@ -24,6 +24,8 @@ class axisStream(v_class):
         self.ready  = port_in( v_sl() )
     
 
+         
+            
 
 
 class axisStream_slave(v_class):
@@ -31,6 +33,7 @@ class axisStream_slave(v_class):
         super().__init__(Axi_in.type+"_slave")
         
         self.rx = port_Slave(Axi_in)
+        self.rx._connect(Axi_in)
         self.__v_classType__         = v_classType_t.Slave_t
         self.data_isvalid            = v_sl()
         self.data_internal2          = v_copy(Axi_in.data)
@@ -59,6 +62,9 @@ class axisStream_slave(v_class):
     def IsEndOfStream(self):
         return  self.data_internal_isvalid2  and  self.data_internal_isLast2
 
+    def __bool__(self):
+        
+        return self.isReceivingData()
 
     def _onPull(self):
 
@@ -76,6 +82,11 @@ class axisStream_slave(v_class):
 
    
       
+    def _sim_get_value(self):
+        if self.data_internal_isvalid2:
+            self.data_internal_was_read2 << 1
+
+        return self.data_internal2._sim_get_value()
 
     def _onPush(self):
         if self.data_internal_was_read2:
@@ -97,38 +108,43 @@ class axisStream_slave(v_class):
         return buff
 
 class axisStream_master(v_class):
-    def __init__(self, Axi_in):
-        super().__init__(Axi_in.type + "_master")
-        self.tx = port_Master(Axi_in)
+    def __init__(self, Axi_Out):
+        super().__init__(Axi_Out.type + "_master")
+        self.tx = port_Master(Axi_Out)
+        Axi_Out._connect(self.tx)
         self.__v_classType__         = v_classType_t.Master_t
         self.__vectorPull__ = True
         self.__vectorPush__ = True
         
-        self.send_data = v_procedure(argumentList= "datain : in " + self.tx.data.type, body='''
-   self.tx.valid   := '1';
-   self.tx.data    := datain; 
-''')
-        
-        self.ready_to_send = v_function(returnType="boolean",body = '''
-    return self.tx.valid = '0';
-''')
-        self.Send_end_Of_Stream = v_procedure(argumentList= "EndOfStream : in boolean := true",body='''
-    if EndOfStream then 
-        self.tx.last := '1';
-    else 
-        self.tx.last := '0';
-    end if; 
-''')
 
-        self.__AfterPull__ ='''
-    if (self.tx.ready = '1') then 
-        self.tx.valid   := '0'; 
-        self.tx.last := '0';  
-        self.tx.data := {default};
-    end if;
-        '''.format(
-            default=Axi_in.data.DefaultValue
-        )
+        
+    def send_data(self, dataIn = port_out(dataType())):
+        self.tx.valid   << 1
+        self.tx.data    << dataIn    
+    
+    def ready_to_send(self):
+        return not self.tx.valid
+
+    def Send_end_Of_Stream(self, EndOfStream= port_in(v_bool())):
+        if EndOfStream:
+            self.tx.last << 1
+        else:
+            self.tx.last << 0
+
+
+    def _onPull(self):
+        if self.tx.ready: 
+            self.tx.valid << 0 
+            self.tx.last  << 0  
+            self.tx.data  << 0
+    
+    def __lshift__(self, rhs):
+        self.send_data(rhs._sim_get_value())
+
+    def __bool__(self):
+        
+        return self.ready_to_send()
+
     def _vhdl__to_bool(self, astParser):
         return "ready_to_send(" + str(self) + ") "
     

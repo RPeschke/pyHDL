@@ -55,13 +55,34 @@ class wait_for():
         return " " + str(self.time) +" " + self.unit
 
 
+def addPullsPushes(symbol):
+    funcrec = inspect.stack()[2]
+    funcrec4 = inspect.stack()[4]
+    
+        
+    f_locals = funcrec.frame.f_locals
+    f_locals4  = funcrec4.frame.f_locals
+    for y in f_locals:
+        if not y in f_locals4 and y != "self" and issubclass(type(f_locals[y]), vhdl_base0):
+            onPushPull = f_locals[y]._sim_get_push_pull()
+            if  onPushPull['_onPull']:
+                symbol._sim_append_Pull_update_list( onPushPull['_onPull'])
+
+            if onPushPull['_onPush']:
+                symbol._sim_append_Push_update_list(onPushPull['_onPush'])
+            
+
+
 def rising_edge(symbol):
     def decorator_rising_edge(func):
         @functools.wraps(func)
         def wrapper_rising_edge(getSymb=None):
             if symbol.value == 1:
-                return func()
+                symbol._sim_run_pull()
+                func()
+                symbol._sim_run_push()
         symbol._update_list.append(wrapper_rising_edge)
+        addPullsPushes(symbol)
         return wrapper_rising_edge
     return decorator_rising_edge
 
@@ -212,14 +233,14 @@ class v_entity(vhdl_base0):
         self.type = "entity"
         self.__local_symbols__ = list()
 
-    def set_simulation_param(self, name,writer):
+    def set_simulation_param(self,module, name,writer):
         mem = v_entity_getMember(self)
         for x in mem:
-            x["symbol"].set_simulation_param(name+"_"+x["name"],writer)
+            x["symbol"].set_simulation_param(module +"."+ name, x["name"],writer)
             #print(x)
 
         for x in self.__local_symbols__:
-            x["symbol"].set_simulation_param(name+"_"+x["name"],writer)
+            x["symbol"].set_simulation_param(module +"."+ name, x["name"],writer)
             #print (x)
 
 
@@ -254,9 +275,14 @@ class v_entity(vhdl_base0):
         return self
 
     def _get_definition(self):
+        s = isConverting2VHDL()
+        set_isConverting2VHDL(True)
+        
         to_text=v_entiy2text(self)
 
-        return to_text.get_definition()
+        ret = to_text.get_definition()
+        set_isConverting2VHDL(s)
+        return ret
 
     def _vhdl_get_adtribute(self,attName):
         if self.vhdl_name:
@@ -297,5 +323,5 @@ class v_clk_entity(v_entity):
     def __init__(self,srcFileName=None,clk=None):
         super().__init__(srcFileName)
         self.clk    =  port_in(v_sl())
-        if clk:
+        if clk != None:
             self.clk <<  clk

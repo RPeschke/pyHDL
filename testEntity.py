@@ -93,13 +93,13 @@ class tb_entity(v_entity):
                 
 
 
-ax = tb_entity()
+#ax = tb_entity()
 
 
-gsimulation.run_timed(ax, 1000,"test.vcd")
+#gsimulation.run_timed(ax, 1000,"test.vcd")
 
-print(ax._get_definition())
+#print(ax._get_definition())
 
-axB= axiFifo()
+axB= axiFifo(v_sl())
 
-#print(axB._get_definition())
+print(axB._get_definition())
