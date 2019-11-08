@@ -122,7 +122,10 @@ class v_class(vhdl_base):
         else:
             raise Exception("wrong combination of Class type and Inout type",self.__v_classType__,Inout)
 
-           
+    def set_varSigConst(self, varSigConst):
+        for x  in self.getMember():
+            x["symbol"].set_varSigConst(varSigConst)
+                
 
     def isInOutType(self, Inout):
         
@@ -508,20 +511,16 @@ class v_class(vhdl_base):
         if type(self).__name__ != type(rhs).__name__:
             raise Exception("Unable to connect different types")
 
-        if self.Inout == InOut_t.Master_t:
-            inputtype = InOut_t.input_t
-            outputtype = InOut_t.output_t
-        elif self.Inout == InOut_t.Slave_t:
-            inputtype  = InOut_t.output_t
-            outputtype = InOut_t.input_t
+        
 
-        self_members = self.getMember(inputtype)
-        rhs_members = rhs.getMember(inputtype)
+        
+        self_members = self.getMember(InOut_t.input_t)
+        rhs_members = rhs.getMember(InOut_t.input_t)
         for i in range(len(self_members)):
             self_members[i]['symbol']._connect(rhs_members[i]['symbol'])
         
-        self_members = self.getMember(outputtype)
-        rhs_members = rhs.getMember(outputtype)
+        self_members = self.getMember(InOut_t.output_t)
+        rhs_members = rhs.getMember(InOut_t.output_t)
         for i in range(len(self_members)):
             rhs_members[i]['symbol']._connect(self_members[i]['symbol'])
 
@@ -530,6 +529,8 @@ class v_class(vhdl_base):
     def __lshift__(self, rhs):
         if self.__Driver__ :
             raise Exception("symbol has already a driver", str(self))
+        self._connect(rhs)
+        print("das")
         #self.__Driver__ = rhs
 
     def _vhdl__reasign(self, rhs, context=None):

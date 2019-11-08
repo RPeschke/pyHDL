@@ -52,6 +52,8 @@ class vhdl_base(vhdl_base0):
     def to_arglist(self,name,parent):
         return ""
     
+    def set_varSigConst(self, varSigConst):
+        raise Exception("not implemented")
 
     def get_vhdl_name(self,Inout):
         return None
@@ -227,31 +229,32 @@ class v_classType_t(Enum):
 def port_out(symbol):
     ret= copy.deepcopy(symbol)
     ret.setInout(InOut_t.output_t)
-    ret.varSigConst=getDefaultVarSig()
+    ret.set_varSigConst(getDefaultVarSig())
     return ret
 
 def port_in(symbol):
     ret= copy.deepcopy(symbol)
     ret.setInout(InOut_t.input_t)
-    ret.varSigConst=getDefaultVarSig()
+    ret.set_varSigConst(getDefaultVarSig())
     return ret
 
 def port_Master(symbol):
     ret= copy.deepcopy(symbol)
     ret.setInout(InOut_t.Master_t)
-    ret.varSigConst=getDefaultVarSig()
+    ret.set_varSigConst(getDefaultVarSig())
     return ret
 
 def port_Slave(symbol):
     ret= copy.deepcopy(symbol)
     ret.setInout(InOut_t.Slave_t)
-    ret.varSigConst=getDefaultVarSig()
+    ret.set_varSigConst(getDefaultVarSig())
     return ret
 
 def v_copy(symbol):
     ret= copy.deepcopy(symbol)
     ret.setInout(InOut_t.Internal_t)
     ret.vhdl_name = None
+    ret.set_varSigConst(getDefaultVarSig())
     return ret
 
 def port(symbol):

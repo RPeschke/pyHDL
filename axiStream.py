@@ -24,7 +24,22 @@ class axisStream(v_class):
         self.ready  = port_in( v_sl() )
     
 
-         
+    def _connect(self,rhs):
+        if self.Inout != rhs.Inout and self.Inout != InOut_t.Internal_t and rhs.Inout != InOut_t.Internal_t:
+            raise Exception("Unable to connect different InOut types")
+        
+        if type(self).__name__ != type(rhs).__name__:
+            raise Exception("Unable to connect different types")
+
+        
+        rhs.ready  <<  self.ready
+        self.valid <<  rhs.valid
+        self.last  <<  rhs.last
+        self.data  <<  rhs.data
+
+
+
+
             
 
 
@@ -33,7 +48,9 @@ class axisStream_slave(v_class):
         super().__init__(Axi_in.type+"_slave")
         
         self.rx = port_Slave(Axi_in)
-        self.rx._connect(Axi_in)
+        self.rx  << Axi_in
+
+  
         self.__v_classType__         = v_classType_t.Slave_t
         self.data_isvalid            = v_sl()
         self.data_internal2          = v_copy(Axi_in.data)
@@ -56,7 +73,7 @@ class axisStream_slave(v_class):
     
 
     def isReceivingData(self):
-        return  self.data_internal_isvalid2 == 1
+        return  bool(self.data_internal_isvalid2)
 
 
     def IsEndOfStream(self):
@@ -111,11 +128,22 @@ class axisStream_master(v_class):
     def __init__(self, Axi_Out):
         super().__init__(Axi_Out.type + "_master")
         self.tx = port_Master(Axi_Out)
-        Axi_Out._connect(self.tx)
+        
+        self.tx.data.__Driver__ = None
+        self.tx.last.__Driver__ = None
+        self.tx.valid.__Driver__ = None
+        self.tx.ready.__Driver__ = None
+
+
+        Axi_Out  << self.tx
+
+        
+        #self.tx._connect(Axi_Out)
         self.__v_classType__         = v_classType_t.Master_t
         self.__vectorPull__ = True
         self.__vectorPush__ = True
-        
+    
+   
 
         
     def send_data(self, dataIn = port_out(dataType())):

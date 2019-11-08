@@ -507,7 +507,8 @@ def body_unfold_call_local_func(astParser,Node):
         return astParser.local_function[Node.func.id]()
     elif len(Node.args) == 1:
         return astParser.local_function[Node.func.id](astParser.Unfold_body(Node.args[0]))
-
+    elif len(Node.args) == 2:
+        return astParser.local_function[Node.func.id](astParser.Unfold_body(Node.args[0]),astParser.Unfold_body(Node.args[1]))
 
 def body_unfold_call(astParser,Node):
     if hasattr(Node.func, 'id'):
@@ -594,6 +595,9 @@ def body_LShift(astParser,Node):
             rhs.__Driver__ = 'process'
 
         lhs << rhs
+        if astParser.ContextName[-1] == 'process':
+            lhs.__Driver__ = 'process'
+            
         return v_re_assigne(lhs, rhs,astParser.ContextName[-1])
 
     var = astParser.get_variable(lhs.Value, Node)
