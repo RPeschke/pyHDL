@@ -135,10 +135,10 @@ class v_symbol(vhdl_base):
 ##################### Operators #############################################
     def __add__(self,rhs):
         
-        return self.value + rhs 
+        return value(self) + value(rhs) 
         
     def __lt__(self,rhs):
-        return self.value < rhs 
+        return value(self) < value(rhs) 
 ##################### End Operators #############################################
     def _sim_append_update_list(self,up):
         self._update_list.append(up)
@@ -204,7 +204,8 @@ class v_symbol(vhdl_base):
                 raise Exception("symbol has already a driver", str(self))
             if issubclass(type(rhs),vhdl_base0):
                 self.__Driver__ = rhs
-
+                self.nextValue = rhs.nextValue
+                self.value = rhs.value
 
                 #print("__lshift__",self.vhdl_name)
                 def update1():

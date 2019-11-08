@@ -1,5 +1,18 @@
 from enum import Enum 
 import copy
+import  inspect 
+
+def add_symbols_to_entiy():
+    funcrec = inspect.stack()
+    for x in funcrec:
+            #print (x.function)
+        if x.function == "architecture":
+            f_locals = x.frame.f_locals
+            for y in f_locals:
+                if y != "self" and issubclass(type(f_locals[y]), vhdl_base0):
+                    f_locals["self"]._add_symbol(y,f_locals[y])
+                    print(y)
+
 
 __VHDL__OPS_to2str= {
 "Gt": ">",
@@ -151,7 +164,11 @@ def optional_concatonat(first, delimer, Second):
     
     return first + Second
 
+def value(Input):
+    if issubclass(type(Input), vhdl_base):
+        return Input._sim_get_value()
 
+    return Input
 
 class  InOut_t(Enum):
     input_t = 1
@@ -244,12 +261,29 @@ def port_Master(symbol):
     ret.set_varSigConst(getDefaultVarSig())
     return ret
 
+def port_Stream_Master(symbol):
+    ret = port_Master(symbol)
+    funcrec = inspect.stack()[-1]
+        
+    f_locals = funcrec.frame.f_locals
+    f_locals["self"]._StreamOut = ret
+                    
+    return ret 
+
 def port_Slave(symbol):
     ret= copy.deepcopy(symbol)
     ret.setInout(InOut_t.Slave_t)
     ret.set_varSigConst(getDefaultVarSig())
     return ret
 
+def port_Stream_Slave(symbol):
+    ret = port_Slave(symbol)
+    funcrec = inspect.stack()[-1]
+        
+    f_locals = funcrec.frame.f_locals
+    f_locals["self"]._StreamIn = ret
+                    
+    return ret 
 def v_copy(symbol):
     ret= copy.deepcopy(symbol)
     ret.setInout(InOut_t.Internal_t)

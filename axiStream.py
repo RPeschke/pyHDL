@@ -25,7 +25,7 @@ class axisStream(v_class):
     
 
     def _connect(self,rhs):
-        if self.Inout != rhs.Inout and self.Inout != InOut_t.Internal_t and rhs.Inout != InOut_t.Internal_t:
+        if self.Inout != rhs.Inout and self.Inout != InOut_t.Internal_t and rhs.Inout != InOut_t.Internal_t and rhs.Inout != InOut_t.Slave_t and self.Inout != InOut_t.Master_t:
             raise Exception("Unable to connect different InOut types")
         
         if type(self).__name__ != type(rhs).__name__:

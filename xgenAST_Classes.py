@@ -239,6 +239,8 @@ class v_funDef(v_ast_base):
     def __str__(self):
         ret = "" 
         for x in self.BodyList:
+            if x == None:
+                continue 
             x_str =str(x) 
             if x_str:
                 x_str = x_str.replace("\n", "\n  ")
@@ -628,6 +630,53 @@ def body_add(astParser,Node):
     var = astParser.get_variable(lhs.Value, Node)
 
     return v_add(var, rhs)
+
+
+
+class v_stream_assigne(v_ast_base):
+    def __init__(self,lhs, rhs,StreamOut,lhsEntity,context=None):
+        self.lhsEntity = lhsEntity
+        self.lhs = lhs
+        self.rhs = rhs
+        self.context =context
+        self._StreamOut =None
+        if StreamOut != None:
+            self._StreamOut = StreamOut
+
+        
+
+ 
+
+    def __str__(self):
+        ret = ""
+        if issubclass(type(self.lhsEntity), v_ast_base):
+            ret+= str(self.lhsEntity) +";\n  "
+            
+        if issubclass(type(self.lhs),vhdl_base):
+            ret += self.lhs._vhdl__reasign(self.rhs)
+
+        else:
+            ret += str(self.lhs) + " := " +  str(self.rhs) 
+
+        return ret
+
+
+def body_bitOr(astParser,Node):
+    rhs =  astParser.Unfold_body(Node.right)
+    lhs =  astParser.Unfold_body(Node.left)
+    
+    rhs_streamout = rhs._StreamOut
+    rhs_StreamIn =  rhs._StreamIn
+    lhs_StreamOut =  lhs._StreamOut
+    if issubclass( type(lhs_StreamOut),vhdl_base) and issubclass( type(rhs_StreamIn),vhdl_base):
+        rhs_StreamIn = rhs_StreamIn._vhdl__reasign_type()
+        lhs_StreamOut = lhs_StreamOut._vhdl__getValue(rhs_StreamIn,astParser)
+        rhs_StreamIn  <<  lhs_StreamOut
+
+            
+        return v_stream_assigne(rhs_StreamIn, lhs_StreamOut,rhs_streamout,lhs,astParser.ContextName[-1])
+
+    raise Exception("Unexpected types")
 
 
 def body_BinOP(astParser,Node):

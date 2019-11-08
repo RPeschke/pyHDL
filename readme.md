@@ -256,6 +256,203 @@ end architecture;
 ```
 
 
+### Example 3
+
+This example shows how to incoperate the pipe operator. As it is common in many languages object can have default input output channels. This allows to concatanate entities with a single operation instead of having to connect each signal individually.   
+
+```Python 
+
+class axiFilter(v_clk_entity):
+    def __init__(self,clk=None):
+        super().__init__(__file__, clk)
+        self.Axi_in = port_Slave(axisStream(32,v_slv(32)))
+        self._StreamIn = self.Axi_in
+        self.Axi_out = port_Master(axisStream(32,v_slv(32)))
+        self._StreamOut = self.Axi_out
+        self.architecture()
+
+        
+    def architecture(self):
+        @process()
+        def _process1():
+            axiSalve = axisStream_slave(self.Axi_in)
+            axMaster = axisStream_master(self.Axi_out) 
+
+
+            i_buff = v_slv(32)
+            @rising_edge(self.clk)
+            def proc():
+                print("axiPrint",i_buff.value )
+                if axiSalve and axMaster:
+                    i_buff << axiSalve
+                    if i_buff < 10:
+                        axMaster << axiSalve
+                        print("axiPrint valid",i_buff.value )
+
+class axiPrint(v_clk_entity):
+    def __init__(self,clk=None):
+        super().__init__(__file__, clk)
+        self.Axi_in = port_Slave(axisStream(32,v_slv(32)))
+        self._StreamIn = self.Axi_in
+        self.architecture()
+
+        
+    def architecture(self):
+        @process()
+        def _process1():
+            axiSalve = axisStream_slave(self.Axi_in)
+
+            i_buff = v_slv(32)
+
+            @rising_edge(self.clk)
+            def proc():
+                print("axiPrint",i_buff.value )
+                if axiSalve :
+                    i_buff << axiSalve
+                    print("axiPrint valid",i_buff.value )
+
+
+
+class clk_generator(v_entity):
+    def __init__(self):
+        super().__init__(__file__)
+        self.clk = port_out(v_sl())
+        self.architecture()
+
+    def architecture(self):
+        
+        @process()
+        def p1():
+
+            @timed()
+            def proc():
+                self.clk << 1
+                print("======================")
+                yield wait_for(10)
+                self.clk << 0
+                yield wait_for(10)
+
+
+class rollingCounter(v_clk_entity):
+    def __init__(self,clk=None,MaxCount=v_slv(32,100)):
+        super().__init__(__file__, clk)
+        self.Axi_out = port_Master( axisStream(32,v_slv(32)))
+        self._StreamOut = self.Axi_out
+        self.MaxCount = port_in(v_slv(32,10))
+        self.MaxCount << MaxCount
+        self.architecture()
+    
+    def architecture(self):
+        
+        counter = v_slv(32)
+        @process()
+        def p2():
+            v_Axi_out = axisStream_master(self.Axi_out)
+            @rising_edge(self.clk)
+            def proc():
+                if v_Axi_out:
+                    print("counter", counter.value)
+                    v_Axi_out << counter
+                
+                    counter << counter + 1
+
+                if counter > self.MaxCount:
+                    counter << 0
+
+
+class tb_entity(v_entity):
+    def __init__(self):
+        super().__init__(__file__)
+        self.architecture()
+        
+
+
+    def architecture(self):
+        clkgen = v_create(clk_generator())
+
+        maxCount = v_slv(32,20)
+        axiSource = v_create(rollingCounter(clkgen.clk,maxCount))
+        axP       = v_create(axiPrint(clkgen.clk))
+        axFilter  = v_create(axiFilter(clkgen.clk))
+        
+        axiSource | axFilter | axP
+        
+        end_architecture()
+```
+
+This example can be simulated by using the following command:
+
+```Python
+ax = tb_entity()
+gsimulation.run_timed(ax, 1000,"example3.vcd")
+```
+
+![Example3](pictures/example3.png)
+
+
+The test bench can be converted to VHDL by using the following command:
+
+```Py
+
+print(ax._get_definition())
+```
+
+
+Which results in the following code:
+
+```VHDL
+entity tb_entity is 
+end entity;
+
+
+
+architecture rtl of tb_entity is
+
+signal clkgen_clk : std_logic := '0'; 
+signal maxCount : std_logic_vector(31 downto 0) := x"00000014"; 
+signal axiSource_Axi_out_m2s : axisStream_32_m2s := axisStream_32_m2s_null;
+signal axiSource_Axi_out_s2m : axisStream_32_s2m := axisStream_32_s2m_null;
+signal axP_Axi_in_m2s : axisStream_32_m2s := axisStream_32_m2s_null;
+signal axP_Axi_in_s2m : axisStream_32_s2m := axisStream_32_s2m_null;
+signal axFilter_Axi_out_m2s : axisStream_32_m2s := axisStream_32_m2s_null;
+signal axFilter_Axi_out_s2m : axisStream_32_s2m := axisStream_32_s2m_null;
+signal axFilter_Axi_in_m2s : axisStream_32_m2s := axisStream_32_m2s_null;
+signal axFilter_Axi_in_s2m : axisStream_32_s2m := axisStream_32_s2m_null;
+
+begin
+clkgen : entity work.clk_generator port map ( 
+      clk => clkgen_clk
+  );
+  axiSource : entity work.rollingCounter port map ( 
+      clk => clkgen_clk,
+      Axi_out_m2s => axiSource_Axi_out_m2s, 
+      Axi_out_s2m => axiSource_Axi_out_s2m,
+      MaxCount => maxCount
+  );
+  axP : entity work.axiPrint port map ( 
+      clk => clkgen_clk,
+      Axi_in_m2s => axP_Axi_in_m2s, 
+      Axi_in_s2m => axP_Axi_in_s2m
+  );
+  axFilter : entity work.axiFilter port map ( 
+      clk => clkgen_clk,
+      Axi_out_m2s => axFilter_Axi_out_m2s, 
+      Axi_out_s2m => axFilter_Axi_out_s2m,
+      Axi_in_m2s => axFilter_Axi_in_m2s, 
+      Axi_in_s2m => axFilter_Axi_in_s2m
+  );
+  ---------------------------------------------------------------------
+  --  axFilter_Axi_in << axiSource_Axi_out
+  axFilter_Axi_in_m2s <= axiSource_Axi_out_m2s;
+  axiSource_Axi_out_s2m <= axFilter_Axi_in_s2m;
+    ---------------------------------------------------------------------
+  --  axP_Axi_in << axFilter_Axi_out
+  axP_Axi_in_m2s <= axFilter_Axi_out_m2s;
+  axFilter_Axi_out_s2m <= axP_Axi_in_s2m;
+  
+end architecture;
+```
+
 
 ## Object Oriented Desigen for HDL
 

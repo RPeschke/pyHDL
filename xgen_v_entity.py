@@ -5,6 +5,9 @@ import  functools
 
 
 
+def end_architecture():
+    add_symbols_to_entiy()
+
 def process():
     def decorator_processd(func):
         @functools.wraps(func)
@@ -15,19 +18,11 @@ def process():
         setDefaultVarSig(varSig.variable_t)
         func()
         setDefaultVarSig(localVarSig)
-        funcrec = inspect.stack()
-
-        for x in funcrec:
-            #print (x.function)
-            if x.function == "architecture":
-                f_locals = x.frame.f_locals
-                for y in f_locals:
-                    if y != "self" and issubclass(type(f_locals[y]), vhdl_base0):
-                        f_locals["self"]._add_symbol(y,f_locals[y])
-                        print(y)
+        add_symbols_to_entiy()
 
         return wrapper_process
     return decorator_processd
+
 
 
 def timed():
@@ -86,9 +81,17 @@ def rising_edge(symbol):
         return wrapper_rising_edge
     return decorator_rising_edge
 
+gport_veto__ =[
+            "_StreamOut",
+            "_StreamIn"
+        ]
+
 def v_entity_getMember(entity):
         ret = list()
         for x in entity.__dict__.items():
+            if x[0] in gport_veto__:
+                continue
+
             t = getattr(entity, x[0])
             if issubclass(type(t),vhdl_base):
                 ret.append({
@@ -100,6 +103,8 @@ def v_entity_getMember(entity):
 def v_entity_getMember_expand(entity):
         ret = list()
         for x in entity.__dict__.items():
+            if x in gport_veto__:
+                continue
             t = getattr(entity, x[0])
             if issubclass(type(t),v_class):
                 ret.append({
@@ -232,14 +237,29 @@ class v_entity(vhdl_base0):
         self.vhdl_name = None
         self.type = "entity"
         self.__local_symbols__ = list()
+        self._StreamOut = None
+        self._StreamIn  = None
 
+
+    def __or__(self,rhs):
+        if self._StreamOut == None:
+            raise Exception("output stream not defined")
+        if rhs._StreamIn == None:
+            raise Exception("Input stream not defined")
+
+        rhs._StreamIn << self._StreamOut
+
+        return rhs
+        
     def set_simulation_param(self,module, name,writer):
         mem = v_entity_getMember(self)
         for x in mem:
+            
             x["symbol"].set_simulation_param(module +"."+ name, x["name"],writer)
             #print(x)
 
         for x in self.__local_symbols__:
+            
             x["symbol"].set_simulation_param(module +"."+ name, x["name"],writer)
             #print (x)
 

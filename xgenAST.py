@@ -91,6 +91,7 @@ class xgenAST:
             "BinOp"         : body_BinOP,
             "LShift"        : body_LShift,
             'RShift'        : body_RShift,
+            "BitOr"         : body_bitOr,
             "Str"           : body_unfold_str,
             'NameConstant'  : body_Named_constant,
             "If"            : body_if,
