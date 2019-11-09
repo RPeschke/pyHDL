@@ -453,8 +453,100 @@ clkgen : entity work.clk_generator port map (
 end architecture;
 ```
 
+## Pseudo Classes
+
+### Axi Stream Interface
+
+This section shows how an interface can be implemented as a pseudo class. For this the Axi Stream Interface is used. This example is used because it is very simple and widly used. The axi stream interface has four signals that are exchanged between master and slave. 
+
+| Name | Direction |
+|:--:|:----:|
+| Valid | Master To Slave |
+| Data | Master To Slave |
+| Last | Master To Slave |
+|ready | Slave to Master|
+
+![Axi Stream](pictures/axi.jpg)
+![Axi Stream Truth](pictures/axiStream_truth_table.png)
+
+Since it has 4 signals and each one can either be set or not set this results in 16 combinations. Only four of these 16 combinations are actual a correct state. All the other ones are undefined behaviour. Programming languages usally solve this problem by not allowing users direct access to the underling data but by providing higher level APIs which provide a safe way of setting states. This APIs safeguard the user in two ways from entering undefined behavior (UB). First if functions are used in the intended fashion the program can never reach an UB state. This should be illustrated with the following example (for details see example 3):  
+
+```Python
+if v_Axi_out:
+    v_Axi_out << counter
+```
+
+In this Example ```v_Axi_out``` is a class which handles the Axi Stream Interface. ```Counter``` is a ```std_logic_vector``` aquivalent variable. The program can only ever reach the assinment when the class ```v_Axi_out``` is True. The user has no (and needs no) further information about the actual implementation of ```v_Axi_out```. The Actual implementation is the responsibility of the library provider. As long as the user always checks if the class is usable the user will never be able to reach UB. 
+
+The second way how APIs protect the user from entering UB is by providing a possibility to check for UB and then report an error to the user. This does not change that the interface is not working correclty but now the system is in an error state (not UB). This information can be used to protect the system from doing any more harm. 
+
+In Addition using a class that encapsulates the interface into one single object prevents the user from ever geting signals mixed up and also vastly improves the readablity of the source code. For Example ```pyHDL``` allows the user to write the information if a given signal is an input or an output directly into the pseudo class:
+
+```Python
+class axisStream(v_class):
+    def __init__(self,AxiName,Axitype):
+        super().__init__("axisStream_"+str(AxiName))
+        AddDataType(  Axitype  )
+        self.valid  = port_out( v_sl() )
+        self.last   = port_out( v_sl() )
+        self.data   = port_out( Axitype  )
+        self.ready  = port_in( v_sl() )
+```
+
+This pseudo class can then be consumed by an entity:
+
+```Python
+class axiPrint(v_clk_entity):
+    def __init__(self,clk=None):
+        super().__init__(__file__, clk)
+        self.Axi_in = port_Slave(axisStream(32,v_slv(32)))
+```
+
+This makes it very easy to reason about this code. 
+
+In order to use this model in VHDL the pseudo class has to be broken up into two parts. One ```Master to Slave``` (m2s) part and one ```Slave to Master``` (s2m) part. when converting the pseudo class to VHDL the following code will be generated:
+
+
+```VHDL
+type axisStream_32_m2s is record 
+  valid : std_logic; 
+  data : std_logic_vector(31 downto 0); 
+  last : std_logic; 
+end record;
+
+constant axisStream_32_m2s_null : axisStream_32_m2s:= (
+  valid => '0',
+  data => (others => '0'),
+  last => '0'
+);
+
+type axisStream_32_s2m is record 
+  ready : std_logic; 
+end record;
+
+constant axisStream_32_s2m_null : axisStream_32_s2m:= (
+  ready => '0'
+);
+```
+
+The consuming entity gets translated into the following VHDL:
+
+```VHDL
+entity axiPrint is 
+port(
+  clk :  in  std_logic := '0';
+  Axi_in_m2s : in  axisStream_32_m2s := axisStream_32_m2s_null;
+  Axi_in_s2m : out axisStream_32_s2m := axisStream_32_s2m_null
+);
+end entity;
+```
+
+
+
 
 ## Object Oriented Desigen for HDL
+
+![base](pictures/Programming_base.png)
 
 Virtually all modern programming languages allow the user to write customised objects to build powerful abstraction. The support for this is very limited in typical HDLs. This document is ment to show the limitations of current HDLs and especially how adding an additional layer of abstraction in form of PyHDL can overcome this limitation.
 
