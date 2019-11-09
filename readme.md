@@ -546,9 +546,61 @@ end entity;
 
 ## Object Oriented Desigen for HDL
 
-![base](pictures/Programming_base.png)
+
 
 Virtually all modern programming languages allow the user to write customised objects to build powerful abstraction. The support for this is very limited in typical HDLs. This document is ment to show the limitations of current HDLs and especially how adding an additional layer of abstraction in form of PyHDL can overcome this limitation.
+
+![base](pictures/Programming_base.png)
+
+In this document it is assumed that every program can be descriped with three basic building blocks: Responsibility Handler, Data Object and Processor. In programming all names have already been use which makes it exceedingly hard to use terminology that is not alredy used in a different context. For this document only the definition given here should be used.
+
+### **Processor**
+
+The Task of of **processor** is to take an Input and transform it. For example the following function ```f(x) = x^2``` transorms every input by multipling it by itself. Another example of a **processor** would be a factory function which, depening on the input creates differen objects. 
+
+```Py
+def factory(x):
+    if x == "type_1":
+        return type_1()
+
+    elif x == "type_2":
+        return type_2()
+
+    # ...    
+
+```
+
+Another example of a **processor** would be a VHDL entity. 
+
+### _Data Object_
+
+The purpose of _Data Objects_ / _Data Structs_ is to store data in an reconizable way. An example would be an object that stores the current time. 
+
+```Py
+class time_object:
+    def __init(self, time):
+        self.time = time
+```
+
+The first thing this _data object_ communicates is its purpose. It is designed to store time. (Sure in theory a careless programmer could use it to store the outside temperature in it.) In addition to communicating its purpose it also carries a value. Depening on the development of a given code base the fact that any specefic _data object_ is a time object can be communicated with different mechanims. For example in C++ a common approach would be to just use a typedef which allows the user the convieniece of not having to rewrite all the functions for each new _data object_ while still communicating the purpose of a given object. But if requiered a _data object_ can be a complicated struct with many different members. The important thing is that they all these members would belong logically together. For example the current time can either be stored as unix time or as days, months, years, hours, minutes. In a given context there might be a good reason to store time in days etc. Independend of its implementation a _data object_ communicates its value and its purpose to the user. 
+
+_Data objects_ are usally designed to be very simple and don't contain (much) functionallity. All the funtionallity it provides is to access its value(s). 
+
+With the this two building blocks we can already create our first program:
+
+```Py
+tomorow = nextDay( today )
+```
+with:
+tomorow, today... beeing _data objects_ of the type time
+nextDay...        beeing a **processor** which takes in time object and returns a new data object for the next day
+
+### Responsibility Handler
+
+The last building block is the Responsibility Handler (RH). Which is used to for example handles the Responsibility of resource managment. The classical example would be a file handler or a smart pointer. Its purpose protect the system from wrong use.
+
+
+
 
 ## Limitations of current HDL
 
