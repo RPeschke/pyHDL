@@ -2,6 +2,11 @@ from enum import Enum
 import copy
 import  inspect 
 
+
+def raise_if(condition,errorMessage):
+    if condition:
+        raise Exception(errorMessage)
+
 def add_symbols_to_entiy():
     funcrec = inspect.stack()
     for x in funcrec:
@@ -203,9 +208,9 @@ def get_varSig(varSigConst):
     raise Exception("unknown type")
 
 def get_assiment_op(varSigConst):
-    if varSigConst== varSig.const_t:
-        raise Exception("cannot asign to constant")
-    elif varSigConst== varSig.signal_t:
+    raise_if(varSigConst== varSig.const_t, "cannot asign to constant")
+
+    if varSigConst== varSig.signal_t:
         asOp = " <= "
     else: 
         asOp = " := "
@@ -263,9 +268,12 @@ def port_Master(symbol):
 
 def port_Stream_Master(symbol):
     ret = port_Master(symbol)
-    funcrec = inspect.stack()[-1]
+    funcrec = inspect.stack()[1]
         
     f_locals = funcrec.frame.f_locals
+
+    raise_if(f_locals["self"]._StreamOut != None, "the _StreamOut is already set")
+ 
     f_locals["self"]._StreamOut = ret
                     
     return ret 
@@ -278,9 +286,11 @@ def port_Slave(symbol):
 
 def port_Stream_Slave(symbol):
     ret = port_Slave(symbol)
-    funcrec = inspect.stack()[-1]
+    funcrec = inspect.stack()[1]
         
     f_locals = funcrec.frame.f_locals
+    raise_if(f_locals["self"]._StreamIn != None, "the _StreamIn is already set")
+    
     f_locals["self"]._StreamIn = ret
                     
     return ret 
