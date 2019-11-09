@@ -36,12 +36,12 @@ class axiFilter(v_clk_entity):
             i_buff = v_slv(32)
             @rising_edge(self.clk)
             def proc():
-                print("axiPrint",i_buff.value )
+                print("axiPrint",value(  i_buff) )
                 if axiSalve and axMaster:
                     i_buff << axiSalve
                     if i_buff < 10:
                         axMaster << axiSalve
-                        print("axiPrint valid",i_buff.value )
+                        print("axiPrint valid",value( i_buff) )
 
 class axiPrint(v_clk_entity):
     def __init__(self,clk=None):
@@ -59,10 +59,10 @@ class axiPrint(v_clk_entity):
 
             @rising_edge(self.clk)
             def proc():
-                print("axiPrint",i_buff.value )
+                print("axiPrint",value(i_buff) )
                 if axiSalve :
                     i_buff << axiSalve
-                    print("axiPrint valid",i_buff.value )
+                    print("axiPrint valid",value(i_buff) )
 
 
 
@@ -103,7 +103,7 @@ class rollingCounter(v_clk_entity):
             @rising_edge(self.clk)
             def proc():
                 if v_Axi_out:
-                    print("counter", counter.value)
+                    print("counter", value( counter) )
                     v_Axi_out << counter
                 
                     counter << counter + 1
