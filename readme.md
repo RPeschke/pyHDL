@@ -460,23 +460,18 @@ class tb_entity(v_entity):
     def __init__(self):
         super().__init__(__file__)
         self.architecture()
-        
-
 
     def architecture(self):
         clkgen = v_create(clk_generator())
-
         maxCount = v_slv(32,20)
-
-        
         pipe1  = rollingCounter(clkgen.clk,maxCount)  \
                     | axiFilter(clkgen.clk) \
                     | axiPrint(clkgen.clk)
-        
+
         end_architecture()
 ```
 
-![Example4](pictures/example4.png) 
+![Example4](pictures/example4.png)
 
 ```VHDL
 entity tb_entity is 
@@ -529,7 +524,7 @@ clkgen : entity work.clk_generator port map (
 end architecture;
 ```
 
-## Pseudo Classes
+
 
 ### Axi Stream Interface
 
@@ -673,7 +668,7 @@ nextDay...        beeing a **processor** which takes in time object and returns 
 
 ### Responsibility Handler
 
-The last building block is the Responsibility Handler (RH). Which is used to for example handles the Responsibility of resource managment. The classical example would be a file handler or a smart pointer. Its purpose protect the system from wrong use.
+The last building block is the Responsibility Handler (RH). Which is used to for example handles the Responsibility of resource managment. Its purpose is for example to allow access to system recsources while at the same time protect the system from wrong use. The classical example would be a file handler or a smart pointer. 
 
 
 
@@ -682,4 +677,149 @@ The last building block is the Responsibility Handler (RH). Which is used to for
 
 ### The strict IN/OUT model
 
-Typical HDLs are build up of submodules. In the case of VHDL this submodules are called ```entities```. These ```entites``` are connected to each other by ports. A port can be a single bit (```std_logic```), an array of bits (```std_logic_vector```), a data structure (```record```) or an array of data structure. But no matter how complicated the individual port is, it has always to be labeled as either ```IN``` or ```OUT```. This strict seperation between ```IN``` and ```OUT``` 
+Typical HDLs are build up of submodules. In the case of VHDL this submodules are called ```entities```. These ```entites``` are connected to each other by ports. A port can be a single bit (```std_logic```), an array of bits (```std_logic_vector```), a data structure (```record```) or an array of data structure. But no matter how complicated the individual port is, it has always to be labeled as either ```IN``` or ```OUT```. This strict seperation between ```IN``` and ```OUT``` prohibit the creation of more complex objects. How do other languages solve the problem? Lets write the axi stream interface in C++. This example contains two objects which exchange data by sharing a pointer to a common data storage. 
+
+```C++
+class axistream;
+class source{
+public:
+    source(axistream * ax);
+    void operator()();
+private:
+    axistream * ax;
+};
+
+class destination{
+public:
+    destination(const axistream * ax);
+    void operator()();
+private:
+    const axistream * ax;
+};
+
+class axistream{
+public:
+    int data;
+    bool valid;
+    bool last;
+    mutable bool ready;
+};
+
+auto ax = axistream();
+auto my_source = source(ax);
+auto my_destination = destination(ax);
+
+
+while(running()){
+    my_source();
+    my_destination();
+}
+```
+
+This example shows that in C++ the direction of the data flow is directly expresst in the _axistream_ class. There is no need to tear apart the individual members of _axistream_. Everything is expresst in the type system of C++. The fact that **source** takes an _axistream_ pointer communicats that **source** wants to modify it. **destination**  takes the _axistream_ as a const pointer which means it wants to consume the data. The mutable keyword communicates that this member will (most) likely be modified by the destination. In this example ready could be modified by two places which is not posibile in HDL. This could be fixed by using some template meta programming technics, which are not part of the scope of this document. The important part is that the _object_ itself carries information about the data flow with it. Translating this to VHDL and we would end up with a construct like this (pseudo syntax):
+
+```VHDL
+type axi_Stream  is record 
+  data  :  out Integer; 
+  valid :  out std_logic; 
+  last  :  out std_logic; 
+  ready :  in  std_logic; 
+end record;
+
+
+entity source is 
+port(
+  clk     :  in     std_logic;
+  Axi_out : master  axi_Stream;
+ 
+);
+
+entity destination is 
+port(
+  clk     :  in    std_logic;
+  Axi_in  : slave  axi_Stream;
+ 
+);
+end entity;
+```
+
+On every abstraction level this code communicates exactly what is needed to know (and not more). On the record level it shows that it will be used as an interface between two objects. And which of the signals flow in which direction. On the entity level it communicates only if it is a source or a destination. The internal layout of _axi_stream_ does not matter at this point. With the introduction of these new keywords and the possibility to give records directional qualifiers it is possibile to easily create compound objects. For example a bidirectional axi stream can be written as:
+
+```VHDL
+type axi_Stream  is record 
+  data  :  out Integer; 
+  valid :  out std_logic; 
+  last  :  out std_logic; 
+  ready :  in  std_logic; 
+end record;
+
+type axi_Stream_directional  is record 
+  TX : master axi_Stream;
+  RX : slave axi_Stream;
+end record;
+```
+
+### Encapsulation
+
+In HDL it is a common aproach to modify signals directly without the procetion of encapsulation. Dependig on the context this approach has been proven to be problematic, especially when there is an invariance to protect. In these cases it has shown to be the safer approach to use (member) function to make the modification. A good example for an invariance that needs to be preserved is the number of elements in a C++ vector. In order to add a new element to a vector there are many steps that have to be done correclty to not destroy the invariance. 
+
+1. checking the size of the vector
+1. allocate memory
+1. copy elements to new location.
+1. Change pointer to point to the new location
+1. add the element 
+1. update the end pointer
+1. ...
+
+All these complicated procedures are completly hidden from the user by the simple ```push_back``` function call. As long as the user does not access the members directly the user will never reach UB. 
+
+What makes this approach so diffecult to achive in HDL is that object are always split up into inputs and outputs. There is not one object that represents an idea there are at least two. In addition VHDL does not allow the creation of member functions. This limitation can be overcome by using free function. 
+
+### Information Hiding / (Compile time) Polymorphism
+
+As described it is a common aporach in HDLs to modify signals directly. In addtion to the already described problem it violates the principle of information hiding and also prohibits any form of polymorphism. Lets take as an example the axi stream interface and the native fifo interface.
+
+![native fifo](pictures/native_fifo.png)
+
+These interfaces do exactly the same thing yet they have three different ways of using them. The only thing a user ever would be intressted is:
+
+On master side:
+- can i write data
+- write data
+
+On the slave side
+- can i read data
+- read data
+
+This is true for axi stream, native writer and native reader interface. This problem can be solved by providing common interface abstractions. One example from C++ would be the common base class:
+
+```C++
+class stream_writer{
+    public:
+    virtual bool ready() const = 0;
+    virtual void write(data_t data) = 0;
+};
+
+class stream_reader{
+    public:
+    virtual bool ready() const = 0;
+    virtual data_t read() = 0;
+};
+
+class axistream_master : public stream_writer{
+public:
+    bool ready() const override;
+    void write(data_t data) override;
+private:
+    axi_stream_t ax;
+};
+```
+
+(Note: In C++ there are many ways to do anything)
+
+With this approach the details of each interface are hiden from the user. 
+
+## Pseudo Classes
+
+### VHDL Pseudo Classes
+
