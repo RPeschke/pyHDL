@@ -437,6 +437,9 @@ class v_variable_cration(v_ast_base):
         if self.lhs.type == "entity":
             return self.lhs._vhdl__create(self.rhs)
 
+        if self.lhs.type == "v_entity_list":
+            return self.lhs._vhdl__create(self.rhs)
+
         return ""
 
 
@@ -664,19 +667,11 @@ class v_stream_assigne(v_ast_base):
 def body_bitOr(astParser,Node):
     rhs =  astParser.Unfold_body(Node.right)
     lhs =  astParser.Unfold_body(Node.left)
+    ret = lhs | rhs
     
-    rhs_streamout = rhs._StreamOut
-    rhs_StreamIn =  rhs._StreamIn
-    lhs_StreamOut =  lhs._StreamOut
-    if issubclass( type(lhs_StreamOut),vhdl_base) and issubclass( type(rhs_StreamIn),vhdl_base):
-        rhs_StreamIn = rhs_StreamIn._vhdl__reasign_type()
-        lhs_StreamOut = lhs_StreamOut._vhdl__getValue(rhs_StreamIn,astParser)
-        rhs_StreamIn  <<  lhs_StreamOut
-
+    ret.astParser = astParser
             
-        return v_stream_assigne(rhs_StreamIn, lhs_StreamOut,rhs_streamout,lhs,astParser.ContextName[-1])
-
-    raise Exception("Unexpected types")
+    return ret
 
 
 def body_BinOP(astParser,Node):

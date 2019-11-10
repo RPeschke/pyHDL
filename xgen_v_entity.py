@@ -226,6 +226,121 @@ class v_entiy2text:
         return ret 
     def getMember(self):
         return v_entity_getMember(self.entity)
+
+class v_entity_list(vhdl_base0):
+    def __init__(self):
+        self.nexted_entities = list()
+        self._StreamOut = None
+        self._StreamIn  = None
+        self.vhdl_name = ""
+        self.type = "v_entity_list"
+        self.astParser = None
+    
+    def __or__(self,rhs):
+
+        
+
+        if self._StreamOut == None:
+            raise Exception("output stream not defined")
+        if rhs._StreamIn == None:
+            raise Exception("Input stream not defined")
+        
+        rhs._StreamIn << self._StreamOut
+        
+        self.append(rhs)
+        return self
+    
+    def append(self, entity):
+        if entity._isInstance == False:
+            entity()
+            self.nexted_entities.append({
+                "symbol" : entity,
+                "temp"   : True
+            })
+        else:
+            self.nexted_entities.append({
+                "symbol" : entity,
+                "temp"   : False
+            })
+
+        self._StreamOut = entity._StreamOut
+        self._StreamIn = entity._StreamIn
+
+    def set_vhdl_name(self, Name):
+        self.vhdl_name  = Name
+
+    def _vhdl__DefineSymbol(self,VarSymb=None):
+        ret = ""
+        if not VarSymb:
+            VarSymb = get_varSig(self.varSigConst)
+        i = 0
+        for x in self.nexted_entities:
+            i+=1
+            if x["temp"]:
+                tempName = self.vhdl_name +"_"+ str(i) + "_" +type(x["symbol"]).__name__
+                x["symbol"].set_vhdl_name(tempName)
+                ret += x["symbol"]._vhdl__DefineSymbol(VarSymb)
+
+
+                    
+
+
+        return ret
+    
+    def set_simulation_param(self,module, name,writer):
+
+        i = 0
+        for x in self.nexted_entities:
+            i+=1
+            if x["temp"]:
+                tempName =   name+"_"+str(i) + "_" +type(x["symbol"]).__name__
+                x["symbol"].set_simulation_param(module, tempName,writer)
+            #print(x)
+    
+    def _vhdl__create(self, name):
+        ret = ""
+        i = 0
+        start = ""
+        for x in self.nexted_entities:
+            i+=1
+            if x["temp"]:
+                tempName = self.vhdl_name +"_"+  str(i) + "_" +type(x["symbol"]).__name__
+                ret += start + x["symbol"]._vhdl__create(tempName)
+                start = ";\n  "
+        
+        for i in range(len(self.nexted_entities) -1):
+            source = self.nexted_entities[i]
+            destination = self.nexted_entities[i+1]
+            rhs_StreamIn = destination["symbol"]._StreamIn
+            lhs_StreamOut = source["symbol"]._StreamOut
+            if issubclass( type(lhs_StreamOut),vhdl_base) and issubclass( type(rhs_StreamIn),vhdl_base):
+                rhs_StreamIn = rhs_StreamIn._vhdl__reasign_type()
+                lhs_StreamOut = lhs_StreamOut._vhdl__getValue(rhs_StreamIn,self.astParser)
+                
+                ret +=start+rhs_StreamIn._vhdl__reasign(lhs_StreamOut)
+                start = ";\n  "
+
+        return ret
+
+    def  __str__(self):
+        ret = ""
+        start = ""
+        for i in range(len(self.nexted_entities) -1):
+            source = self.nexted_entities[i]
+            destination = self.nexted_entities[i+1]
+            rhs_StreamIn = destination["symbol"]._StreamIn
+            lhs_StreamOut = source["symbol"]._StreamOut
+            if issubclass( type(lhs_StreamOut),vhdl_base) and issubclass( type(rhs_StreamIn),vhdl_base):
+                rhs_StreamIn = rhs_StreamIn._vhdl__reasign_type()
+                lhs_StreamOut = lhs_StreamOut._vhdl__getValue(rhs_StreamIn,self.astParser)
+                
+                ret +=start+rhs_StreamIn._vhdl__reasign(lhs_StreamOut)
+                start = ";\n  "
+
+        return ret
+
+                
+
 class v_entity(vhdl_base0):
     def __init__(self,srcFileName=None):
         setDefaultVarSig(varSig.signal_t)
@@ -239,17 +354,30 @@ class v_entity(vhdl_base0):
         self.__local_symbols__ = list()
         self._StreamOut = None
         self._StreamIn  = None
+        self._isInstance = False
+        
 
 
     def __or__(self,rhs):
+
+        
+
         if self._StreamOut == None:
             raise Exception("output stream not defined")
         if rhs._StreamIn == None:
             raise Exception("Input stream not defined")
+        
+        rhs_StreamIn = rhs._StreamIn
+        self_StreamOut = self._StreamOut
+        
+        ret = v_entity_list()
 
-        rhs._StreamIn << self._StreamOut
 
-        return rhs
+        ret.append(self)
+        ret.append(rhs)
+
+        rhs_StreamIn << self_StreamOut
+        return ret
         
     def set_simulation_param(self,module, name,writer):
         mem = v_entity_getMember(self)
@@ -284,14 +412,15 @@ class v_entity(vhdl_base0):
         mem = v_entity_getMember(self)
         for x in mem:
             if not issubclass(type(self.__dict__[x["name"]]), vhdl_base):
-                del self.__dict__[x["name"]]
+                #del self.__dict__[x["name"]]
                 continue
 
             if x["symbol"].Inout == InOut_t.Internal_t:
-                del self.__dict__[x["name"]]
+                #del self.__dict__[x["name"]]
                 continue
             self.__dict__[x["name"]].Inout = InoutFlip( self.__dict__[x["name"]].Inout )
-            
+        
+        self._isInstance = True
         return self
 
     def _get_definition(self):

@@ -8,6 +8,8 @@ def to_v_object(ObjIn):
         return ObjIn
     if issubclass(type(ObjIn),vhdl_base0):
         return ObjIn
+    elif type(ObjIn).__name__ == "v_stream_assigne":
+        return ObjIn
     elif type(ObjIn).__name__ == "EnumMeta":
         return v_enum(ObjIn)
     elif type(ObjIn).__name__ == 'bool':
