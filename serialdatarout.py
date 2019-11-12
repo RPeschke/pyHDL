@@ -21,7 +21,7 @@ class SerialDataConfig(v_class):
 
         self.row_Select            = port_out( v_slv(3) )  
         self.column_select         = port_out( v_slv(6) )  
-        self.ASIC_NUM              = port_out( copy.deepcopy(asicN) )  
+        self.ASIC_NUM              = port_out( asicN )  
         self.force_test_pattern    = port_out( v_sl() )  
         self.sample_start          = port_out( v_slv(5) )  
         self.sample_stop           = port_out( v_slv(5) )
