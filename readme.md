@@ -2,16 +2,16 @@
 
 ## Introduction
 
-PyHDL is a library which allowes one to write Python code and convert it to VHDL. The Main Goal of this library is to allow the user to write fully Object oriented code.
+PyHDL is a library which allowes one to write Python code and convert it to VHDL. The Main Goal of this library is to allow the user to write fully object oriented code.
 
 ## Getting Started
 
 ### Example1
 
 This Example is shows a single entity with two pocess blocks.
-- The First process block (```p1```) is a timed block, which means it gets sequentially executed until it reaches the yield statment and then waits for the appropriate time and then continues the execution. In the context of this example ```p1``` works as a clock generator.
-- The Second process block (```p2```) is a triggered process block which gets executed evertime the argument of ```rising_edge``` changes. This Process Block updates a signal (```counter```) amd a variable (```v_counter```). Similarly to VHDL the variable gets changed imidatly but is not avalible for any other process. The signal in contrast gets only changed after the process block but can be used in other process blocks. 
 
+- The First process block (```p1```) is a timed block, which means it gets sequentially executed until it reaches the yield statment and then waits for the appropriate time and then continues the execution. In the context of this example ```p1``` works as a clock generator.
+- The Second process block (```p2```) is a triggered process block which gets executed evertime the argument of ```rising_edge``` changes. This Process Block updates a signal (```counter```) amd a variable (```v_counter```). Similarly to VHDL the variable gets changed imidatly but is not avalible for any other process. The signal in contrast gets only changed after the process block but can be used in other process blocks.
 
 ```Python
 class tb_entity(v_entity):
@@ -815,11 +815,52 @@ private:
 };
 ```
 
-(Note: In C++ there are many ways to do anything)
+(Note: In C++, there are many ways of doing anything)
 
 With this approach the details of each interface are hiden from the user. 
 
-## Pseudo Classes
+### Classes / Combination Of Data and Functions
 
-### VHDL Pseudo Classes
+This section will concentrate on enties and signals. In VHDL entities and signals are instantiated at very different parts of the source file and do not share any visible connection. Therefore it is up to the user to come up with good names that exaclty describe the relationship of each entity and each signal. The next example shows how in C++ this problem solved:
 
+```C++
+class axistream{
+public:
+    int data;
+    bool valid;
+    bool last;
+    mutable bool ready;
+};
+
+class source{
+public:
+    source();
+    void operator()();
+    const axistream* get_data() const;
+private:
+    axistream  ax;
+};
+
+class destination{
+public:
+    destination(const axistream * ax);
+    void operator()();
+private:
+    const axistream * ax;
+};
+
+auto my_source = source();
+auto my_destination = destination(my_source.get_data());
+
+while(running()){
+    my_source();
+    my_destination();
+}
+```
+
+In this example **source** owns the _data object_, which makes it much easier to reason about the data flow. Now the line ```auto my_destination = destination(my_source.get_data());``` explains exaclty where the data comes from. It does not depend on a smart naming scheme to communicate this information. Also it can not be done wrong ```my_source.get_data()``` returns a constant pointer. It can only be used in a sink. It cannot accidentally be connected to another source. It will never accidentally return the wrong _data object_. It is correct by design. 
+
+## VHDL Pseudo Classes
+
+
+## PyHDL Classes
