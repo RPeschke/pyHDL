@@ -76,7 +76,7 @@ def rising_edge(symbol):
                 symbol._sim_run_pull()
                 func()
                 symbol._sim_run_push()
-        symbol._update_list.append(wrapper_rising_edge)
+        symbol._update_list_process.append(wrapper_rising_edge)
         addPullsPushes(symbol)
         return wrapper_rising_edge
     return decorator_rising_edge

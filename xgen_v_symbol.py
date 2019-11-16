@@ -20,6 +20,8 @@ class v_symbol(vhdl_base):
         self.varSigConst=varSigConst
         self.__Driver__ = None 
         self._update_list = list()
+        self._update_list_process = list()
+        
         self._Pull_update_list = list()
         self._Push_update_list = list()
         self.__vcd_varobj__ = None
@@ -129,6 +131,9 @@ class v_symbol(vhdl_base):
         
         for x in self._update_list:
             gsimulation.append_updateList(x)
+
+        for x in self._update_list_process:
+            gsimulation.append_updateList_process(x)
         #print("update",self.value)
         self.__UpdateFlag__ = False
 

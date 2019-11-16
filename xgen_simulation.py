@@ -18,6 +18,8 @@ class v_simulation():
     def __init__(self):
         self.timmed_process=list()
         self.updateList=list()
+        self.updateList_process=list()
+        
         self.writer= None
         self.CurrentTime = 0
 
@@ -27,6 +29,9 @@ class v_simulation():
         
     def append_updateList(self,obj):
         self.updateList.append(obj)
+
+    def append_updateList_process(self,obj):
+        self.updateList_process.append(obj)
 
     def register_var(self, module, name, vartype,size):
         vcdvar  = self.writer.register_var(module, name, vartype, size=size)
@@ -63,11 +68,18 @@ class v_simulation():
                     
                 self.CurrentTime +=  minNext
                 while (len(self.updateList)):
-                    updateList =  self.updateList
-                    self.updateList=list()
-                    for x in updateList:
-                        x()
-        
+                    while (len(self.updateList)):
+                        updateList =  self.updateList
+                        self.updateList=list()
+                        for x in updateList:
+                            x()
+                    
+                    while (len(self.updateList_process)):
+                        updateList_process =  self.updateList_process
+                        self.updateList_process=list()
+                        for x in updateList_process:
+                            x()
+
         self.writer= None
         self.CurrentTime =0
 
