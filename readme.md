@@ -733,6 +733,7 @@ port(
   Axi_out : master  axi_Stream;
  
 );
+end entity;
 
 entity destination is 
 port(
