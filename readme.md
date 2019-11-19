@@ -2,16 +2,20 @@
 
 ## Introduction
 
-PyHDL is a library which allowes one to write Python code and convert it to VHDL. The Main Goal of this library is to allow the user to write fully object oriented code.
+```bash
+git clone https://github.com/RPeschke/pyHDL.git CodeGen
+```
+
+PyHDL is a library that allows one to write Python code and convert it to VHDL. The Main Goal of this library is to allow the user to write fully object-oriented code.
 
 ## Getting Started
 
 ### Example1
 
-This Example is shows a single entity with two pocess blocks.
+This Example shows a single entity with two process blocks.
 
-- The First process block (```p1```) is a timed block, which means it gets sequentially executed until it reaches the yield statment and then waits for the appropriate time and then continues the execution. In the context of this example ```p1``` works as a clock generator.
-- The Second process block (```p2```) is a triggered process block which gets executed evertime the argument of ```rising_edge``` changes. This Process Block updates a signal (```counter```) amd a variable (```v_counter```). Similarly to VHDL the variable gets changed imidatly but is not avalible for any other process. The signal in contrast gets only changed after the process block but can be used in other process blocks.
+- The First process block (```p1```) is a timed block, which means it gets sequentially executed until it reaches the yield statement and then waits for the appropriate time and then continues the execution. In the context of this example, ```p1``` works as a clock generator.
+- The Second process block (```p2```) is a triggered process block that is executed every time the argument of ```rising_edge``` changes. This Process Block updates a signal (```counter```) and a variable (```v_counter```). Similarly, to VHDL, the variable is changed immediately but is not available for any other process. The signal, in contrast, gets only changed after the process block but can be used in other process blocks.
 
 ```Python
 class tb_entity(v_entity):
@@ -56,11 +60,11 @@ ax = tb_entity()
 gsimulation.run_timed(ax, 1000,"example1.vcd")
 ```
 
-First one needs to create an instants of the entity and then it has to be given as an argument to the simulator alongside the runtime and the output file name. The ouput file can then be viewed with programs like ```GTKWave```.
+First one needs to create an instance of the entity and then it has to be given as an argument to the simulator alongside the runtime and the output file name. The output file can then be viewed with programs like ```GTKWave```.
 
 ![GTKWave](pictures/example1.png)
 
-In Addition the program can be converted to ```VHDL``` using the following command:
+In addition, the program can be converted to ```VHDL``` using the following command:
 
 ```Python
 print(ax._get_definition())
@@ -106,15 +110,15 @@ begin
 end architecture;
 ```
 
-As one can see the Converted can figure out by itself if a given symbol is a signal or a variable. Also the print statements are currently not supported. Usually if the converter encounters an unknown token it would raise an Exception. For Print there has been written a special module which tells the converter to silently ignore it. 
+As one can see, the Converted can figure out by itself if a given symbol is a signal or a variable. In addition, the print statements are currently not supported. Usually, if the converter encounters an unknown token it would raise an Exception. For ```Print``` there has been written a special module which tells the converter to silently ignore it. 
 
 
 ### Example2
 
-This Example shows how multiple entities can interact with each other. 
-1. Clock Generation has been moved to its own entity. 
-1. A new entity was introduced that allows to print out data from an axi stream interface. This entity shows the value of the buffer before and after the it has been changed. 
-1. the communication between the individual entities is done with classes. With this approach the user does not need to know which signals flow between the different entities. The user can just utilize a library and focus on the actual logic that needs to be implemented. 
+This Example shows how multiple entities can interact with each other.
+1. Clock Generation has been moved to its own entity.
+1. A new entity was introduced that allows us to print out data from an axi stream interface. This entity shows the value of the buffer before and after it has been changed. 
+1. the communication between the individual entities is done with classes. With this approach, the user does not need to know which signals flow between the different entities. The user can just utilize a library and focus on the actual logic that needs to be implemented. 
 
 ```Python
 class axiPrint(v_clk_entity):
@@ -197,13 +201,14 @@ gsimulation.run_timed(ax, 1000,"example2.vcd")
 
 ![example2](pictures/example2.png)
 
-Each individual entity can be converted to VHDL by using the following command:
+Each entity can be converted to VHDL by using the following command:
 
 
 ```Py
 ax = tb_entity()
 print(ax._get_definition())
 ```
+
 The output from this is the following VHDL code:
 
 ```VHDL
@@ -258,7 +263,7 @@ end architecture;
 
 ### Example 3
 
-This example shows how to incoperate the pipe operator. As it is common in many languages object can have default input output channels. This allows to concatanate entities with a single operation instead of having to connect each signal individually.   
+This example shows how to incorporate the pipe operator. As it is common in many languages object can have default input output channels. This allows to concatenate entities with a single operation instead of having to connect each signal individually.   
 
 ```Python 
 
@@ -528,7 +533,7 @@ end architecture;
 
 ### Axi Stream Interface
 
-This section shows how an interface can be implemented as a pseudo class. For this the Axi Stream Interface is used. This example is used because it is very simple and widly used. The axi stream interface has four signals that are exchanged between master and slave. 
+This section shows how an interface can be implemented as a pseudo class. For this, the Axi Stream Interface is used. This example is used because it is very simple and widely used. The axi stream interface has four signals that are exchanged between master and slave. 
 
 | Name | Direction |
 |:--:|:----:|
@@ -540,18 +545,18 @@ This section shows how an interface can be implemented as a pseudo class. For th
 ![Axi Stream](pictures/axi.jpg)
 ![Axi Stream Truth](pictures/axiStream_truth_table.png)
 
-Since it has 4 signals and each one can either be set or not set this results in 16 combinations. Only four of these 16 combinations are actual a correct state. All the other ones are undefined behaviour. Programming languages usally solve this problem by not allowing users direct access to the underling data but by providing higher level APIs which provide a safe way of setting states. This APIs safeguard the user in two ways from entering undefined behavior (UB). First if functions are used in the intended fashion the program can never reach an UB state. This should be illustrated with the following example (for details see example 3):  
+Since it has four signals and each one can either be set or not set this results in 16 combinations. Only four of these 16 combinations are actual a correct state. All the other ones are undefined behavior. Programming languages usually solve this problem by not allowing users direct access to the underlying data but by providing higher level APIs that provide a safe way of setting states. This APIs safeguard the user in two ways from entering undefined behavior (UB). First, if functions are used in the intended fashion the program can never reach an UB state. This should be illustrated with the following example (for details see example 3):  
 
 ```Python
 if v_Axi_out:
     v_Axi_out << counter
 ```
 
-In this Example ```v_Axi_out``` is a class which handles the Axi Stream Interface. ```Counter``` is a ```std_logic_vector``` aquivalent variable. The program can only ever reach the assinment when the class ```v_Axi_out``` is True. The user has no (and needs no) further information about the actual implementation of ```v_Axi_out```. The Actual implementation is the responsibility of the library provider. As long as the user always checks if the class is usable the user will never be able to reach UB. 
+In this Example ```v_Axi_out``` is a class which handles the Axi Stream Interface. ```Counter``` is a ```std_logic_vector``` equivalent variable. The program can only ever reach the assignment when the class ```v_Axi_out``` is True. The user has no (and needs no) further information about the actual implementation of ```v_Axi_out```. The Actual implementation is the responsibility of the library provider. As long as the user always checks if the class is usable the user will never be able to reach UB. 
 
-The second way how APIs protect the user from entering UB is by providing a possibility to check for UB and then report an error to the user. This does not change that the interface is not working correclty but now the system is in an error state (not UB). This information can be used to protect the system from doing any more harm. 
+The second way how APIs protect the user from entering UB is by providing a possibility to check for UB and then report an error to the user. This does not change that the interface is not working correctly but now the system is in an error state (not UB). This information can be used to protect the system from doing any more harm. 
 
-In Addition using a class that encapsulates the interface into one single object prevents the user from ever geting signals mixed up and also vastly improves the readablity of the source code. For Example ```pyHDL``` allows the user to write the information if a given signal is an input or an output directly into the pseudo class:
+In Addition using a class that encapsulates the interface into one single object prevents the user from ever getting signals mixed up and vastly improves the readability of the source code. For Example ```pyHDL``` allows the user to write the information if a given signal is an input or an output directly into the pseudo class:
 
 ```Python
 class axisStream(v_class):
@@ -575,7 +580,7 @@ class axiPrint(v_clk_entity):
 
 This makes it very easy to reason about this code. 
 
-In order to use this model in VHDL the pseudo class has to be broken up into two parts. One ```Master to Slave``` (m2s) part and one ```Slave to Master``` (s2m) part. when converting the pseudo class to VHDL the following code will be generated:
+In order to use this model in VHDL the pseudo class has to be broken up into two parts. One ```Master to Slave``` (m2s) part and one ```Slave to Master``` (s2m) part. When converting the pseudo class to VHDL the following code will be generated:
 
 
 ```VHDL
@@ -600,7 +605,7 @@ constant axisStream_32_s2m_null : axisStream_32_s2m:= (
 );
 ```
 
-The consuming entity gets translated into the following VHDL:
+The consuming entity is translated into the following VHDL:
 
 ```VHDL
 entity axiPrint is 
@@ -615,19 +620,19 @@ end entity;
 
 
 
-## Object Oriented Desigen for HDL
+## Object Oriented Design for HDL
 
 
 
-Virtually all modern programming languages allow the user to write customised objects to build powerful abstraction. The support for this is very limited in typical HDLs. This document is ment to show the limitations of current HDLs and especially how adding an additional layer of abstraction in form of PyHDL can overcome this limitation.
+Virtually all modern programming languages allow the user to write customized objects to build powerful abstraction. The support for this is very limited in typical HDLs. This document is meant to show the limitations of current HDLs and especially how adding an additional layer of abstraction in form of PyHDL can overcome this limitation.
 
 ![base](pictures/Programming_base.png)
 
-In this document it is assumed that every program can be descriped with three basic building blocks: Responsibility Handler, Data Object and Processor. In programming all names have already been use which makes it exceedingly hard to use terminology that is not alredy used in a different context. For this document only the definition given here should be used.
+In this document, it is assumed that every program can be described with three basic building blocks: Responsibility Handler, Data Object and Processor. In programming, all names have already been use, which makes it exceedingly hard to use terminology that is not already used in a different context. For this document, only the definition given here should be used.
 
 ### **Processor**
 
-The Task of of **processor** is to take an Input and transform it. For example the following function ```f(x) = x^2``` transorms every input by multipling it by itself. Another example of a **processor** would be a factory function which, depening on the input creates differen objects. 
+The Task of **processor** is to take an Input and transform it. For example the following function ```f(x) = x^2``` transforms every input by multiplying it by itself. Another example of a **processor** would be a factory function which, depending on the input creates different objects. 
 
 ```Py
 def factory(x):
@@ -645,7 +650,7 @@ Another example of a **processor** would be a VHDL entity.
 
 ### _Data Object_
 
-The purpose of _Data Objects_ / _Data Structs_ is to store data in an reconizable way. An example would be an object that stores the current time. 
+The purpose of _Data Objects_ / _Data Structs_ is to store data in a recognizable way. An example would be an object that stores the current time. 
 
 ```Py
 class time_object:
@@ -653,22 +658,22 @@ class time_object:
         self.time = time
 ```
 
-The first thing this _data object_ communicates is its purpose. It is designed to store time. (Sure in theory a careless programmer could use it to store the outside temperature in it.) In addition to communicating its purpose it also carries a value. Depening on the development of a given code base the fact that any specefic _data object_ is a time object can be communicated with different mechanims. For example in C++ a common approach would be to just use a typedef which allows the user the convieniece of not having to rewrite all the functions for each new _data object_ while still communicating the purpose of a given object. But if requiered a _data object_ can be a complicated struct with many different members. The important thing is that they all these members would belong logically together. For example the current time can either be stored as unix time or as days, months, years, hours, minutes. In a given context there might be a good reason to store time in days etc. Independend of its implementation a _data object_ communicates its value and its purpose to the user. 
+The first thing this _data object_ communicates is its purpose. It is designed to store time. (Sure, in theory a careless programmer could use it to store the outside temperature in it.) In addition to communicating its purpose it also carries a value. Depending on the development of a given code base the fact that any specific _data object_ is a time object can be communicated with different mechanism. For example in C++ a common approach would be to just use a typedef which allows the user the convenience of not having to rewrite all the functions for each new _data object_ while still communicating the purpose of a given object. However, if required a _data object_ can be a complicated struct with many different members. The important thing is that they all these members would belong logically together. For example, the current time can either be stored as UNIX time or as days, months, years, hours, minutes. In a given context, there might be a good reason to store time in days etc. Independent of its implementation a _data object_ communicates its value and its purpose to the user. 
 
-_Data objects_ are usally designed to be very simple and don't contain (much) functionallity. All the funtionallity it provides is to access its value(s). 
+_Data objects_ are usually designed to be very simple and do not contain (much) functionality. All the functionality it provides is to access its value(s). 
 
-With the this two building blocks we can already create our first program:
+With these two building blocks, we can already create our first program:
 
 ```Py
 tomorow = nextDay( today )
 ```
 with:
-tomorow, today... beeing _data objects_ of the type time
-nextDay...        beeing a **processor** which takes in time object and returns a new data object for the next day
+tomorow, today... being _data objects_ of the type time
+nextDay...        being a **processor** which takes in time object and returns a new data object for the next day
 
 ### Responsibility Handler
 
-The last building block is the Responsibility Handler (RH). Which is used to for example handles the Responsibility of resource managment. Its purpose is for example to allow access to system recsources while at the same time protect the system from wrong use. The classical example would be a file handler or a smart pointer. 
+The last building block is the Responsibility Handler (RH). Which is used for example to handles the Responsibility of resource management. Its purpose is for example to allow access to system resources while at the same time protect the system from wrong use. The classical example would be a file handler or a smart pointer. 
 
 
 
@@ -677,7 +682,7 @@ The last building block is the Responsibility Handler (RH). Which is used to for
 
 ### The strict IN/OUT model
 
-Typical HDLs are build up of submodules. In the case of VHDL this submodules are called ```entities```. These ```entites``` are connected to each other by ports. A port can be a single bit (```std_logic```), an array of bits (```std_logic_vector```), a data structure (```record```) or an array of data structure. But no matter how complicated the individual port is, it has always to be labeled as either ```IN``` or ```OUT```. This strict seperation between ```IN``` and ```OUT``` prohibit the creation of more complex objects. How do other languages solve the problem? Lets write the axi stream interface in C++. This example contains two objects which exchange data by sharing a pointer to a common data storage. 
+Typical HDLs are build up of submodules. In the case of VHDL this submodules are called ```entities```. These ```entites``` are connected to each other by ports. A port can be a single bit (```std_logic```), an array of bits (```std_logic_vector```), a data structure (```record```) or an array of data structure. But no matter how complicated the individual port is, it has always to be labeled as either ```IN``` or ```OUT```. This strict separation between ```IN``` and ```OUT``` prohibit the creation of more complex objects. How do other languages solve the problem? Lets write the axi stream interface in C++. This example contains two objects, which exchange data by sharing a pointer to a common data storage. 
 
 ```C++
 class axistream;
@@ -716,7 +721,7 @@ while(running()){
 }
 ```
 
-This example shows that in C++ the direction of the data flow is directly expresst in the _axistream_ class. There is no need to tear apart the individual members of _axistream_. Everything is expresst in the type system of C++. The fact that **source** takes an _axistream_ pointer communicats that **source** wants to modify it. **destination**  takes the _axistream_ as a const pointer which means it wants to consume the data. The mutable keyword communicates that this member will (most) likely be modified by the destination. In this example ready could be modified by two places which is not posibile in HDL. This could be fixed by using some template meta programming technics, which are not part of the scope of this document. The important part is that the _object_ itself carries information about the data flow with it. Translating this to VHDL and we would end up with a construct like this (pseudo syntax):
+This example shows that in C++ the direction of the data flow is directly express in the _axistream_ class. There is no need to tear apart the individual members of _axistream_. Everything is expressed in the type system of C++. The fact that **source** takes an _axistream_ pointer communicates that **source** wants to modify it. **destination** takes the _axistream_ as a const pointer which means it wants to consume the data. The mutable keyword communicates that this member will (most) likely be modified by the destination. In this example ready could be modified by two places, which is not possible in HDL. This could be fixed by using some template Meta programming technics, which are not part of the scope of this document. The important part is that the _object_ itself carries information about the data flow with it. Translating this to VHDL and we would end up with a construct like this (pseudo syntax):
 
 ```VHDL
 type axi_Stream  is record 
@@ -744,7 +749,7 @@ port(
 end entity;
 ```
 
-On every abstraction level this code communicates exactly what is needed to know (and not more). On the record level it shows that it will be used as an interface between two objects. And which of the signals flow in which direction. On the entity level it communicates only if it is a source or a destination. The internal layout of _axi_stream_ does not matter at this point. With the introduction of these new keywords and the possibility to give records directional qualifiers it is possibile to easily create compound objects. For example a bidirectional axi stream can be written as:
+On every abstraction level, this code communicates exactly what is needed to know (and not more). On the record level, it shows that it will be used as an interface between two objects. In addition, which of the signals flow in which direction. On the entity level, it communicates only if it is a source or a destination. The internal layout of _axi_stream_ does not matter at this point. With the introduction of these new keywords and the possibility to give records directional qualifiers it is possible to easily create compound objects. For example, a bidirectional axi stream can be written as:
 
 ```VHDL
 type axi_Stream  is record 
@@ -762,23 +767,23 @@ end record;
 
 ### Encapsulation
 
-In HDL it is a common aproach to modify signals directly without the procetion of encapsulation. Dependig on the context this approach has been proven to be problematic, especially when there is an invariance to protect. In these cases it has shown to be the safer approach to use (member) function to make the modification. A good example for an invariance that needs to be preserved is the number of elements in a C++ vector. In order to add a new element to a vector there are many steps that have to be done correclty to not destroy the invariance. 
+In HDL, it is a common approach to modify signals directly without the protection of encapsulation. Depending on the context, this approach has been proven to be problematic, especially when there is an invariance to protect. In these cases, it has shown to be the safer approach to use (member) function to make the modification. A good example for an invariance that needs to be preserved is the number of elements in a C++ vector. In order to add a new element to a vector there are many steps that have to be done correctly to not destroy the invariance. 
 
-1. checking the size of the vector
-1. allocate memory
-1. copy elements to new location.
+1. Checking the size of the vector
+1. Allocate memory
+1. Copy elements to new location.
 1. Change pointer to point to the new location
-1. add the element 
-1. update the end pointer
+1. Add the element 
+1. Update the end pointer
 1. ...
 
-All these complicated procedures are completly hidden from the user by the simple ```push_back``` function call. As long as the user does not access the members directly the user will never reach UB. 
+All these complicated procedures are completely hidden from the user by the simple ```push_back``` function call. As long as the user does not access the members directly, the user will never reach UB. 
 
-What makes this approach so diffecult to achive in HDL is that object are always split up into inputs and outputs. There is not one object that represents an idea there are at least two. In addition VHDL does not allow the creation of member functions. This limitation can be overcome by using free function. 
+What makes this approach so difficult to achieve in HDL is that object are always split up into inputs and outputs. There is not one object that represents an idea there are at least two. In addition, VHDL does not allow the creation of member functions. This limitation can be overcome by using free function. 
 
 ### Information Hiding / (Compile time) Polymorphism
 
-As described it is a common aporach in HDLs to modify signals directly. In addtion to the already described problem it violates the principle of information hiding and also prohibits any form of polymorphism. Lets take as an example the axi stream interface and the native fifo interface.
+As described it is a common approach in HDLs to modify signals directly. In addition to the already described problem, it violates the principle of information hiding and prohibits any form of polymorphism. Let us take as an example the axi stream interface and the native FIFO interface.
 
 ![native fifo](pictures/native_fifo.png)
 
@@ -818,11 +823,11 @@ private:
 
 (Note: In C++, there are many ways of doing anything)
 
-With this approach the details of each interface are hiden from the user. 
+With this approach, the details of each interface are hidden from the user. 
 
-### Classes / Combination Of Data and Functions
+### Classes / Combination of Data and Functions
 
-This section will concentrate on enties and signals. In VHDL entities and signals are instantiated at very different parts of the source file and do not share any visible connection. Therefore it is up to the user to come up with good names that exaclty describe the relationship of each entity and each signal. The next example shows how in C++ this problem solved:
+This section will concentrate on entities and signals. In VHDL entities and signals are instantiated at very different parts of the source file and do not share any visible connection. Therefore it is up to the user to come up with good names that exactly describe the relationship of each entity and each signal. The next example shows how in C++ this problem solved:
 
 ```C++
 class axistream{
@@ -859,7 +864,7 @@ while(running()){
 }
 ```
 
-In this example **source** owns the _data object_, which makes it much easier to reason about the data flow. Now the line ```auto my_destination = destination(my_source.get_data());``` explains exaclty where the data comes from. It does not depend on a smart naming scheme to communicate this information. Also it can not be done wrong ```my_source.get_data()``` returns a constant pointer. It can only be used in a sink. It cannot accidentally be connected to another source. It will never accidentally return the wrong _data object_. It is correct by design. 
+In this example **source** owns the _data object_, which makes it much easier to reason about the data flow. Now the line ```auto my_destination = destination(my_source.get_data());``` explains exactly where the data comes from. It does not depend on a smart naming scheme to communicate this information. Also it cannot be done wrong ```my_source.get_data()``` returns a constant pointer. It can only be used in a sink. It cannot accidentally be connected to another source. It will never accidentally return the wrong _data object_. It is correct by design. 
 
 ## VHDL Pseudo Classes
 
