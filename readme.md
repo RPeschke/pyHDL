@@ -72,7 +72,7 @@ print(ax._get_definition())
 
 The output is the following:
 
-```vhdl
+```VHDL
 
 entity tb_entity is 
 end entity;
@@ -131,15 +131,15 @@ class axiPrint(v_clk_entity):
     def architecture(self):
         @process()
         def _process1():
-            axiSalve = axisStream_slave(self.Axi_in)
+            axiSlave = axisStream_slave(self.Axi_in)
 
             i_buff = v_slv(32)
 
             @rising_edge(self.clk)
             def proc():
                 print("axiPrint",i_buff.value )
-                if axiSalve :
-                    i_buff << axiSalve
+                if axiSlave :
+                    i_buff << axiSlave
                     print("axiPrint valid",i_buff.value )
 
 
@@ -280,7 +280,7 @@ class axiFilter(v_clk_entity):
     def architecture(self):
         @process()
         def _process1():
-            axiSalve = axisStream_slave(self.Axi_in)
+            axiSlave = axisStream_slave(self.Axi_in)
             axMaster = axisStream_master(self.Axi_out) 
 
 
@@ -288,10 +288,10 @@ class axiFilter(v_clk_entity):
             @rising_edge(self.clk)
             def proc():
                 print("axiPrint",i_buff.value )
-                if axiSalve and axMaster:
-                    i_buff << axiSalve
+                if axiSlave and axMaster:
+                    i_buff << axiSlave
                     if i_buff < 10:
-                        axMaster << axiSalve
+                        axMaster << axiSlave
                         print("axiPrint valid",i_buff.value )
 
 class axiPrint(v_clk_entity):
@@ -305,15 +305,15 @@ class axiPrint(v_clk_entity):
     def architecture(self):
         @process()
         def _process1():
-            axiSalve = axisStream_slave(self.Axi_in)
+            axiSlave = axisStream_slave(self.Axi_in)
 
             i_buff = v_slv(32)
 
             @rising_edge(self.clk)
             def proc():
                 print("axiPrint",i_buff.value )
-                if axiSalve :
-                    i_buff << axiSalve
+                if axiSlave :
+                    i_buff << axiSlave
                     print("axiPrint valid",i_buff.value )
 
 
@@ -545,16 +545,16 @@ This section shows how an interface can be implemented as a pseudo class. For th
 ![Axi Stream](pictures/axi.jpg)
 ![Axi Stream Truth](pictures/axiStream_truth_table.png)
 
-Since it has four signals and each one can either be set or not set this results in 16 combinations. Only four of these 16 combinations are actual a correct state. All the other ones are undefined behavior. Programming languages usually solve this problem by not allowing users direct access to the underlying data but by providing higher level APIs that provide a safe way of setting states. This APIs safeguard the user in two ways from entering undefined behavior (UB). First, if functions are used in the intended fashion the program can never reach an UB state. This should be illustrated with the following example (for details see example 3):  
+Since it has four signals and each one can either be set or not set this results in 16 combinations. Only four of these 16 combinations are actual a correct state. All the other ones are undefined behavior. Programming languages usually solve this problem by not allowing users direct access to the underlying data but by providing higher-level APIs that provide a safe way of setting states. This APIs safeguard the user in two ways from entering undefined behavior (UB). First, if functions are used in the intended fashion the program can never reach an UB state. That should be illustrated with the following example (for details see example 3):  
 
 ```Python
 if v_Axi_out:
     v_Axi_out << counter
 ```
 
-In this Example ```v_Axi_out``` is a class which handles the Axi Stream Interface. ```Counter``` is a ```std_logic_vector``` equivalent variable. The program can only ever reach the assignment when the class ```v_Axi_out``` is True. The user has no (and needs no) further information about the actual implementation of ```v_Axi_out```. The Actual implementation is the responsibility of the library provider. As long as the user always checks if the class is usable the user will never be able to reach UB. 
+In this example, ```v_Axi_out``` is a class that handles the Axi Stream Interface. ```Counter``` is a ```std_logic_vector``` equivalent variable. The program can only ever reach the assignment when the class ```v_Axi_out``` is True. The user has no (and needs no) further information about the actual implementation of ```v_Axi_out```. The actual implementation is the responsibility of the library provider. As long as the user always checks if the class is usable the user will never be able to reach UB. 
 
-The second way how APIs protect the user from entering UB is by providing a possibility to check for UB and then report an error to the user. This does not change that the interface is not working correctly but now the system is in an error state (not UB). This information can be used to protect the system from doing any more harm. 
+The second way how APIs protect the user from entering UB is by providing a possibility to check for UB and then report an error to the user. This does not change that the interface is not working correctly but now the system is in an error state (not UB). This information can be used to protect the system from doing any more harm.
 
 In Addition using a class that encapsulates the interface into one single object prevents the user from ever getting signals mixed up and vastly improves the readability of the source code. For Example ```pyHDL``` allows the user to write the information if a given signal is an input or an output directly into the pseudo class:
 
@@ -580,7 +580,7 @@ class axiPrint(v_clk_entity):
 
 This makes it very easy to reason about this code. 
 
-In order to use this model in VHDL the pseudo class has to be broken up into two parts. One ```Master to Slave``` (m2s) part and one ```Slave to Master``` (s2m) part. When converting the pseudo class to VHDL the following code will be generated:
+In order to use this model in VHDL the pseudo-class has to be broken up into two parts. One ```Master to Slave``` (m2s) part and one ```Slave to Master``` (s2m) part. When converting the pseudo-class to VHDL the following code will be generated:
 
 
 ```VHDL
@@ -620,7 +620,7 @@ end entity;
 
 
 
-## Object Oriented Design for HDL
+## Object-Oriented Design for HDL
 
 
 
@@ -628,11 +628,11 @@ Virtually all modern programming languages allow the user to write customized ob
 
 ![base](pictures/Programming_base.png)
 
-In this document, it is assumed that every program can be described with three basic building blocks: Responsibility Handler, Data Object and Processor. In programming, all names have already been use, which makes it exceedingly hard to use terminology that is not already used in a different context. For this document, only the definition given here should be used.
+In this document, it is assumed that every program can be described with three basic building blocks: Responsibility Handler, Data Object and Processor. In programming, all names have already been used, which makes it exceedingly hard to use terminology that is not already used in a different context. For this document, only the definition given here should be used.
 
 ### **Processor**
 
-The Task of **processor** is to take an Input and transform it. For example the following function ```f(x) = x^2``` transforms every input by multiplying it by itself. Another example of a **processor** would be a factory function which, depending on the input creates different objects. 
+The Task of **processor** is to take input and transform it. For example, the following function ```f(x) = x^2``` transforms every input by multiplying it by itself. Another example of a **processor** would be a factory function which, depending on the input creates different objects. 
 
 ```Py
 def factory(x):
@@ -650,7 +650,7 @@ Another example of a **processor** would be a VHDL entity.
 
 ### _Data Object_
 
-The purpose of _Data Objects_ / _Data Structs_ is to store data in a recognizable way. An example would be an object that stores the current time. 
+The purpose of _Data Objects_ / _Data Structs_ is to store data recognizably. An example would be an object that stores the current time. 
 
 ```Py
 class time_object:
@@ -658,7 +658,7 @@ class time_object:
         self.time = time
 ```
 
-The first thing this _data object_ communicates is its purpose. It is designed to store time. (Sure, in theory a careless programmer could use it to store the outside temperature in it.) In addition to communicating its purpose it also carries a value. Depending on the development of a given code base the fact that any specific _data object_ is a time object can be communicated with different mechanism. For example in C++ a common approach would be to just use a typedef which allows the user the convenience of not having to rewrite all the functions for each new _data object_ while still communicating the purpose of a given object. However, if required a _data object_ can be a complicated struct with many different members. The important thing is that they all these members would belong logically together. For example, the current time can either be stored as UNIX time or as days, months, years, hours, minutes. In a given context, there might be a good reason to store time in days etc. Independent of its implementation a _data object_ communicates its value and its purpose to the user. 
+The first thing this _data object_ communicates is its purpose. It is designed to store time. (Sure, in theory, a careless programmer could use it to store the outside temperature in it.) In addition to communicating its purpose, it also carries a value. Depending on the development of a given codebase the fact that any specific _data object_ is a time object can be communicated with a different mechanism. For example, in C++ a common approach would be to just use a typedef which allows the user the convenience of not having to rewrite all the functions for each new _data object_ while still communicating the purpose of a given object. However, if required, a _data object_ can be a complicated struct with many different members. The important thing is that all these members would belong logically together. For example, the current time can either be stored as UNIX time or as days, months, years, hours, minutes. In a given context, there might be a good reason to store time in days etc. independent of its implementation a _data object_ communicates its value and its purpose to the user. 
 
 _Data objects_ are usually designed to be very simple and do not contain (much) functionality. All the functionality it provides is to access its value(s). 
 
@@ -779,7 +779,7 @@ In HDL, it is a common approach to modify signals directly without the protectio
 
 All these complicated procedures are completely hidden from the user by the simple ```push_back``` function call. As long as the user does not access the members directly, the user will never reach UB. 
 
-What makes this approach so difficult to achieve in HDL is that object are always split up into inputs and outputs. There is not one object that represents an idea there are at least two. In addition, VHDL does not allow the creation of member functions. This limitation can be overcome by using free function. 
+What makes this approach so difficult to achieve in HDL is that objects are always split up into inputs and outputs. There is no one object that represents an idea there are at least two. In addition, VHDL does not allow the creation of member functions. This limitation can be overcome by using free-function. 
 
 ### Information Hiding / (Compile time) Polymorphism
 
@@ -787,14 +787,16 @@ As described it is a common approach in HDLs to modify signals directly. In addi
 
 ![native fifo](pictures/native_fifo.png)
 
-These interfaces do exactly the same thing yet they have three different ways of using them. The only thing a user ever would be intressted is:
+These interfaces do the same thing, yet they have three different ways of using them. The only thing a user ever would be interested is:
 
-On master side:
-- can i write data
+On the master side:
+
+- can I write data
 - write data
 
 On the slave side
-- can i read data
+
+- can I read data
 - read data
 
 This is true for axi stream, native writer and native reader interface. This problem can be solved by providing common interface abstractions. One example from C++ would be the common base class:
