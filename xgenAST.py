@@ -60,9 +60,13 @@ class xgenAST:
         self.functionNameVetoList = [
         "__init__",
         "create",
+        "__lshift__",
+        "__bool__",
         '_vhdl__to_bool',
         '_vhdl__getValue',
-        "_vhdl__reasign"
+        "_vhdl__reasign",
+        '_connect',
+        "_sim_get_value"
         ]
 
         self.local_function ={}
@@ -72,6 +76,7 @@ class xgenAST:
     "v_slv"  : v_slv_to_vhdl,
     "v_sl"  : v_sl_to_vhdl,
     "v_int" : v_int_to_vhdl,
+    "v_bool" : v_bool_to_vhdl,
     "dataType":dataType,
      "rising_edge" : handle_rising_edge,
      "print"       : handle_print

@@ -8,6 +8,15 @@ from CodeGen.xgenBase import *
 from CodeGen.xgenPackage import *
 
 
+class TX_DAC_control(v_class):
+    def __init__(self):
+        super().__init__("TX_DAC_control")
+        self.SIN     = port_out(v_sl())
+        self.SCLK    = port_out(v_sl())
+        self.PCLK    = port_out(v_sl())
+        self.REG_CLR = port_out(v_sl())
+
+
 class TXWriteSignals(v_class):
     def __init__(self):
         super().__init__("TXWriteSignals")
@@ -62,7 +71,8 @@ def main():
         TXSamplingSignals(),
         TXWriteSignals(),
         TXShiftRegisterSignals(),
-        DataBus()
+        DataBus(),
+        TX_DAC_control()
     ]
     
     

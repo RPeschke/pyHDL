@@ -14,7 +14,7 @@ class v_procedure(vhdl_base):
     
     def getHeader(self, name, parent):
         classDef =""
-        if parent and not self.isFreeFunction:
+        if parent != None and not self.isFreeFunction:
             classDef = " self : inout " + parent.getName()
 
         argumentList = optional_concatonat( classDef, "; ", self.argumentList)
@@ -33,7 +33,7 @@ class v_procedure(vhdl_base):
     
     def getBody(self, name,parent):
         classDef =""
-        if parent and not self.isFreeFunction:
+        if parent != None and not self.isFreeFunction:
             classDef = " self : inout " + parent.getName()
 
         argumentList = optional_concatonat( classDef, "; ", self.argumentList)
@@ -68,7 +68,7 @@ class v_function(vhdl_base):
 
     def getHeader(self, name, parent):
         classDef =""
-        if parent and not self.isFreeFunction:
+        if parent != None and not self.isFreeFunction:
             classDef = " self : " + parent.getName()
         argumentList = optional_concatonat( classDef, "; ", self.argumentList)
         if self.name:
@@ -87,7 +87,7 @@ class v_function(vhdl_base):
     
     def getBody(self, name,parent):
         classDef =""
-        if parent and not self.isFreeFunction:
+        if parent != None and not self.isFreeFunction:
             classDef = " self : " + parent.getName()
         argumentList = optional_concatonat( classDef, "; ", self.argumentList)
         

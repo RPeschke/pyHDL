@@ -49,7 +49,7 @@ class axisStream_slave(v_class):
         
         self.rx = port_Slave(Axi_in)
         self.rx  << Axi_in
-
+     
   
         self.__v_classType__         = v_classType_t.Slave_t
         self.data_isvalid            = v_sl()
@@ -73,7 +73,7 @@ class axisStream_slave(v_class):
     
 
     def isReceivingData(self):
-        return  bool(self.data_internal_isvalid2)
+        return  self.data_internal_isvalid2==1
 
 
     def IsEndOfStream(self):
@@ -146,7 +146,7 @@ class axisStream_master(v_class):
    
 
         
-    def send_data(self, dataIn = port_out(dataType())):
+    def send_data(self, dataIn = port_in(dataType())):
         self.tx.valid   << 1
         self.tx.data    << dataIn    
     
@@ -301,8 +301,9 @@ def main():
     
     parser = argparse.ArgumentParser(description='Generate Packages')
     parser.add_argument('--OutputPath',    help='Path to where the build system is located',default="build/xgen/xgen_axiStream_32.vhd")
-    parser.add_argument('--PackageName',   help='package Name',default="xgen_axiStream_32")
-   
+    parser.add_argument('--PackageName',   help='package Name',default="xgen_axistream_32")
+    s = isConverting2VHDL()
+    set_isConverting2VHDL(True)
     args = parser.parse_args()
     sp = args.PackageName.split("_")
     AXiName,AxiType = arg2type(sp[2])
@@ -321,7 +322,8 @@ def main():
     fileContent = ax.to_string()
     with open(args.OutputPath, "w", newline="\n") as f:
         f.write(fileContent)
-
+        
+    set_isConverting2VHDL(s)
 
 
 if __name__== "__main__":

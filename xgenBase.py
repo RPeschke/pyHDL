@@ -33,7 +33,8 @@ def ops2str(ops):
 
 
 gStatus = {
-    "isConverting2VHDL" : False
+    "isConverting2VHDL" : False,
+    "isProcess" : False
 }
 
 def isConverting2VHDL():
@@ -41,6 +42,14 @@ def isConverting2VHDL():
 
 def set_isConverting2VHDL(newStatus):
     gStatus["isConverting2VHDL"] = newStatus
+
+def isProcess():
+    return gStatus["isProcess"]
+
+def set_isProcess(newStatus):
+    gStatus["isProcess"] = newStatus
+
+
 class vhdl_base0:
     def set_simulation_param(self,module, name,writer):
         pass

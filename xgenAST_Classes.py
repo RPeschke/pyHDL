@@ -66,6 +66,9 @@ def v_sl_to_vhdl(astParser,Node):
 def v_int_to_vhdl(astParser,Node):
     return v_int()
 
+
+def v_bool_to_vhdl(astParser,Node):
+    return v_bool()
 class v_ast_base:
 
     def __str__(self):

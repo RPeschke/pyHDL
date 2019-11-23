@@ -107,12 +107,14 @@ class v_symbol(vhdl_base):
 
     def __str__(self):
         if self.__Driver__ != None and str( self.__Driver__) != 'process':
-            return str(self.__Driver__)
+            ret =  str(self.__Driver__)
+            if ret :
+                return ret
 
         if self.vhdl_name:
             return self.vhdl_name
 
-        return str(self.value)
+        return ""
 
     def set_simulation_param(self,module, name,writer):
         
@@ -232,6 +234,9 @@ class v_symbol(vhdl_base):
         if issubclass(type(rhs),vhdl_base0)  and str( self.__Driver__) != 'process':
             self.__Driver__ = rhs
         
+        if isProcess():
+            self.__Driver__ = 'process'
+
         asOp = get_assiment_op(self.varSigConst)
         
         if self.type == "std_logic":
