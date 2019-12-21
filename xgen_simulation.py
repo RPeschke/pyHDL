@@ -23,6 +23,14 @@ class v_simulation():
         self.writer= None
         self.CurrentTime = 0
 
+    def reset(self):
+        self.timmed_process=list()
+        self.updateList=list()
+        self.updateList_process=list()
+        
+        self.writer= None
+        self.CurrentTime = 0
+
     def isRunning(self):
         return self.CurrentTime >0
 
@@ -82,5 +90,6 @@ class v_simulation():
 
         self.writer= None
         self.CurrentTime =0
+
 
 gsimulation = v_simulation()

@@ -98,6 +98,8 @@ def v_entity_getMember(entity):
                         "name": x[0],
                         "symbol": t
                     })
+
+        ret=sorted(ret, key=lambda element_: element_["name"])
         return ret
 
 def v_entity_getMember_expand(entity):
@@ -116,6 +118,8 @@ def v_entity_getMember_expand(entity):
                         "name": x[0],
                         "symbol": t
                     })
+        
+        ret=sorted(ret, key=lambda element_: element_["name"])
         return ret
 class v_entiy2text:
     def __init__(self, input_entity):
@@ -385,8 +389,8 @@ class v_entity(vhdl_base0):
             
             x["symbol"].set_simulation_param(module +"."+ name, x["name"],writer)
             #print(x)
-
-        for x in self.__local_symbols__:
+        local_symbols =sorted(self.__local_symbols__, key=lambda element_: element_["name"])
+        for x in local_symbols:
             
             x["symbol"].set_simulation_param(module +"."+ name, x["name"],writer)
             #print (x)
@@ -431,7 +435,7 @@ class v_entity(vhdl_base0):
 
         ret = to_text.get_definition()
         set_isConverting2VHDL(s)
-        return ret
+        return ret.strip()
 
     def _vhdl_get_adtribute(self,attName):
         if self.vhdl_name:

@@ -202,7 +202,7 @@ class v_class(vhdl_base):
                         "symbol": t
                     })
 
-
+        ret =sorted(ret, key=lambda element_: element_["name"])
         return ret
 
 

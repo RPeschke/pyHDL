@@ -4,17 +4,18 @@ import argparse
 import os,sys,inspect
 import copy
 
-currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-parentdir = os.path.dirname(currentdir)
-sys.path.insert(0,parentdir) 
-from CodeGen.xgenBase import *
-from CodeGen.xgen_v_symbol import *
-from CodeGen.axiStream import *
-from CodeGen.xgen_v_entity import *
+
+from .xgenBase import *
+from .xgen_v_symbol import *
+from .axiStream import *
+from .xgen_v_entity import *
 
 
-from CodeGen.xgen_simulation import *
+from .xgen_simulation import *
 
+gData= {
+    "data":1
+}
 
 class axiPrint(v_clk_entity):
     def __init__(self,clk=None):
@@ -32,10 +33,10 @@ class axiPrint(v_clk_entity):
 
             @rising_edge(self.clk)
             def proc():
-                print("axiPrint",i_buff.value )
+                #print("axiPrint",i_buff.value )
                 if axiSalve :
                     i_buff << axiSalve
-                    print("axiPrint valid",i_buff.value )
+                    #print("axiPrint valid",i_buff.value )
 
 
 
@@ -53,9 +54,12 @@ class clk_generator(v_entity):
             @timed()
             def proc():
                 self.clk << 1
-                print("======================")
+                #print("======================")
+                #print(value(self.clk), gData["data"])
                 yield wait_for(10)
+                #print(value(self.clk), gData["data"])
                 self.clk << 0
+                #print(value(self.clk), gData["data"])
                 yield wait_for(10)
 
 
@@ -81,18 +85,9 @@ class tb_entity(v_entity):
             @rising_edge(clkgen.clk)
             def proc():
                 if v_Axi_out and counter < 40:
-                    print("counter", counter.value)
+                    #print("counter", counter.value)
                     v_Axi_out << counter
-                
+                    
                     counter << counter + 1
                 
                 
-
-
-
-
-
-ax = tb_entity()
-gsimulation.run_timed(ax, 1000,"example2.vcd")
-
-print(ax._get_definition())

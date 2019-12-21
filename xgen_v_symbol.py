@@ -146,6 +146,12 @@ class v_symbol(vhdl_base):
         
     def __lt__(self,rhs):
         return value(self) < value(rhs) 
+
+    def __gt__(self,rhs):
+        return value(self) > value(rhs) 
+
+    def __eq__(self,rhs):
+        return value(self) == value(rhs) 
 ##################### End Operators #############################################
     def _sim_append_update_list(self,up):
         self._update_list.append(up)

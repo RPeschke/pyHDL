@@ -73,7 +73,7 @@ class axisStream_slave(v_class):
     
 
     def isReceivingData(self):
-        return  self.data_internal_isvalid2==1
+        return  self.data_internal_isvalid2 == 1
 
 
     def IsEndOfStream(self):
@@ -167,7 +167,7 @@ class axisStream_master(v_class):
             self.tx.data  << 0
     
     def __lshift__(self, rhs):
-        self.send_data(rhs._sim_get_value())
+        self.send_data(value(rhs))
 
     def __bool__(self):
         
