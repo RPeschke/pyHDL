@@ -193,7 +193,7 @@ class v_symbol(vhdl_base):
         if gsimulation.isRunning():
             
             if issubclass(type(rhs),vhdl_base0):
-                self.nextValue = rhs._sim_get_value()
+                self.nextValue = value(rhs)
             
             else:
                 self.nextValue = rhs
