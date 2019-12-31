@@ -13,9 +13,6 @@ from CodeGen.xgenDB import *
 
 class axisStream(v_class):
     def __init__(self,AxiName,Axitype):
-
-
-        
         super().__init__("axisStream_"+str(AxiName))
         AddDataType(  Axitype  )
         self.valid  = port_out( v_sl() )
@@ -24,18 +21,7 @@ class axisStream(v_class):
         self.ready  = port_in( v_sl() )
     
 
-    def _connect(self,rhs):
-        if self.Inout != rhs.Inout and self.Inout != InOut_t.Internal_t and rhs.Inout != InOut_t.Internal_t and rhs.Inout != InOut_t.Slave_t and self.Inout != InOut_t.Master_t:
-            raise Exception("Unable to connect different InOut types")
-        
-        if type(self).__name__ != type(rhs).__name__:
-            raise Exception("Unable to connect different types")
 
-        
-        rhs.ready  <<  self.ready
-        self.valid <<  rhs.valid
-        self.last  <<  rhs.last
-        self.data  <<  rhs.data
 
 
 

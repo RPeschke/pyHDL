@@ -505,7 +505,7 @@ class v_class(vhdl_base):
         return "    pull( " +str(self) +args+");\n"
 
     def _connect(self,rhs):
-        if self.Inout != rhs.Inout:
+        if self.Inout != rhs.Inout and self.Inout != InOut_t.Internal_t and rhs.Inout != InOut_t.Internal_t and rhs.Inout != InOut_t.Slave_t and self.Inout != InOut_t.Master_t:
             raise Exception("Unable to connect different InOut types")
         
         if type(self).__name__ != type(rhs).__name__:
@@ -517,12 +517,12 @@ class v_class(vhdl_base):
         self_members = self.getMember(InOut_t.input_t)
         rhs_members = rhs.getMember(InOut_t.input_t)
         for i in range(len(self_members)):
-            self_members[i]['symbol']._connect(rhs_members[i]['symbol'])
+            rhs_members[i]['symbol'] << self_members[i]['symbol']
         
         self_members = self.getMember(InOut_t.output_t)
         rhs_members = rhs.getMember(InOut_t.output_t)
         for i in range(len(self_members)):
-            rhs_members[i]['symbol']._connect(self_members[i]['symbol'])
+            self_members[i]['symbol'] << rhs_members[i]['symbol']
 
 
 
@@ -530,8 +530,7 @@ class v_class(vhdl_base):
         if self.__Driver__ :
             raise Exception("symbol has already a driver", str(self))
         self._connect(rhs)
-        print("das")
-        #self.__Driver__ = rhs
+
 
     def _vhdl__reasign(self, rhs, context=None):
         
