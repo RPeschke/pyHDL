@@ -77,7 +77,13 @@ class vhdl_base(vhdl_base0):
         return type(self).__name__
 
     def to_arglist(self,name,parent):
-        return ""
+        
+        localname = self.vhdl_name
+        if name:
+            localname = name
+
+        
+        return localname +" : " +self.type
     
     def set_varSigConst(self, varSigConst):
         raise Exception("not implemented")

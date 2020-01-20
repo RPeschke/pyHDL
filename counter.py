@@ -17,11 +17,18 @@ class counter_state(Enum):
     running = 1
     done    = 2
 
+class time_span(v_class):
+    def __init__(self, CounterLength):
+        super().__init__("time_span"+ str(CounterLength))
+        self.__v_classType__         = v_classType_t.Record_t
+        self.min  = v_slv(CounterLength)
+        self.max  = v_slv(CounterLength)
+
 class counter(v_class):
     def __init__(self, CounterLength):
         super().__init__("counter_"+ str(CounterLength))
         self.__v_classType__         = v_classType_t.Slave_t
-        
+        AddDataType(  time_span(CounterLength)  )
         self.state = v_enum(counter_state)
         self.Count = v_slv(CounterLength)
         self.MaxCount = v_slv(CounterLength)
@@ -43,6 +50,14 @@ class counter(v_class):
             self.Count << 0
             
 
+    def StartCountFromTo(self,MinCount= port_in(v_slv()), MaxCount= port_in(v_slv())):
+        if self.isReady():
+            self.state << counter_state.running
+            self.MaxCount << MaxCount
+            self.Count << MinCount
+
+
+        
     def stopCounter(self):
         self.state << counter_state.done
     
@@ -77,6 +92,24 @@ class counter(v_class):
             DataOut << 1  
         return DataOut
         
+
+    def InTimeWindowSLV_r(self,TimeSpan=port_in(dataType()), DataIn=port_in(v_slv())):
+        
+        DataOut=v_slv("DataIn'length")
+        DataOut << 0
+        if self.isRunning() and TimeSpan.min <= self.Count and self.Count < TimeSpan.max:
+            DataOut << DataIn
+
+        return DataOut
+
+    def InTimeWindowSl_r(self,TimeSpan=port_in(dataType())):
+        DataOut=v_sl()
+        DataOut << 0
+        if self.isRunning() and TimeSpan.min <= self.Count and self.Count < TimeSpan.max:
+            DataOut << 1  
+        return DataOut
+
+
 def main():
     
     parser = argparse.ArgumentParser(description='Generate Packages')
@@ -88,6 +121,7 @@ def main():
     ax = v_package(args.PackageName,sourceFile=__file__,
     PackageContent = [
       v_enum ( counter_state),        
+      time_span(16),
       counter(16)
     ]
     

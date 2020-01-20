@@ -107,7 +107,14 @@ class example4_test(unittest.TestCase):
         file_set_content("CodeGen/tests/example4_new.vhd",vhdl)
         vhdl_ref = file_get_contents("CodeGen/tests/example4.vhd")
         self.assertTrue(vhdl == vhdl_ref)
-
+    
+    def test_Conversion_filter(self):
+        ax = CodeGen.example4.axiFilter()
+        vhdl = ax._get_definition().strip() 
+        
+        file_set_content("CodeGen/tests/example4_filter_new.vhd",vhdl)
+        vhdl_ref = file_get_contents("CodeGen/tests/example4_filter.vhd")
+        self.assertTrue(vhdl == vhdl_ref)
 
 
 if __name__ == '__main__':

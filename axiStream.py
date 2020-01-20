@@ -13,18 +13,13 @@ from CodeGen.xgenDB import *
 
 class axisStream(v_class):
     def __init__(self,AxiName,Axitype):
-        super().__init__("axisStream_"+str(AxiName))
+        super().__init__("axiStream_"+str(AxiName))
         AddDataType(  Axitype  )
         self.valid  = port_out( v_sl() )
         self.last   = port_out( v_sl() )
         self.data   = port_out( Axitype  )
         self.ready  = port_in( v_sl() )
     
-
-
-
-
-
 
             
 

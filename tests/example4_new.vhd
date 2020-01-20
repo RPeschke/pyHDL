@@ -7,14 +7,14 @@ architecture rtl of tb_entity is
 
 signal clkgen_clk : std_logic := '0'; 
 signal maxCount : std_logic_vector(31 downto 0) := x"00000014"; 
-signal pipe1_1_rollingCounter_Axi_out_m2s : axisStream_32_m2s := axisStream_32_m2s_null;
-signal pipe1_1_rollingCounter_Axi_out_s2m : axisStream_32_s2m := axisStream_32_s2m_null;
-signal pipe1_2_axiFilter_Axi_in_m2s : axisStream_32_m2s := axisStream_32_m2s_null;
-signal pipe1_2_axiFilter_Axi_in_s2m : axisStream_32_s2m := axisStream_32_s2m_null;
-signal pipe1_2_axiFilter_Axi_out_m2s : axisStream_32_m2s := axisStream_32_m2s_null;
-signal pipe1_2_axiFilter_Axi_out_s2m : axisStream_32_s2m := axisStream_32_s2m_null;
-signal pipe1_3_axiPrint_Axi_in_m2s : axisStream_32_m2s := axisStream_32_m2s_null;
-signal pipe1_3_axiPrint_Axi_in_s2m : axisStream_32_s2m := axisStream_32_s2m_null;
+signal pipe1_1_rollingCounter_Axi_out_m2s : axiStream_32_m2s := axiStream_32_m2s_null;
+signal pipe1_1_rollingCounter_Axi_out_s2m : axiStream_32_s2m := axiStream_32_s2m_null;
+signal pipe1_2_axiFilter_Axi_in_m2s : axiStream_32_m2s := axiStream_32_m2s_null;
+signal pipe1_2_axiFilter_Axi_in_s2m : axiStream_32_s2m := axiStream_32_s2m_null;
+signal pipe1_2_axiFilter_Axi_out_m2s : axiStream_32_m2s := axiStream_32_m2s_null;
+signal pipe1_2_axiFilter_Axi_out_s2m : axiStream_32_s2m := axiStream_32_s2m_null;
+signal pipe1_3_axiPrint_Axi_in_m2s : axiStream_32_m2s := axiStream_32_m2s_null;
+signal pipe1_3_axiPrint_Axi_in_s2m : axiStream_32_s2m := axiStream_32_s2m_null;
 
 begin
 clkgen : entity work.clk_generator port map ( 

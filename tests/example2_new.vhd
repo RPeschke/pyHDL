@@ -6,11 +6,11 @@ end entity;
 architecture rtl of tb_entity is
 
 signal clkgen_clk : std_logic := '0'; 
-signal Axi_out_m2s : axisStream_32_m2s := axisStream_32_m2s_null;
-signal Axi_out_s2m : axisStream_32_s2m := axisStream_32_s2m_null;
+signal Axi_out_m2s : axiStream_32_m2s := axiStream_32_m2s_null;
+signal Axi_out_s2m : axiStream_32_s2m := axiStream_32_s2m_null;
 signal counter : std_logic_vector(31 downto 0) := (others => '0'); 
-signal axFil_Axi_in_m2s : axisStream_32_m2s := axisStream_32_m2s_null;
-signal axFil_Axi_in_s2m : axisStream_32_s2m := axisStream_32_s2m_null;
+signal axFil_Axi_in_m2s : axiStream_32_m2s := axiStream_32_m2s_null;
+signal axFil_Axi_in_s2m : axiStream_32_s2m := axiStream_32_s2m_null;
 
 begin
 clkgen : entity work.clk_generator port map ( 
@@ -28,7 +28,7 @@ clkgen : entity work.clk_generator port map (
   
   -----------------------------------
   p2 : process(clkgen_clk) is
-    variable v_Axi_out : axisStream_32_master := axisStream_32_master_null;
+    variable v_Axi_out : axiStream_32_master := axiStream_32_master_null;
     begin
       if rising_edge(clkgen_clk) then 
         pull( v_Axi_out, Axi_out_s2m);
