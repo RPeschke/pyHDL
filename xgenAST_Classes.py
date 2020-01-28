@@ -810,6 +810,8 @@ class v_boolOp(v_ast_base):
         op = type(self.op).__name__
         if op == "And":
             op = " and "
+        elif op == "Or":
+            op = " or "
         ret = "( "
         start = ""
         for x in self.elements:
