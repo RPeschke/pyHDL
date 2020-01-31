@@ -6,7 +6,7 @@ end entity;
 architecture rtl of tb_entity is
 
 signal clk : std_logic := '0'; 
-signal counter : std_logic_vector(31 downto 0) := (others => '0'); 
+signal counter : std_logic_vector(32 -1 downto 0) := (others => '0'); 
 
 begin
 
@@ -24,7 +24,7 @@ begin
   
   -----------------------------------
   p2 : process(clk) is
-    variable v_counter : std_logic_vector(31 downto 0) := (others => '0'); 
+    variable v_counter : std_logic_vector(32 -1 downto 0) := (others => '0'); 
     begin
       if rising_edge(clk) then 
     v_counter := v_counter + 1;

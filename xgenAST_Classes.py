@@ -21,6 +21,8 @@ def Unfold_call(astParser, callNode):
     return astParser._unfold_symbol_fun_arg[callNode.func.id](astParser, callNode.args)
 
 
+class GNames:
+    process = "process"
 
 
 class indent:
@@ -40,34 +42,39 @@ class indent:
 gIndent = indent()
 
 
-def port_in_to_vhdl(astParser,Node):
+def port_in_to_vhdl(astParser,Node,Keywords=None):
     return port_in(astParser.unfold_argList(Node[0]) )
 
-def port_out_to_vhdl(astParser,Node):
+def port_out_to_vhdl(astParser,Node,Keywords=None):
     return port_out(astParser.unfold_argList(Node[0]) )
 
-def v_slv_to_vhdl(astParser,Node):
-    if len(Node) == 0:
-        return v_slv()
-    if len(Node) == 1:
-        return v_slv(astParser.unfold_argList(Node[0]) )
-    if len(Node) == 2:
-        return v_slv(astParser.unfold_argList(Node[0]),astParser.unfold_argList(Node[1]))
-    
-    raise Exception("unexpected num of args")
+def v_slv_to_vhdl(astParser,Node,Keywords=None):
+    args = list()
+    for x in Node:
+        args.append(astParser.Unfold_body(x))
 
-def v_sl_to_vhdl(astParser,Node):
+    kwargs = {}
+    for x in Keywords:
+        if x.arg =='varSigConst':
+            kwargs[x.arg] = astParser.Unfold_body(x.value).Value 
+        else:
+            kwargs[x.arg] = astParser.Unfold_body(x.value) 
+
+    return v_slv(*args,**kwargs)
+
+
+def v_sl_to_vhdl(astParser,Node,Keywords=None):
     if len(Node) == 1:
         return v_sl(InOut_t.input_t, astParser.unfold_argList(Node[0]) )
     else:
         return v_sl(InOut_t.input_t )
         
         
-def v_int_to_vhdl(astParser,Node):
+def v_int_to_vhdl(astParser,Node,Keywords=None):
     return v_int()
 
 
-def v_bool_to_vhdl(astParser,Node):
+def v_bool_to_vhdl(astParser,Node,Keywords=None):
     return v_bool()
 class v_ast_base:
 
@@ -110,16 +117,19 @@ class v_process_Def(v_ast_base):
         ret += "end process"
         return ret
 
-def body_unfold_porcess(astParser,Node):
+def body_unfold_porcess(astParser,Node, Body = None):
     localContext = astParser.Context
-    astParser.push_scope("process")
+    astParser.push_scope(GNames.process)
     
     dummy_DefaultVarSig = getDefaultVarSig()
     setDefaultVarSig(varSig.variable_t)
     ret = list()
     astParser.Context = ret
-    for x in Node.body:
-        ret.append( astParser.Unfold_body(x))
+    if Body == None:
+        for x in Node.body:
+            ret.append( astParser.Unfold_body(x))
+    else:
+        ret.append( astParser.Unfold_body(Body))
 
     astParser.Context = localContext
     setDefaultVarSig(dummy_DefaultVarSig)
@@ -164,6 +174,8 @@ class v_process_body_Def(v_ast_base):
         return ret
 
 def body_unfold_porcess_body(astParser,Node):
+    if astParser.get_scope_name() != GNames.process:
+        return body_unfold_porcess(astParser,Node = Node ,Body = Node)
     localContext = astParser.Context
     
 
@@ -218,6 +230,10 @@ class v_process_body_timed_Def(v_ast_base):
         return ret
 
 def body_unfold_porcess_body_timed(astParser,Node):
+    
+    if astParser.get_scope_name() != GNames.process:
+        return body_unfold_porcess(astParser,Node = Node ,Body = Node)
+
     localContext = astParser.Context
     
 
@@ -493,7 +509,7 @@ def  body_unfold_Name(astParser,Node):
     ret = astParser.getInstantByName(Node.id)
     return ret
 
-def handle_print(astParser,args):
+def handle_print(astParser,args,keywords=None):
     return v_noop()
 
 
@@ -511,6 +527,16 @@ class v_call(v_ast_base):
         return self.symbol.type
 
 def body_unfold_call_local_func(astParser,Node):
+
+    args = list()
+    for x in Node.args:
+        args.append(astParser.Unfold_body(x))
+
+    kwargs = {}
+    for x in Node.keywords:
+        kwargs[x.arg] = astParser.Unfold_body(x.value) 
+    return astParser.local_function[Node.func.id](*args,**kwargs)
+
     if len(Node.args) == 0:
         return astParser.local_function[Node.func.id]()
     elif len(Node.args) == 1:
@@ -521,7 +547,7 @@ def body_unfold_call_local_func(astParser,Node):
 def body_unfold_call(astParser,Node):
     if hasattr(Node.func, 'id'):
         if Node.func.id in astParser._unfold_symbol_fun_arg:
-            return astParser._unfold_symbol_fun_arg[Node.func.id](astParser, Node.args)
+            return astParser._unfold_symbol_fun_arg[Node.func.id](astParser, Node.args,Node.keywords)
         elif Node.func.id in astParser.local_function:
             return body_unfold_call_local_func( astParser ,Node)
         else:
@@ -896,7 +922,7 @@ class v_decorator:
     def get_prefix(self):
         return self.name + "(" + str(self.argList[0]) +")"
 
-def handle_rising_edge(astParser, symb):
+def handle_rising_edge(astParser, symb,keyword=None):
     l = list()
     for x in symb:
         s = astParser.Unfold_body(x)

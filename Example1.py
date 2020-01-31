@@ -25,31 +25,28 @@ class tb_entity(v_entity):
         clk = v_sl()
 
 
-        @process()
+        @timed()
         def p1():
-
-            @timed()
-            def proc():
-                clk << 1
-                #print("set clk to 1")
-                yield wait_for(10)
-                clk << 1
-                #print("set clk to 1 again")
-                yield wait_for(10)
-                clk << 0
-                #print("set clk to 0")
-                yield wait_for(10)
+            clk << 1
+            print("set clk to 1")
+            yield wait_for(10)
+            clk << 1
+            print("set clk to 1 again")
+            yield wait_for(10)
+            clk << 0
+            print("set clk to 0")
+            yield wait_for(10)
 
         counter = v_slv(32)
-        @process()
+        v_counter = v_slv(32,varSigConst=varSig.variable_t)
+        @rising_edge(clk)
         def p2():
-            v_counter = v_slv(32)
-            @rising_edge(clk)
-            def proc():
-                v_counter << v_counter +1
-                counter << counter + 1
-                #print("counter", counter.value)
-                #print("v_counter", v_counter.value)
+            v_counter << v_counter +1
+            counter << counter + 1
+            print("counter", counter.value)
+            print("v_counter", v_counter.value)
+
+        end_architecture()
 
 
 

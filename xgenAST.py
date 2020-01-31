@@ -128,6 +128,10 @@ class xgenAST:
         self.varScope.append(self.LocalVar)
         self.LocalVar = list()
 
+    def get_scope_name(self):
+        return self.ContextName[-1]
+
+
     def pop_scope(self):
         self.LocalVar =  self.varScope[-1]
         del self.varScope[-1]
@@ -196,6 +200,8 @@ class xgenAST:
             header =""
             for x in self.LocalVar:
                 if x.type == "undef":
+                    continue
+                if  hasattr(x, 'varSigConst') and x.varSigConst == varSig.variable_t:
                     continue
                 header += x._vhdl__DefineSymbol("signal")
             
@@ -320,8 +326,15 @@ class xgenAST:
                 return x
 
         for x in self.varScope:
+            index = -1
             for y in x:
+                index = index + 1
                 if y.vhdl_name == SymbolName:
+                    if y.varSigConst == varSig.variable_t:
+                        self.LocalVar.append(y)
+                        del x[index]
+                        return y
+                    
                     return y
 
         if self.parent:
@@ -329,7 +342,12 @@ class xgenAST:
             if ret:
                 return ret 
                 
-
+        try: 
+            return self.local_function[SymbolName]
+        except:
+            pass
+        
+        
         raise Exception("Unable to find symbol", SymbolName, "\nAvalible Symbols\n",self.FuncArgs)
 
 

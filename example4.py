@@ -138,7 +138,7 @@ class tb_entity(v_entity):
 
 
 
-ax = tb_entity()
-gsimulation.run_timed(ax, 1000,"example4.vcd")
+#ax = tb_entity()
+#gsimulation.run_timed(ax, 1000,"example4.vcd")
 
-print(ax._get_definition())
+#print(ax._get_definition())

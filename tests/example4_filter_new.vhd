@@ -27,7 +27,7 @@ begin
   _process1 : process(clk) is
     variable axiSalve : axiStream_32_slave := axiStream_32_slave_null;
     variable axMaster : axiStream_32_master := axiStream_32_master_null;
-    variable i_buff : std_logic_vector(31 downto 0) := (others => '0'); 
+    variable i_buff : std_logic_vector(32 -1 downto 0) := (others => '0'); 
     variable axiSalve_buff : std_logic_vector(31 downto 0) := (others => '0'); 
     variable axiSalve_buff : std_logic_vector(31 downto 0) := (others => '0'); 
     begin

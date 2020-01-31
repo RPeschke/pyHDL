@@ -8,7 +8,7 @@ architecture rtl of tb_entity is
 signal clkgen_clk : std_logic := '0'; 
 signal Axi_out_m2s : axiStream_32_m2s := axiStream_32_m2s_null;
 signal Axi_out_s2m : axiStream_32_s2m := axiStream_32_s2m_null;
-signal counter : std_logic_vector(31 downto 0) := (others => '0'); 
+signal counter : std_logic_vector(32 -1 downto 0) := (others => '0'); 
 signal axFil_Axi_in_m2s : axiStream_32_m2s := axiStream_32_m2s_null;
 signal axFil_Axi_in_s2m : axiStream_32_s2m := axiStream_32_s2m_null;
 
