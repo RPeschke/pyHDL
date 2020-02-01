@@ -39,7 +39,7 @@ class InputDelay(v_clk_entity):
             | serialize(self.globals,axisStream("32",v_slv(32))) \
             | axiStreamDelayBuffer(self.globals) \
             | ax_fifo(self.globals)  \
-            | dezirelize(self.globals) \
+            | deserialize(self.globals) \
             | \
         self.ConfigOut   
 
