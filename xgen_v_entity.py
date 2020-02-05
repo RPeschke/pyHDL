@@ -66,6 +66,17 @@ def addPullsPushes(symbol):
             if onPushPull['_onPush']:
                 symbol._sim_append_Push_update_list(onPushPull['_onPush'])
             
+def addPullsPushes_from_closure(symbol,closure):
+    for x in closure:
+        y = x.cell_contents
+        if issubclass(type(y), vhdl_base0):
+            onPushPull = y._sim_get_push_pull()
+            if  onPushPull['_onPull']:
+                symbol._sim_append_Pull_update_list( onPushPull['_onPull'])
+
+            if onPushPull['_onPush']:
+                symbol._sim_append_Push_update_list(onPushPull['_onPush'])
+            
 
 
 def rising_edge(symbol):
@@ -77,7 +88,7 @@ def rising_edge(symbol):
                 func()
                 symbol._sim_run_push()
         symbol._update_list_process.append(wrapper_rising_edge)
-        addPullsPushes(symbol)
+        addPullsPushes_from_closure(symbol,func.__closure__)
         return wrapper_rising_edge
     return decorator_rising_edge
 
@@ -228,6 +239,8 @@ class v_entiy2text:
 
 
         return ret 
+
+
     def getMember(self):
         return v_entity_getMember(self.entity)
 
