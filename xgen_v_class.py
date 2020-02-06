@@ -1,9 +1,113 @@
 from .xgenBase import * 
 from .xgen_v_function import *
 
+
+class v_class_converter(vhdl_converter_base):
+
+
+    def includes(self,obj, name,parent):
+        ret = ""
+        for x in obj.__dict__.items():
+            t = getattr(obj, x[0])
+            if issubclass(type(t),vhdl_base):
+                        
+                ret += t.vhdl_conversion__.includes(t,x[0],obj)
+        
+        for x in obj.__ast_functions__:
+            ret += x.vhdl_conversion__.includes(x,None,obj)
+        return ret
+
+    def recordMember(self,obj, name,parent,Inout=None):
+        if issubclass(type(parent),v_class):
+            if obj.Inout == InOut_t.Slave_t:
+                Inout = InoutFlip(Inout)
+
+
+            return "  " + name + " : " +obj.getType(Inout) +"; \n"
+
+        
+        return ""
+
+    def recordMemberDefault(self, obj, name,parent,Inout=None):
+        if issubclass(type(parent),v_class):
+            if obj.Inout == InOut_t.Slave_t:
+                Inout = InoutFlip(Inout)
+
+            return name + " => " + obj.getType(Inout) + "_null"
+
+        return ""
+
+    def make_constant(self, obj, name,parent=None,InOut_Filter=None):
+        TypeName = obj.getType(InOut_Filter)
+        member = obj.getMember(InOut_Filter)
+        ret = "\nconstant " + name + " : " + TypeName + ":= (\n  "
+        start = ""
+        for x in member:
+            default = x["symbol"].vhdl_conversion__.recordMemberDefault(x["symbol"], x["name"],obj,InOut_Filter)
+            if default:
+                ret += start + default
+                start = ",\n  "
+                
+        ret += "\n);\n"
+        return ret
+
+    def getHeader(self,obj, name,parent):
+        if issubclass(type(parent),v_class):
+            return ""
+        ret = "-------------------------------------------------------------------------\n"
+        ret += "------- Start Psuedo Class " +obj.getName() +" -------------------------\n"
+        if obj.__v_classType__ == v_classType_t.transition_t:     
+            ret +=  obj.getHeader_make_record(name,parent,InOut_t.output_t)
+            ret += "\n\n"
+            ret +=  obj.getHeader_make_record(name,parent,InOut_t.input_t)
+            ret += "\n\n"
+        
+        ret +=  obj.getHeader_make_record(name,parent)
+        
+        obj.make_connection(name,parent)
+        
+        for x in obj.__dict__.items():
+            t = getattr(obj, x[0])
+            if issubclass(type(t),vhdl_base) and not issubclass(type(t),v_class):
+                ret += t.vhdl_conversion__.getHeader(t,x[0],obj)
+
+        for x in obj.__ast_functions__:
+            if x.name.lower() == "_onpull" or x.name.lower() == "_onpush":
+                continue
+            ret +=  x.vhdl_conversion__.getHeader(x,None,None)
+
+
+        ret += "------- End Psuedo Class " +obj.getName() +" -------------------------\n"
+        ret += "-------------------------------------------------------------------------\n\n\n"
+        return ret
+
+    def getBody(self,obj, name,parent):
+        if issubclass(type(parent),v_class):
+            return ""
+        ret = "-------------------------------------------------------------------------\n"
+        ret += "------- Start Psuedo Class " +obj.getName() +" -------------------------\n"
+        
+        for x in obj.__dict__.items():
+            t = getattr(obj, x[0])
+            if issubclass(type(t),vhdl_base):
+                ret += t.vhdl_conversion__.getBody(t,x[0],obj)
+        
+        for x in obj.__ast_functions__:
+            if x.name.lower() == "_onpull" or x.name.lower() == "_onpush":
+                continue
+            ret +=  x.vhdl_conversion__.getBody(x,None,None)
+
+        ret += "------- End Psuedo Class " +obj.getName() +" -------------------------\n  "
+        ret += "-------------------------------------------------------------------------\n\n\n"
+        return ret
+    
+
 class v_class(vhdl_base):
 
     def __init__(self,Name,varSigConst=None):
+        super().__init__()
+        self.vhdl_conversion__ = v_class_converter()
+
         self.name = Name
         self.type = Name
         self.__v_classType__ = v_classType_t.transition_t 
@@ -62,16 +166,7 @@ class v_class(vhdl_base):
             return self.vhdl_name+"_m2s"
         return None
 
-    def recordMember(self, name,parent,Inout=None):
-        if issubclass(type(parent),v_class):
-            if self.Inout == InOut_t.Slave_t:
-                Inout = InoutFlip(Inout)
 
-
-            return "  " + name + " : " +self.getType(Inout) +"; \n"
-
-        
-        return ""
 
     def getType(self,Inout=None):
         if Inout == InOut_t.input_t:
@@ -89,26 +184,9 @@ class v_class(vhdl_base):
 
         }        
         
-    def recordMemberDefault(self, name,parent,Inout=None):
-        if issubclass(type(parent),v_class):
-            if self.Inout == InOut_t.Slave_t:
-                Inout = InoutFlip(Inout)
 
-            return name + " => " + self.getType(Inout) + "_null"
 
-        return ""
 
-    def includes(self, name,parent):
-        ret = ""
-        for x in self.__dict__.items():
-            t = getattr(self, x[0])
-            if issubclass(type(t),vhdl_base):
-                ret += t.includes(x[0],self)
-        
-        for x in self.__ast_functions__:
-            ret += x.includes(None,self)
-
-        return ret
 
     def setInout(self,Inout):
         if self.__v_classType__ == v_classType_t.transition_t:
@@ -160,30 +238,18 @@ class v_class(vhdl_base):
 
         ret = "\ntype "+TypeName+" is record \n"
         for x in member:
-            ret += x["symbol"].recordMember(x["name"],self,InOut_Filter)
+            ret += x["symbol"].vhdl_conversion__.recordMember(x["symbol"],x["name"],self,InOut_Filter)
         ret += "end record;\n\n"
 
 
 
-        ret += self.make_constant(TypeName+ "_null", parent, InOut_Filter)
+        ret += self.vhdl_conversion__.make_constant(self,TypeName+ "_null", parent, InOut_Filter)
    
         ret += "\n\n"
         ret += "type "+ TypeName+"_a is array (natural range <>) of "+TypeName+";\n\n"
         return ret
 
-    def make_constant(self, name,parent=None,InOut_Filter=None):
-        TypeName = self.getType(InOut_Filter)
-        member = self.getMember(InOut_Filter)
-        ret = "\nconstant " + name + " : " + TypeName + ":= (\n  "
-        start = ""
-        for x in member:
-            default = x["symbol"].recordMemberDefault(x["name"],self,InOut_Filter)
-            if default:
-                ret += start + default
-                start = ",\n  "
-                
-        ret += "\n);\n"
-        return ret
+
 
 
 
@@ -436,56 +502,9 @@ class v_class(vhdl_base):
                 return x.body
 
         return ""
-    def getHeader(self, name,parent):
-        if issubclass(type(parent),v_class):
-            return ""
-        ret = "-------------------------------------------------------------------------\n"
-        ret += "------- Start Psuedo Class " +self.getName() +" -------------------------\n"
-        if self.__v_classType__ == v_classType_t.transition_t:     
-            ret +=  self.getHeader_make_record(name,parent,InOut_t.output_t)
-            ret += "\n\n"
-            ret +=  self.getHeader_make_record(name,parent,InOut_t.input_t)
-            ret += "\n\n"
-        
-        ret +=  self.getHeader_make_record(name,parent)
-        
-        self.make_connection(name,parent)
-        
-        for x in self.__dict__.items():
-            t = getattr(self, x[0])
-            if issubclass(type(t),vhdl_base) and not issubclass(type(t),v_class):
-                ret += t.getHeader(x[0],self)
-
-        for x in self.__ast_functions__:
-            if x.name.lower() == "_onpull" or x.name.lower() == "_onpush":
-                continue
-            ret +=  x.getHeader(None,None)
-
-
-        ret += "------- End Psuedo Class " +self.getName() +" -------------------------\n"
-        ret += "-------------------------------------------------------------------------\n\n\n"
-        return ret
+ 
     
-    def getBody(self, name,parent):
-        if issubclass(type(parent),v_class):
-            return ""
-        ret = "-------------------------------------------------------------------------\n"
-        ret += "------- Start Psuedo Class " +self.getName() +" -------------------------\n"
-        
-        for x in self.__dict__.items():
-            t = getattr(self, x[0])
-            if issubclass(type(t),vhdl_base):
-                ret += t.getBody(x[0],self)
-        
-        for x in self.__ast_functions__:
-            if x.name.lower() == "_onpull" or x.name.lower() == "_onpush":
-                continue
-            ret +=  x.getBody(None,None)
-
-        ret += "------- End Psuedo Class " +self.getName() +" -------------------------\n  "
-        ret += "-------------------------------------------------------------------------\n\n\n"
-        return ret
-    
+  
     def __str__(self):
         if self.__Driver__ and str( self.__Driver__) != 'process':
             return str(self.__Driver__)

@@ -134,6 +134,7 @@ def v_entity_getMember_expand(entity):
         return ret
 class v_entiy2text:
     def __init__(self, input_entity):
+        super().__init__()
         self.entity = input_entity
         self.astTree = None
         if input_entity._srcFileName:
@@ -145,10 +146,10 @@ class v_entiy2text:
         bufffer = ""
         members= self.getMember()
         for x in members:
-            bufffer += x["symbol"].includes(x["name"],None)
+            bufffer += x.vhdl_conversion__.includes(x["symbol"],x["name"],None)
 
         for x in self.entity.__processList__:
-            bufffer += x.includes("",None)
+            bufffer += x.vhdl_conversion__.includes(x,"",None)
 
         sp = bufffer.split(";")
         sp  = [x.strip() for x in sp]
@@ -203,7 +204,7 @@ class v_entiy2text:
                 ret += "  " + sym._vhdl__DefineSymbol("signal")
         
         for x in self.entity.__processList__:
-            ret += x.getHeader("",None)
+            ret += x.vhdl_conversion__.getHeader(x,"",None)
         return ret 
 
 
@@ -213,7 +214,7 @@ class v_entiy2text:
         ret += self.get_archhitecture_header()
         ret += "\nbegin\n"
         for x in self.entity.__processList__:
-            ret += x.getBody("",None)
+            ret += x.vhdl_conversion__.getBody(x,"",None)
 
         ret += "\nend architecture;\n"
         return ret 

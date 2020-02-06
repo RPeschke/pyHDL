@@ -1,3 +1,11 @@
+library IEEE;
+library UNISIM;
+use IEEE.numeric_std.all;
+use IEEE.std_logic_1164.all;
+use UNISIM.VComponents.all;
+use ieee.std_logic_unsigned.all;
+
+
 entity tb_entity is 
 end entity;
 

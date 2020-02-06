@@ -205,7 +205,7 @@ class xgenAST:
                     continue
                 header += x._vhdl__DefineSymbol("signal")
             
-            proc = v_Arch(body=str(body),Header=header)
+            proc = v_Arch(body=str(body),Header=header,Symbols=self.LocalVar)
             ClassInstance.__processList__.append(proc)
 
     def extractFunctionsForEntity(self, ClassInstance, parent):

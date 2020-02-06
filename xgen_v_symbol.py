@@ -4,16 +4,49 @@ from .xgen_v_class import *
 from .xgen_simulation import *
 
 
+class v_symbol_converter(vhdl_converter_base):
+    def __init__(self,inc_str):
+        self.inc_str  = inc_str
+
+    def includes(self,obj, name,parent):
+        return self.inc_str
+
+
+    def recordMember(self,obj, name, parent,Inout=None):
+        if issubclass(type(parent),v_class):
+            return "  " + name + " : " +obj.type +"; \n"
+
+        return ""
+
+    def recordMemberDefault(self, obj,name,parent,Inout=None):
+        if issubclass(type(parent),v_class):
+            return name + " => " + obj.DefaultValue 
+
+        return ""
+
+    def getHeader(self, obj,name,parent):
+        if obj.vhdl_name:
+            name = obj.vhdl_name
+
+        if issubclass(type(parent),v_class):
+             return ""
+            
+        return name + " : " +obj.type +" := " +  obj.DefaultValue  + "; \n"
+
+    def getFuncArg(self,obj, name,parent):
+        return name + " : " + obj.type   
 
 class v_symbol(vhdl_base):
     def __init__(self, v_type, DefaultValue, Inout = InOut_t.Internal_t,includes="",value=None,varSigConst=varSig.variable_t):
+        super().__init__()
         if not varSigConst:
             varSigConst = getDefaultVarSig()
 
+        self.vhdl_conversion__= v_symbol_converter(includes)
         self.type = v_type
         self.DefaultValue = str(DefaultValue)
         self.Inout = Inout
-        self.inc = includes
+        self.inc = ""
         self.vhdl_name = None
         self.value = value
         self.nextValue  = value
@@ -41,8 +74,7 @@ class v_symbol(vhdl_base):
 
         return self.Inout == Inout
 
-    def getFuncArg(self,name,parent):
-        return name + " : " + self.type   
+
 
     def to_arglist(self,name,parent):
         inoutstr = InOut_t2str(self.Inout)
@@ -57,14 +89,7 @@ class v_symbol(vhdl_base):
             self.vhdl_name = name
 
 
-    def recordMember(self,name, parent,Inout=None):
-        
-        #self.set_vhdl_name(name)
 
-        if issubclass(type(parent),v_class):
-            return "  " + name + " : " +self.type +"; \n"
-
-        return ""
 
     def getType(self,Inout=None):
         return self.type
@@ -81,29 +106,14 @@ class v_symbol(vhdl_base):
         self.varSigConst = varSigConst
         
     
-    def includes(self, name,parent):
-        return self.inc
-    
-    
-    def getHeader(self, name,parent):
-        if self.vhdl_name:
-            name = self.vhdl_name
 
-        if issubclass(type(parent),v_class):
-             return ""
-            
-        return name + " : " +self.type +" := " +  self.DefaultValue  + "; \n"
+    
+    
+
     def get_type(self):
         return self.type
 
-    def recordMemberDefault(self, name, parent,Inout=None):
-        #if self.vhdl_name:
-        #    name = self.vhdl_name
-        
-        if issubclass(type(parent),v_class):
-            return name + " => " + self.DefaultValue 
 
-        return ""
 
     def __str__(self):
         if self.__Driver__ != None and str( self.__Driver__) != 'process':

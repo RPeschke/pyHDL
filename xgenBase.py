@@ -50,28 +50,43 @@ def set_isProcess(newStatus):
     gStatus["isProcess"] = newStatus
 
 
+
+
+class vhdl_converter_base:
+    def includes(self,obj, name,parent):
+        return ""
+
+    def recordMember(self,obj, name,parent,Inout=None):
+        return ""
+
+    def recordMemberDefault(self, obj,name,parent,Inout=None):
+        return "" 
+
+    def getHeader(self,obj, name,parent):
+        return ""
+    def getFuncArg(self,obj,name,parent):
+        return ""
+
+    def getBody(self,obj, name,parent):
+        return ""
+
 class vhdl_base0:
+    def __init__(self):
+        super().__init__()
+
+        self.vhdl_conversion__ = vhdl_converter_base()
+    
+    
     def set_simulation_param(self,module, name,writer):
         pass
 
+
 class vhdl_base(vhdl_base0):
-    def includes(self, name,parent):
-        return ""
 
-    def recordMember(self, name,parent,Inout=None):
-        return ""
+    def __init__(self):
+        super().__init__()
 
-    def recordMemberDefault(self, name,parent,Inout=None):
-        return "" 
 
-    def getHeader(self, name,parent):
-        return ""
-
-    def getFuncArg(self,name,parent):
-        return ""
-
-    def getBody(self, name,parent):
-        return ""
 
     def getName(self):
         return type(self).__name__
@@ -103,11 +118,6 @@ class vhdl_base(vhdl_base0):
             elif type(t).__name__ == "EnumMeta":
                 yield v_enum(t), x[0]
 
-    def __lshift__(self, rhs):
-        print("lshift")
-
-    def __rshift__(self, rhs):
-        print("rshift")
 
     def _sim_append_update_list(self,up):
         raise Exception("update not implemented")
