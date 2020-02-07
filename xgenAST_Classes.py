@@ -624,7 +624,11 @@ def body_LShift(astParser,Node):
     lhs =  astParser.Unfold_body(Node.left)
     if issubclass( type(lhs),vhdl_base):
         lhs = lhs.hdl_conversion__._vhdl__reasign_type(lhs)
-        rhs = rhs._vhdl__getValue(lhs,astParser)
+        if issubclass( type(rhs),vhdl_base):
+            rhs = rhs.hdl_conversion__._vhdl__getValue(rhs, lhs,astParser)
+        else:
+            rhs = rhs._vhdl__getValue(lhs,astParser)
+            
         if astParser.ContextName[-1] == 'process' and issubclass( type(rhs),vhdl_base):
             rhs.__Driver__ = 'process'
 
