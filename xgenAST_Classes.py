@@ -160,7 +160,7 @@ class v_process_body_Def(v_ast_base):
         ret =  "("+ str(self.dec[0].argList[0])+ ") is\n"
         
         for x in self.LocalVar:
-            ret += x.hdl_conversion__._vhdl__DefineSymbol(x, "variable")
+            ret += x.hdl_conversion__.get_process_header(x)
         ret += "begin\n  " 
         ret += "if " + self.dec[0].name +"(" + str(self.dec[0].argList[0])+") then \n"
         ret += pull
@@ -628,7 +628,7 @@ def body_LShift(astParser,Node):
             rhs = rhs.hdl_conversion__._vhdl__getValue(rhs, lhs,astParser)
         else:
             rhs = rhs._vhdl__getValue(lhs,astParser)
-            
+
         if astParser.ContextName[-1] == 'process' and issubclass( type(rhs),vhdl_base):
             rhs.__Driver__ = 'process'
 

@@ -203,7 +203,7 @@ class xgenAST:
                     continue
                 if  hasattr(x, 'varSigConst') and x.varSigConst == varSig.variable_t:
                     continue
-                header += x.hdl_conversion__._vhdl__DefineSymbol(x,"signal")
+                header += x.hdl_conversion__.get_architecture_header(x)
             
             proc = v_Arch(body=str(body),Header=header,Symbols=self.LocalVar)
             ClassInstance.__processList__.append(proc)

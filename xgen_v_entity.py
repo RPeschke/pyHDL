@@ -169,25 +169,8 @@ class v_entiy2text:
             ret+="port(\n"
             for x in members:
                 sym = x["symbol"]
-                if sym.Inout == InOut_t.Internal_t:
-                    continue
-                elif sym.Inout == InOut_t.input_t or sym.Inout == InOut_t.output_t:
-                    ret +=start+ x["name"] + " : "+ InOut_t2str(sym.Inout) + " " + sym.type + " := " + sym.DefaultValue 
-                    start = ";\n  "
-                elif sym.Inout == InOut_t.Slave_t:
-                    types = sym.getTypes()
-                    #ret += start+"-- " +x["name"]+" \n  "
-                    ret += start+x["name"] + "_m2s : in  " +types["m2s"] + " := " + types["m2s"] + "_null"
-                    start = ";\n  "   
-                    ret +=start+ x["name"] + "_s2m : out " +types["s2m"] + " := " + types["s2m"] + "_null"
-                    
-                elif sym.Inout == InOut_t.Master_t:
-                    types = sym.getTypes()
-                    #ret += "-- <" +x["name"]+">\n  "
-                    ret +=start+ x["name"] + "_m2s : out " +types["m2s"] + " := " + types["m2s"] + "_null"
-                    start = ";\n  " 
-                    ret +=start+ x["name"] + "_s2m : in  " +types["s2m"] + " := " + types["s2m"] + "_null"
-                    #ret += "-- </" +x["name"]+">\n  "
+                ret += start + sym.hdl_conversion__.get_port_list(sym)
+                start = ";\n  "
         
             ret+="\n);\n"
         ret += "end entity;\n\n"
@@ -200,22 +183,26 @@ class v_entiy2text:
         for x in members:
             sym = x["symbol"]
             sym.set_vhdl_name(x["name"])
-            if sym.Inout == InOut_t.Internal_t:
-                ret += "  " + sym._vhdl__DefineSymbol("signal")
+            ret += "  " + sym.hdl_conversion__.get_architecture_header(sym)
         
         for x in self.entity.__processList__:
-            ret += x.hdl_conversion__.getHeader(x,"",None)
+            ret += x.hdl_conversion__.get_architecture_header(x)
         return ret 
 
+
+
+    def get_architecture_body(self):
+        ret = ""
+        for x in self.entity.__processList__:
+            ret += x.hdl_conversion__.get_architecture_body(x)
+        return ret 
 
     def get_archhitecture(self):
 
         ret = "architecture rtl of "+ self.entity._name +" is\n\n"
         ret += self.get_archhitecture_header()
         ret += "\nbegin\n"
-        for x in self.entity.__processList__:
-            ret += x.hdl_conversion__.getBody(x,"",None)
-
+        ret += self.get_architecture_body()
         ret += "\nend architecture;\n"
         return ret 
 

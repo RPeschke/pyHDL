@@ -149,10 +149,16 @@ class v_Arch_converter(vhdl_converter_base):
             inc_str +=  x.hdl_conversion__.includes(x, x.vhdl_name,obj)
         return inc_str
 
+    def get_architecture_header(self, obj):
+        return obj.Header
+    def get_architecture_body(self, obj):
+        return  obj.body
     def getHeader(self, obj, name, parent):
+        print("getHeader is dep")
         return obj.Header
 
     def getBody(self,obj, name,parent):
+        print("getHeader is dep")
         return obj.body
 
 class v_Arch(vhdl_base):

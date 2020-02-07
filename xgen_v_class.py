@@ -236,6 +236,7 @@ class v_class_converter(vhdl_converter_base):
         return ret
     
     def _vhdl__DefineSymbol(self, obj ,VarSymb=None):
+        print("_vhdl__DefineSymbol is deprecated")
         if not VarSymb:
             VarSymb = get_varSig(obj.varSigConst)
 
@@ -249,6 +250,48 @@ class v_class_converter(vhdl_converter_base):
             return ret
 
         return VarSymb +" " +str(obj) + " : " +obj.type +" := " + obj.type+"_null;\n"
+    
+
+    def get_architecture_header(self, obj):
+        if obj.Inout != InOut_t.Internal_t:
+            return ""
+        
+        if obj.varSigConst != varSig.signal_t or obj.varSigConst != varSig.signal_t:
+            return ""
+
+        VarSymb = get_varSig(obj.varSigConst)
+
+        if obj.__Driver__ and str( obj.__Driver__) != 'process':
+            return ""
+        t = obj.getTypes()
+        if len(t) ==3 and obj.__v_classType__ ==  v_classType_t.transition_t:
+            ret = ""
+            ret += VarSymb + " " +str(obj) + "_m2s : " + t["m2s"] +" := " + t["m2s"]+"_null;\n"
+            ret += VarSymb + " " +str(obj) + "_s2m : " + t["s2m"] +" := " + t["s2m"]+"_null;\n"
+            return ret
+
+        return VarSymb +" " +str(obj) + " : " +obj.type +" := " + obj.type+"_null;\n"
+        
+    def get_port_list(self,obj):
+        ret = ""
+        if obj.Inout == InOut_t.Internal_t:
+            return ""
+        
+        if obj.varSigConst != varSig.signal_t:
+            return ""
+        
+        if obj.Inout == InOut_t.Slave_t:
+            types = obj.getTypes()
+            ret += obj.vhdl_name + "_m2s : in  " +types["m2s"] + " := " + types["m2s"] + "_null;\n  "
+            ret += obj.vhdl_name + "_s2m : out " +types["s2m"] + " := " + types["s2m"] + "_null"
+                    
+        elif obj.Inout == InOut_t.Master_t:
+            types = obj.getTypes()
+            ret += obj.vhdl_name + "_m2s : out " +types["m2s"] + " := " + types["m2s"] + "_null;\n  "
+            ret += obj.vhdl_name + "_s2m : in  " +types["s2m"] + " := " + types["s2m"] + "_null"
+            
+        return ret
+
 
     def _vhdl_make_port(self, obj, name):
         t = obj.getTypes()

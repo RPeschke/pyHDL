@@ -104,10 +104,43 @@ class vhdl_converter_base:
             return str(obj)
         return name+"(" +  str(obj) + ")" 
 
+    
 
     def _vhdl__DefineSymbol(self,obj, VarSymb="variable"):
+        print("_vhdl__DefineSymbol is deprecated")
         return VarSymb +" " +str(obj) + " : " +obj.type +" := " + obj.type+"_null;\n"
         #return " -- No Generic symbol definition for object " + self.getName()
+
+    def get_architecture_header(self, obj):
+        if obj.Inout != InOut_t.Internal_t:
+            return ""
+        
+        if obj.varSigConst != varSig.signal_t or obj.varSigConst != varSig.signal_t:
+            return ""
+
+        VarSymb = get_varSig(obj.varSigConst)
+
+        return VarSymb +" " +str(obj) + " : " +obj.type +" := " + obj.type+"_null;\n"
+        
+    def get_architecture_body(self, obj):
+        return ""
+
+
+    def get_port_list(self,obj):
+        return ""
+
+    def get_process_header(self,obj):
+        if obj.Inout != InOut_t.Internal_t:
+            return ""
+        
+        if obj.varSigConst != varSig.variable_t:
+            return ""
+
+        VarSymb = get_varSig(obj.varSigConst)
+
+        return VarSymb +" " +str(obj) + " : " +obj.type +" := " + obj.type+"_null;\n"
+
+
 
     def _vhdl__make_constant(self, obj, name):
         return str(obj) + " := " +  str(rhs) +";\n"
@@ -117,6 +150,7 @@ class vhdl_converter_base:
 
     def _vhdl__push(self,obj):
         return ""
+
 
 class vhdl_base0:
     def __init__(self):

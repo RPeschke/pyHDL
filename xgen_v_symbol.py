@@ -74,7 +74,7 @@ class v_symbol_converter(vhdl_converter_base):
         return "pyhdl_to_bool(" + str(obj) + ") "
 
     def _vhdl__DefineSymbol(self,obj, VarSymb=None):
-        
+        print("_vhdl__DefineSymbol is deprecated")
         if not VarSymb:
             VarSymb = get_varSig(obj.varSigConst)
 
@@ -84,6 +84,34 @@ class v_symbol_converter(vhdl_converter_base):
 
             
         return  VarSymb+ " " + name + " : " +obj.type +" := " +  obj.DefaultValue  + "; \n"
+    def get_architecture_header(self, obj):
+
+        if obj.Inout != InOut_t.Internal_t:
+            return ""
+        
+        if obj.varSigConst == varSig.variable_t:
+            return ""
+        
+        
+        VarSymb = get_varSig(obj.varSigConst)
+
+        if  obj.__Driver__ != None and str(obj.__Driver__ ) != 'process':
+            return ""
+        name = obj.vhdl_name
+
+            
+        return  VarSymb+ " " + name + " : " +obj.type +" := " +  obj.DefaultValue  + "; \n"   
+
+    def get_port_list(self,obj):
+        if obj.Inout == InOut_t.Internal_t:
+            return ""
+        
+        if obj.varSigConst != varSig.signal_t:
+            return ""
+        
+        ret = obj.vhdl_name + " : "+ InOut_t2str(obj.Inout) + " " + obj.type + " := " + obj.DefaultValue
+        return ret
+
 
     def _vhdl__make_constant(self,obj, name):
         return "constant " + name + " : " +  obj.type +" := " + str(obj.DefaultValue) +";\n"

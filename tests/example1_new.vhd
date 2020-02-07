@@ -19,7 +19,7 @@ end entity;
 
 architecture rtl of rollingCounter is
 
-signal counter : std_logic_vector(32 -1 downto 0) := (others => '0'); 
+      signal counter : std_logic_vector(32 -1 downto 0) := (others => '0'); 
 
 begin
 
