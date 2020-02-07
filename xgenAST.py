@@ -166,7 +166,7 @@ class xgenAST:
     def get_local_var_def(self):
         ret =""
         for x in self.LocalVar:
-            ret += x._vhdl__DefineSymbol()
+            ret += x.vhdl_conversion__._vhdl__DefineSymbol(x)
         
         return ret
 
@@ -203,7 +203,7 @@ class xgenAST:
                     continue
                 if  hasattr(x, 'varSigConst') and x.varSigConst == varSig.variable_t:
                     continue
-                header += x._vhdl__DefineSymbol("signal")
+                header += x.vhdl_conversion__._vhdl__DefineSymbol(x,"signal")
             
             proc = v_Arch(body=str(body),Header=header,Symbols=self.LocalVar)
             ClassInstance.__processList__.append(proc)
@@ -237,7 +237,7 @@ class xgenAST:
             for x in self.LocalVar:
                 if x.type == "undef":
                     continue
-                header += x._vhdl__DefineSymbol("variable")
+                header += x.vhdl_conversion__._vhdl__DefineSymbol(x, "variable")
 
             pull =""
             for x in self.LocalVar:

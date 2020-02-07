@@ -70,6 +70,54 @@ class vhdl_converter_base:
     def getBody(self,obj, name,parent):
         return ""
 
+    def _vhdl_make_port(self, obj, name):
+        return  name + " => " + str(obj)
+
+
+    def _vhdl_get_adtribute(self,obj, attName):
+        return str(obj) + "." +str(attName)
+
+    def _vhdl_slice(self,obj, sl):
+        raise Exception("Not implemented")
+        return obj
+    
+    def _vhdl__compare(self,obj, ops, rhs):
+        return str(obj) + " " +ops2str(ops)+" " + str(rhs)
+
+    def _vhdl__add(self,obj,args):
+        return str(obj) + " + " + str(args)
+
+    def _vhdl__to_bool(self,obj, astParser):
+        return "pyhdl_to_bool(" + str(obj) + ") "
+
+    def _vhdl__getValue(self,obj, ReturnToObj=None,astParser=None):
+        return obj
+
+    def _vhdl__reasign_type(self, obj ):
+        return obj
+
+    def _vhdl__reasign(self, obj, rhs, context=None):
+        return str(obj) + " := " +  str(rhs)
+
+    def _vhdl__call_member_func(self, obj, name, args):
+        if name =="Connect":
+            return str(obj)
+        return name+"(" +  str(obj) + ")" 
+
+
+    def _vhdl__DefineSymbol(self,obj, VarSymb="variable"):
+        return VarSymb +" " +str(obj) + " : " +obj.type +" := " + obj.type+"_null;\n"
+        #return " -- No Generic symbol definition for object " + self.getName()
+
+    def _vhdl__make_constant(self, obj, name):
+        return str(obj) + " := " +  str(rhs) +";\n"
+
+    def _vhdl__Pull(self,obj):
+        return ""
+
+    def _vhdl__push(self,obj):
+        return ""
+
 class vhdl_base0:
     def __init__(self):
         super().__init__()
@@ -80,6 +128,17 @@ class vhdl_base0:
     def set_simulation_param(self,module, name,writer):
         pass
 
+    def _sim_get_push_pull(self):
+        ret = {
+            "_onPull" : None,
+            "_onPush" : None
+        }
+        if hasattr(self, "_onPull"):
+            ret["_onPull"] =  getattr(self, '_onPull')
+        if hasattr(self, "_onPush"):
+            ret["_onPush"] =  getattr(self, '_onPush')
+        
+        return ret 
 
 class vhdl_base(vhdl_base0):
 
@@ -122,67 +181,15 @@ class vhdl_base(vhdl_base0):
     def _sim_append_update_list(self,up):
         raise Exception("update not implemented")
   
-    def _vhdl__reasign(self, rhs, context=None):
-        return str(self) + " := " +  str(rhs)
 
-    def _vhdl__reasign_type(self):
-        return self
 
-    def _vhdl__getValue(self,ReturnToObj=None,astParser=None):
-        return self
 
-    def _vhdl__make_constant(self, name):
-        return str(self) + " := " +  str(rhs) +";\n"
 
-    def _vhdl__call_member_func(self, name, args):
-        if name =="Connect":
-            return str(self)
-        return name+"(" +  str(self) + ")" 
-
-    def _vhdl__to_bool(self,astParser):
-        return "pyhdl_to_bool(" + str(self) + ") "
-
-    def _vhdl__add(self,args):
-        return str(self) + " + " + str(args)
-
-    def _vhdl__compare(self, ops, rhs):
-        return str(self) + " " +ops2str(ops)+" " + str(rhs)
-
-    def _vhdl__DefineSymbol(self,VarSymb="variable"):
-        return VarSymb +" " +str(self) + " : " +self.type +" := " + self.type+"_null;\n"
-        #return " -- No Generic symbol definition for object " + self.getName()
-
-    
-    def _vhdl__Pull(self):
-        return ""
-
-    def _vhdl__push(self):
-        return ""
-
-    def _vhdl_slice(self,sl):
-        raise Exception("Not implemented")
-        return self
-
-    def _vhdl_get_adtribute(self,attName):
-        return str(self) + "." +str(attName)
-
-    def _vhdl_make_port(self, name):
-        return  name + " => " + str(self)
 
     def _connect(self,rhs):
         raise Exception("not implemented")
     
-    def _sim_get_push_pull(self):
-        ret = {
-            "_onPull" : None,
-            "_onPush" : None
-        }
-        if hasattr(self, "_onPull"):
-            ret["_onPull"] =  getattr(self, '_onPull')
-        if hasattr(self, "_onPush"):
-            ret["_onPush"] =  getattr(self, '_onPush')
-        
-        return ret 
+
 
     def _sim_get_value(self):
         raise Exception("not implemented")
@@ -382,7 +389,7 @@ class v_const(vhdl_base):
         
         if issubclass(type(self.symbol),vhdl_base):
 
-            ret += self.symbol._vhdl__make_constant(name) 
+            ret += self.symbol.vhdl_conversion__._vhdl__make_constant(self.symbol, name) 
 
         else:
             raise Exception("unknown type")

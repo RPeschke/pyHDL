@@ -22,12 +22,22 @@ class axisStream(v_class):
     
 
             
+class axisStream_slave_converter(v_class_converter):
+    def _vhdl__to_bool(self, obj, astParser):
+        return "isReceivingData(" + str(obj) + ") "
+
+    def _vhdl__getValue(self,obj, ReturnToObj=None,astParser=None):
+        buff = v_copy(obj.rx.data)
+        buff.vhdl_name = str(obj) + "_buff"
+        astParser.LocalVar.append(buff)
+        astParser.AddStatementBefore("read_data(" +str(obj) +", " +str(buff) +' ) ')
+        return buff
 
 
 class axisStream_slave(v_class):
     def __init__(self, Axi_in):
         super().__init__(Axi_in.type+"_slave")
-        
+        self.vhdl_conversion__ =axisStream_slave_converter()
         self.rx = port_Slave(Axi_in)
         self.rx  << Axi_in
      
@@ -95,19 +105,17 @@ class axisStream_slave(v_class):
 
 
 
-    def _vhdl__to_bool(self, astParser):
-        return "isReceivingData(" + str(self) + ") "
-
-    def _vhdl__getValue(self,ReturnToObj=None,astParser=None):
-        buff = v_copy(self.rx.data)
-        buff.vhdl_name = str(self) + "_buff"
-        astParser.LocalVar.append(buff)
-        astParser.AddStatementBefore("read_data(" +str(self) +", " +str(buff) +' ) ')
-        return buff
+class axisStream_master_converter(v_class_converter):
+    def _vhdl__to_bool(self, obj, astParser):
+        return "ready_to_send(" + str(obj) + ") "
+    
+    def _vhdl__reasign(self,obj, rhs):
+        return "send_data( "+str(obj) + ", " +  str(rhs)+")"
 
 class axisStream_master(v_class):
     def __init__(self, Axi_Out):
         super().__init__(Axi_Out.type + "_master")
+        self.vhdl_conversion__ =axisStream_master_converter()
         self.tx = port_Master(Axi_Out)
         
         self.tx.data.__Driver__ = None
@@ -154,11 +162,7 @@ class axisStream_master(v_class):
         
         return self.ready_to_send()
 
-    def _vhdl__to_bool(self, astParser):
-        return "ready_to_send(" + str(self) + ") "
-    
-    def _vhdl__reasign(self, rhs):
-        return "send_data( "+str(self) + ", " +  str(rhs)+")"
+
 
 class axisStream_master_with_strean_counter(v_class):
     def __init__(self, Axi_in):

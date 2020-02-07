@@ -146,7 +146,7 @@ class v_entiy2text:
         bufffer = ""
         members= self.getMember()
         for x in members:
-            bufffer += x.vhdl_conversion__.includes(x["symbol"],x["name"],None)
+            bufffer += x["symbol"].vhdl_conversion__.includes(x["symbol"],x["name"],None)
 
         for x in self.entity.__processList__:
             bufffer += x.vhdl_conversion__.includes(x,"",None)
@@ -247,6 +247,7 @@ class v_entiy2text:
 
 class v_entity_list(vhdl_base0):
     def __init__(self):
+        super().__init__()
         self.nexted_entities = list()
         self._StreamOut = None
         self._StreamIn  = None
@@ -332,10 +333,10 @@ class v_entity_list(vhdl_base0):
             rhs_StreamIn = destination["symbol"]._StreamIn
             lhs_StreamOut = source["symbol"]._StreamOut
             if issubclass( type(lhs_StreamOut),vhdl_base) and issubclass( type(rhs_StreamIn),vhdl_base):
-                rhs_StreamIn = rhs_StreamIn._vhdl__reasign_type()
-                lhs_StreamOut = lhs_StreamOut._vhdl__getValue(rhs_StreamIn,self.astParser)
+                rhs_StreamIn = rhs_StreamIn.vhdl_conversion__._vhdl__reasign_type(rhs_StreamIn)
+                lhs_StreamOut = lhs_StreamOut.vhdl_conversion__._vhdl__getValue(lhs_StreamOut, rhs_StreamIn,self.astParser)
                 
-                ret +=start+rhs_StreamIn._vhdl__reasign(lhs_StreamOut)
+                ret +=start+rhs_StreamIn.vhdl_conversion__._vhdl__reasign(rhs_StreamIn, lhs_StreamOut)
                 start = ";\n  "
 
         return ret
@@ -349,18 +350,37 @@ class v_entity_list(vhdl_base0):
             rhs_StreamIn = destination["symbol"]._StreamIn
             lhs_StreamOut = source["symbol"]._StreamOut
             if issubclass( type(lhs_StreamOut),vhdl_base) and issubclass( type(rhs_StreamIn),vhdl_base):
-                rhs_StreamIn = rhs_StreamIn._vhdl__reasign_type()
-                lhs_StreamOut = lhs_StreamOut._vhdl__getValue(rhs_StreamIn,self.astParser)
+                rhs_StreamIn = rhs_StreamIn.vhdl_conversion__._vhdl__reasign_type(rhs_StreamIn)
+                lhs_StreamOut = lhs_StreamOut.vhdl_conversion__._vhdl__getValue(lhs_StreamOut, rhs_StreamIn,self.astParser)
                 
-                ret +=start+rhs_StreamIn._vhdl__reasign(lhs_StreamOut)
+                ret +=start+rhs_StreamIn.vhdl_conversion__._vhdl__reasign(rhs_StreamIn, lhs_StreamOut)
                 start = ";\n  "
 
         return ret
 
-                
+class v_entity_converter(vhdl_converter_base):
+    def _vhdl_get_adtribute(self,obj, attName):
+        if obj.vhdl_name:
+            return obj.vhdl_name +"_"+ attName
+        
+        return attName
+
+    def _vhdl__DefineSymbol(self, obj, VarSymb="variable"):
+        ret =""
+        mem = v_entity_getMember(obj)
+        for x in mem:
+            if not x["symbol"].vhdl_name:
+                x["symbol"].set_vhdl_name(obj.vhdl_name +"_"+ x["name"])
+
+            ret += x["symbol"].vhdl_conversion__._vhdl__DefineSymbol(x["symbol"], VarSymb)
+
+        return ret 
 
 class v_entity(vhdl_base0):
     def __init__(self,srcFileName=None):
+        super().__init__()
+
+        self.vhdl_conversion__= v_entity_converter()
         setDefaultVarSig(varSig.signal_t)
         name = type(self).__name__
         self._name = name
@@ -451,25 +471,12 @@ class v_entity(vhdl_base0):
         set_isConverting2VHDL(s)
         return ret.strip()
 
-    def _vhdl_get_adtribute(self,attName):
-        if self.vhdl_name:
-            return self.vhdl_name +"_"+ attName
-        
-        return attName
+
 
     def set_vhdl_name(self,name):
         self.vhdl_name = name   
 
-    def _vhdl__DefineSymbol(self,VarSymb="variable"):
-        ret =""
-        mem = v_entity_getMember(self)
-        for x in mem:
-            if not x["symbol"].vhdl_name:
-                x["symbol"].set_vhdl_name(self.vhdl_name +"_"+ x["name"])
 
-            ret += x["symbol"]._vhdl__DefineSymbol(VarSymb)
-
-        return ret 
 
     def _vhdl__create(self, name):
         ret = str(name) +" : entity work." + self._name+" port map ( \n"
@@ -480,7 +487,7 @@ class v_entity(vhdl_base0):
             if not x["symbol"].vhdl_name:
                 x["symbol"].set_vhdl_name(self.vhdl_name+"_"+ x["name"])
 
-            ret +=start + x["symbol"]._vhdl_make_port( x["name"] )
+            ret +=start + x["symbol"].vhdl_conversion__._vhdl_make_port(x["symbol"], x["name"] )
             start = ",\n    "
 
         ret += "\n)"

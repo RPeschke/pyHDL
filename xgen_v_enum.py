@@ -3,6 +3,7 @@ from .xgen_v_class import *
 
 class v_enum(vhdl_base):
     def __init__(self,EnumIn,EnumVal=None,name=None):
+        super().__init__()
         if type(EnumIn).__name__ == "EnumMeta":
             Enumtype = EnumIn
         elif type(type(EnumIn)).__name__ == "EnumMeta":
@@ -21,8 +22,7 @@ class v_enum(vhdl_base):
         self.Inout = InOut_t.Internal_t
         self.vhdl_name = None
     
-    def _vhdl__reasign(self, rhs):
-        return str(self) + " := " +  str(rhs)  
+
 
         
     def set_vhdl_name(self,name):

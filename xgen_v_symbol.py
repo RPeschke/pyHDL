@@ -36,6 +36,98 @@ class v_symbol_converter(vhdl_converter_base):
     def getFuncArg(self,obj, name,parent):
         return name + " : " + obj.type   
 
+    def _vhdl_slice(self,obj,sl):
+        if "std_logic_vector" in self.type:
+            ret = v_sl(obj.Inout)
+            ret.vhdl_name = obj.vhdl_name+"("+str(sl)+")"
+            return ret
+
+        raise Exception("unexpected type")
+
+
+    def _vhdl__compare(self,obj, ops, rhs):
+        if obj.type == "std_logic":
+            value = str(rhs).lower()
+            if value == "true":
+                rhs = "1"
+            elif value == "false":
+                rhs = "0"            
+
+            return str(obj) + " "+ ops2str(ops)+" '" +  str(rhs) +"'"
+        
+        elif "std_logic_vector" in obj.type:
+            return str(obj) + " "+ ops2str(ops)+" " +   str(rhs)
+        
+
+        return str(obj) + " "+ ops2str(ops)+" " +   str(rhs)
+
+    def _vhdl__to_bool(self,obj, astParser):
+        if obj.type == "std_logic":
+            return str(obj) + " = '1'"
+        elif "std_logic_vector" in obj.type:
+            return str(obj) + " > 1"
+        elif obj.type == "boolean":
+            return str(obj)
+        elif obj.type == "integer":
+            return str(obj) + " > 0"
+
+        return "pyhdl_to_bool(" + str(obj) + ") "
+
+    def _vhdl__DefineSymbol(self,obj, VarSymb=None):
+        
+        if not VarSymb:
+            VarSymb = get_varSig(obj.varSigConst)
+
+        if  obj.__Driver__ != None and str(obj.__Driver__ ) != 'process':
+            return ""
+        name = obj.vhdl_name
+
+            
+        return  VarSymb+ " " + name + " : " +obj.type +" := " +  obj.DefaultValue  + "; \n"
+
+    def _vhdl__make_constant(self,obj, name):
+        return "constant " + name + " : " +  obj.type +" := " + str(obj.DefaultValue) +";\n"
+
+
+    def _vhdl__reasign(self, obj, rhs, context=None):
+        if issubclass(type(rhs),vhdl_base0)  and str( obj.__Driver__) != 'process':
+            obj.__Driver__ = rhs
+        
+        if isProcess():
+            obj.__Driver__ = 'process'
+
+        asOp = get_assiment_op(obj.varSigConst)
+        
+        if obj.type == "std_logic":
+            if type(rhs).__name__=="v_symbol":
+                return str(obj) + asOp + str(rhs.vhdl_conversion__._vhdl__getValue(rhs, obj.type)) 
+            
+            return str(obj) + asOp+  str(rhs) 
+        elif "std_logic_vector" in obj.type:
+            if str(rhs) == '0':
+                return str(obj) + asOp+ " (others => '0')"
+            elif  issubclass(type(rhs),vhdl_base):
+                return str(obj) + asOp +  str(rhs.vhdl_conversion__._vhdl__getValue(rhs, obj.type)) 
+            elif  type(rhs).__name__=="v_Num":
+                return  """{dest} {asOp} std_logic_vector(to_unsigned({src}, {dest}'length))""".format(
+                    dest=str(obj),
+                    src = str(rhs.value),
+                    asOp=asOp
+                )
+        elif obj.type == "integer":
+            if str(rhs) == '0':
+                return str(obj) + asOp+ " 0"
+            elif type(rhs).__name__ == "str":
+                return str(obj) + asOp+ str(rhs)
+                
+            elif rhs.type == "integer":
+                return str(obj) + asOp+ str(rhs)
+            elif "std_logic_vector" in rhs.type:
+                return str(obj) + asOp +" to_integer(signed("+ str(rhs)+"))"
+
+        return str(obj) +asOp +  str(rhs)
+
+
 class v_symbol(vhdl_base):
     def __init__(self, v_type, DefaultValue, Inout = InOut_t.Internal_t,includes="",value=None,varSigConst=varSig.variable_t):
         super().__init__()
@@ -116,10 +208,10 @@ class v_symbol(vhdl_base):
 
 
     def __str__(self):
-        if self.__Driver__ != None and str( self.__Driver__) != 'process':
-            ret =  str(self.__Driver__)
-            if ret :
-                return ret
+        #if self.__Driver__ != None and str( self.__Driver__) != 'process':
+        #    ret =  str(self.__Driver__)
+        #    if ret :
+        #        return ret
 
         if self.vhdl_name:
             return self.vhdl_name
@@ -246,95 +338,16 @@ class v_symbol(vhdl_base):
 
 
 
-    def _vhdl__reasign(self, rhs, context=None):
-        if issubclass(type(rhs),vhdl_base0)  and str( self.__Driver__) != 'process':
-            self.__Driver__ = rhs
-        
-        if isProcess():
-            self.__Driver__ = 'process'
-
-        asOp = get_assiment_op(self.varSigConst)
-        
-        if self.type == "std_logic":
-            if type(rhs).__name__=="v_symbol":
-                return str(self) + asOp + str(rhs._vhdl__getValue(self.type)) 
-            
-            return str(self) + asOp+  str(rhs) 
-        elif "std_logic_vector" in self.type:
-            if str(rhs) == '0':
-                return str(self) + asOp+ " (others => '0')"
-            elif  issubclass(type(rhs),vhdl_base):
-                return str(self) + asOp +  str(rhs._vhdl__getValue(self.type)) 
-            elif  type(rhs).__name__=="v_Num":
-                return  """{dest} {asOp} std_logic_vector(to_unsigned({src}, {dest}'length))""".format(
-                    dest=str(self),
-                    src = str(rhs.value),
-                    asOp=asOp
-                )
-        elif self.type == "integer":
-            if str(rhs) == '0':
-                return str(self) + asOp+ " 0"
-            elif type(rhs).__name__ == "str":
-                return str(self) + asOp+ str(rhs)
-                
-            elif rhs.type == "integer":
-                return str(self) + asOp+ str(rhs)
-            elif "std_logic_vector" in rhs.type:
-                return str(self) + asOp +" to_integer(signed("+ str(rhs)+"))"
-
-        return str(self) +asOp +  str(rhs)
-
-    def _vhdl__compare(self, ops, rhs):
-        if self.type == "std_logic":
-            value = str(rhs).lower()
-            if value == "true":
-                rhs = "1"
-            elif value == "false":
-                rhs = "0"            
-
-            return str(self) + " "+ ops2str(ops)+" '" +  str(rhs) +"'"
-        
-        elif "std_logic_vector" in self.type:
-            return str(self) + " "+ ops2str(ops)+" " +   str(rhs)
-        
-
-        return str(self) + " "+ ops2str(ops)+" " +   str(rhs)
-
-    def _vhdl__make_constant(self, name):
-        return "constant " + name + " : " +  self.type +" := " + str(self.DefaultValue) +";\n"
 
 
-    def _vhdl__to_bool(self,astParser):
-        if self.type == "std_logic":
-            return str(self) + " = '1'"
-        elif "std_logic_vector" in self.type:
-            return str(self) + " > 1"
-        elif self.type == "boolean":
-            return str(self)
-        elif self.type == "integer":
-            return str(self) + " > 0"
 
-        return "pyhdl_to_bool(" + str(self) + ") "
 
-    def _vhdl__DefineSymbol(self,VarSymb=None):
-        
-        if not VarSymb:
-            VarSymb = get_varSig(self.varSigConst)
 
-        if  self.__Driver__ != None and str(self.__Driver__ ) != 'process':
-            return ""
-        name = self.vhdl_name
 
-            
-        return  VarSymb+ " " + name + " : " +self.type +" := " +  self.DefaultValue  + "; \n"
 
-    def _vhdl_slice(self,sl):
-        if "std_logic_vector" in self.type:
-            ret = v_sl(self.Inout)
-            ret.vhdl_name = self.vhdl_name+"("+str(sl)+")"
-            return ret
 
-        raise Exception("unexpected type")
+
+
 
 
 slv_includes = """

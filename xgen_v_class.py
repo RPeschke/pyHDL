@@ -101,6 +101,77 @@ class v_class_converter(vhdl_converter_base):
         ret += "-------------------------------------------------------------------------\n\n\n"
         return ret
     
+    def _vhdl__DefineSymbol(self, obj ,VarSymb=None):
+        if not VarSymb:
+            VarSymb = get_varSig(obj.varSigConst)
+
+        if obj.__Driver__ and str( obj.__Driver__) != 'process':
+            return ""
+        t = obj.getTypes()
+        if len(t) ==3 and obj.__v_classType__ ==  v_classType_t.transition_t:
+            ret = ""
+            ret += VarSymb + " " +str(obj) + "_m2s : " + t["m2s"] +" := " + t["m2s"]+"_null;\n"
+            ret += VarSymb + " " +str(obj) + "_s2m : " + t["s2m"] +" := " + t["s2m"]+"_null;\n"
+            return ret
+
+        return VarSymb +" " +str(obj) + " : " +obj.type +" := " + obj.type+"_null;\n"
+
+    def _vhdl_make_port(self, obj, name):
+        t = obj.getTypes()
+        if len(t) ==3 and obj.__v_classType__ ==  v_classType_t.transition_t:
+            ret = ""
+            ret += name + "_m2s => " + str(obj)+"_m2s, \n    "
+            ret += name + "_s2m => " + str(obj)+"_s2m"
+            return ret
+            
+        return  name + " => " + str(obj)
+
+
+    def _vhdl__Pull(self,obj):
+        args = ""
+        for x in obj.getMemberArgsImpl(InOut_t.input_t,""):
+            
+            args += ", " + x["vhdl_name"]
+
+        return "    pull( " +str(obj) +args+");\n"
+
+    def _vhdl__push(self,obj):
+        args = ""
+        for x in obj.getMemberArgsImpl(InOut_t.output_t,""):
+            
+            args += ", " + x["vhdl_name"]
+
+        return  "    push( " +str(obj) +args+");\n"
+
+
+  def _vhdl__reasign(self, obj, rhs, context=None):
+        
+        asOp = get_assiment_op(obj.varSigConst)
+        if obj.Inout == InOut_t.Slave_t:
+            raise Exception("cannot assign to slave")
+        elif obj.Inout == InOut_t.input_t:
+            raise Exception("cannot assign to input")
+        
+        if rhs.Inout == InOut_t.Master_t:
+            raise Exception("cannot read from Master")
+        elif rhs.Inout == InOut_t.output_t:
+            raise Exception("cannot read from Output")
+
+        if rhs.type != obj.type:
+            raise Exception("cannot assigne different types.", str(obj), rhs.type, obj.type )
+
+
+        t = obj.getTypes()
+        if len(t) ==3 and obj.__v_classType__ ==  v_classType_t.transition_t:
+            ret ="---------------------------------------------------------------------\n--  " + str(obj) +" << " + str (rhs)+"\n" 
+            
+            ret += obj.get_vhdl_name(InOut_t.output_t) + asOp + rhs.get_vhdl_name(InOut_t.output_t) +";\n" 
+            ret += rhs.get_vhdl_name(InOut_t.input_t) + asOp + obj.get_vhdl_name(InOut_t.input_t)
+            return ret 
+
+        return str(obj) + asOp +  str(rhs)
+
+
 
 class v_class(vhdl_base):
 
@@ -515,13 +586,6 @@ class v_class(vhdl_base):
         return str(self.value)
 
 
-    def _vhdl__Pull(self):
-        args = ""
-        for x in self.getMemberArgsImpl(InOut_t.input_t,""):
-            
-            args += ", " + x["vhdl_name"]
-
-        return "    pull( " +str(self) +args+");\n"
 
     def _connect(self,rhs):
         if self.Inout != rhs.Inout and self.Inout != InOut_t.Internal_t and rhs.Inout != InOut_t.Internal_t and rhs.Inout != InOut_t.Slave_t and self.Inout != InOut_t.Master_t:
@@ -551,65 +615,11 @@ class v_class(vhdl_base):
         self._connect(rhs)
 
 
-    def _vhdl__reasign(self, rhs, context=None):
-        
-        asOp = get_assiment_op(self.varSigConst)
-        if self.Inout == InOut_t.Slave_t:
-            raise Exception("cannot assign to slave")
-        elif self.Inout == InOut_t.input_t:
-            raise Exception("cannot assign to input")
-        
-        if rhs.Inout == InOut_t.Master_t:
-            raise Exception("cannot read from Master")
-        elif rhs.Inout == InOut_t.output_t:
-            raise Exception("cannot read from Output")
-
-        if rhs.type != self.type:
-            raise Exception("cannot assigne different types.", str(self), rhs.type, self.type )
-
-
-        t = self.getTypes()
-        if len(t) ==3 and self.__v_classType__ ==  v_classType_t.transition_t:
-            ret ="---------------------------------------------------------------------\n--  " + str(self) +" << " + str (rhs)+"\n" 
-            #ret += "pyHDL_Connect( " +self.get_vhdl_name(InOut_t.input_t) +", " + self.get_vhdl_name(InOut_t.output_t)+", " +rhs.get_vhdl_name(InOut_t.input_t) +", "+ rhs.get_vhdl_name(InOut_t.output_t) +")"
-            ret += self.get_vhdl_name(InOut_t.output_t) + asOp + rhs.get_vhdl_name(InOut_t.output_t) +";\n" 
-            ret += rhs.get_vhdl_name(InOut_t.input_t) + asOp + self.get_vhdl_name(InOut_t.input_t)
-            return ret 
-
-        return str(self) + asOp +  str(rhs)
-
-    def _vhdl__push(self):
-        args = ""
-        for x in self.getMemberArgsImpl(InOut_t.output_t,""):
-            
-            args += ", " + x["vhdl_name"]
-
-        return  "    push( " +str(self) +args+");\n"
+  
     
-    def _vhdl__DefineSymbol(self,VarSymb=None):
-        if not VarSymb:
-            VarSymb = get_varSig(self.varSigConst)
 
-        if self.__Driver__ and str( self.__Driver__) != 'process':
-            return ""
-        t = self.getTypes()
-        if len(t) ==3 and self.__v_classType__ ==  v_classType_t.transition_t:
-            ret = ""
-            ret += VarSymb + " " +str(self) + "_m2s : " + t["m2s"] +" := " + t["m2s"]+"_null;\n"
-            ret += VarSymb + " " +str(self) + "_s2m : " + t["s2m"] +" := " + t["s2m"]+"_null;\n"
-            return ret
-
-        return VarSymb +" " +str(self) + " : " +self.type +" := " + self.type+"_null;\n"
     
-    def _vhdl_make_port(self, name):
-        t = self.getTypes()
-        if len(t) ==3 and self.__v_classType__ ==  v_classType_t.transition_t:
-            ret = ""
-            ret += name + "_m2s => " + str(self)+"_m2s, \n    "
-            ret += name + "_s2m => " + str(self)+"_s2m"
-            return ret
-            
-        return  name + " => " + str(self)
+
 
     def Connect(self,Connections):
         self.__connection__.append(Connections)
