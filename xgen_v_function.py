@@ -50,7 +50,7 @@ class v_procedure(vhdl_base):
         self.name = name
         self.isEmpty = IsEmpty
         self.isFreeFunction =isFreeFunction
-        self.vhdl_conversion__ = v_procedure_converter()
+        self.hdl_conversion__ = v_procedure_converter()
     
 
     
@@ -107,7 +107,7 @@ class v_function(vhdl_base):
         self.name = name
         self.isEmpty = IsEmpty
         self.isFreeFunction =isFreeFunction
-        self.vhdl_conversion__ = v_function_converter()
+        self.hdl_conversion__ = v_function_converter()
 
 
 
@@ -133,7 +133,7 @@ class v_process(vhdl_base):
         self.name = name
         self.IsEmpty = IsEmpty
         self.prefix = prefix
-        self.vhdl_conversion__ = v_process_converter()
+        self.hdl_conversion__ = v_process_converter()
 
 
 
@@ -146,7 +146,7 @@ class v_Arch_converter(vhdl_converter_base):
     def includes(self,obj, name,parent):
         inc_str = ""
         for x in self.symbols:
-            inc_str +=  x.vhdl_conversion__.includes(x, x.vhdl_name,obj)
+            inc_str +=  x.hdl_conversion__.includes(x, x.vhdl_name,obj)
         return inc_str
 
     def getHeader(self, obj, name, parent):
@@ -163,7 +163,7 @@ class v_Arch(vhdl_base):
         self.name = name
         self.IsEmpty = IsEmpty
         self.prefix = prefix
-        self.vhdl_conversion__ = v_Arch_converter(Symbols)
+        self.hdl_conversion__ = v_Arch_converter(Symbols)
         
 
 

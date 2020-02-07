@@ -150,17 +150,17 @@ class v_process_body_Def(v_ast_base):
         for x in self.LocalVar:
             if x.type == "undef":
                 continue
-            pull += x.vhdl_conversion__._vhdl__Pull(x)
+            pull += x.hdl_conversion__._vhdl__Pull(x)
         push =""
         for x in self.LocalVar:
             if x.type == "undef":
                 continue
-            push += x.vhdl_conversion__._vhdl__push(x)
+            push += x.hdl_conversion__._vhdl__push(x)
         
         ret =  "("+ str(self.dec[0].argList[0])+ ") is\n"
         
         for x in self.LocalVar:
-            ret += x.vhdl_conversion__._vhdl__DefineSymbol(x, "variable")
+            ret += x.hdl_conversion__._vhdl__DefineSymbol(x, "variable")
         ret += "begin\n  " 
         ret += "if " + self.dec[0].name +"(" + str(self.dec[0].argList[0])+") then \n"
         ret += pull
@@ -206,17 +206,17 @@ class v_process_body_timed_Def(v_ast_base):
         for x in self.LocalVar:
             if x.type == "undef":
                 continue
-            pull += x.vhdl_conversion__._vhdl__Pull(x)
+            pull += x.hdl_conversion__._vhdl__Pull(x)
         push =""
         for x in self.LocalVar:
             if x.type == "undef":
                 continue
-            push += x.vhdl_conversion__._vhdl__push(x)
+            push += x.hdl_conversion__._vhdl__push(x)
         
         ret =  "\n"
         
         for x in self.LocalVar:
-            ret += x.vhdl_conversion__._vhdl__DefineSymbol(x, "variable")
+            ret += x.hdl_conversion__._vhdl__DefineSymbol(x, "variable")
         ret += "begin\n  " 
         
         ret += pull
@@ -329,7 +329,7 @@ class v_compare(v_ast_base):
 
     def __str__(self):
         if issubclass(type(self.lhs),vhdl_base):
-            return self.lhs.vhdl_conversion__._vhdl__compare(self.lhs, self.ops, self.rhs)
+            return self.lhs.hdl_conversion__._vhdl__compare(self.lhs, self.ops, self.rhs)
         
         return  str(self.lhs)  + " = " +   str(self.rhs) 
 
@@ -344,16 +344,16 @@ class v_compare(v_ast_base):
 
         if type(self.lhs).__name__ == "v_name":
             obj = astParser.get_variable(self.lhs.Value,None)
-            return obj.vhdl_conversion__._vhdl__compare(obj, rhs)
+            return obj.hdl_conversion__._vhdl__compare(obj, rhs)
 
         elif issubclass(type(self.lhs),v_class):
-            return self.lhs.vhdl_conversion__._vhdl__compare(self.lhs,self.ops, self.rhs)
+            return self.lhs.hdl_conversion__._vhdl__compare(self.lhs,self.ops, self.rhs)
         
         elif issubclass(type(self.lhs),v_symbol):
-            return self.lhs.vhdl_conversion__._vhdl__compare(self.lhs, self.ops ,self.rhs)
+            return self.lhs.hdl_conversion__._vhdl__compare(self.lhs, self.ops ,self.rhs)
 
         elif issubclass(type(self.lhs),v_enum):
-            return self.lhs.vhdl_conversion__._vhdl__compare(self.lhs, self.ops ,self.rhs)
+            return self.lhs.hdl_conversion__._vhdl__compare(self.lhs, self.ops ,self.rhs)
         
         raise Exception("unknown type",type(self.lhs).__name__ )
 
@@ -388,7 +388,7 @@ def body_unfold_Attribute(astParser,Node):
         return v_enum(att)
     
 
-    n = obj.vhdl_conversion__._vhdl_get_adtribute(obj,Node.attr)
+    n = obj.hdl_conversion__._vhdl_get_adtribute(obj,Node.attr)
 
     att.set_vhdl_name(n)
     
@@ -571,7 +571,7 @@ def body_unfold_call(astParser,Node):
         
 
         r = to_v_object(r)
-        vhdl = obj.vhdl_conversion__._vhdl__call_member_func(obj, memFunc,args)
+        vhdl = obj.hdl_conversion__._vhdl__call_member_func(obj, memFunc,args)
         r.set_vhdl_name(vhdl)
         ret = v_call(memFunc,r, vhdl)
         return ret
@@ -594,7 +594,7 @@ def body_RShift(astParser,Node):
     rhs =  astParser.Unfold_body(Node.right)
     lhs =  astParser.Unfold_body(Node.left)
     if issubclass( type(lhs),vhdl_base):
-        rhs = rhs.vhdl_conversion__._vhdl__reasign_type(rhs)
+        rhs = rhs.hdl_conversion__._vhdl__reasign_type(rhs)
         lhs = lhs._vhdl__getValue(lhs,astParser)
         lhs >> rhs
         return v_re_assigne(rhs, lhs)
@@ -615,7 +615,7 @@ class v_re_assigne(v_ast_base):
 
     def __str__(self):
         if issubclass(type(self.lhs),vhdl_base):
-            return self.lhs.vhdl_conversion__._vhdl__reasign(self.lhs, self.rhs)
+            return self.lhs.hdl_conversion__._vhdl__reasign(self.lhs, self.rhs)
 
         return str(self.lhs) + " := " +  str(self.rhs) 
 
@@ -623,7 +623,7 @@ def body_LShift(astParser,Node):
     rhs =  astParser.Unfold_body(Node.right)
     lhs =  astParser.Unfold_body(Node.left)
     if issubclass( type(lhs),vhdl_base):
-        lhs = lhs.vhdl_conversion__._vhdl__reasign_type(lhs)
+        lhs = lhs.hdl_conversion__._vhdl__reasign_type(lhs)
         rhs = rhs._vhdl__getValue(lhs,astParser)
         if astParser.ContextName[-1] == 'process' and issubclass( type(rhs),vhdl_base):
             rhs.__Driver__ = 'process'
@@ -649,7 +649,7 @@ class v_add(v_ast_base):
 
     def __str__(self):
         if issubclass(type(self.lhs),vhdl_base):
-            return self.lhs.vhdl_conversion__._vhdl__add(self.lhs, self.rhs)
+            return self.lhs.hdl_conversion__._vhdl__add(self.lhs, self.rhs)
 
         return str(self.lhs) + " + " +  str(self.rhs) 
 
@@ -685,7 +685,7 @@ class v_stream_assigne(v_ast_base):
             ret+= str(self.lhsEntity) +";\n  "
             
         if issubclass(type(self.lhs),vhdl_base):
-            ret += self.lhs.vhdl_conversion__._vhdl__reasign(self.lhs, self.rhs)
+            ret += self.lhs.hdl_conversion__._vhdl__reasign(self.lhs, self.rhs)
 
         else:
             ret += str(self.lhs) + " := " +  str(self.rhs) 
@@ -735,7 +735,7 @@ def v_type_to_bool(astParser,obj):
         return obj._vhdl__to_bool( astParser)
 
     if issubclass(type(obj),vhdl_base):
-        return obj.vhdl_conversion__._vhdl__to_bool(obj, astParser)
+        return obj.hdl_conversion__._vhdl__to_bool(obj, astParser)
 
     if type(obj).__name__ == "v_call":
         return  obj.symbol._vhdl__to_bool(astParser)
@@ -857,10 +857,10 @@ class v_boolOp(v_ast_base):
 
         if type(self.lhs).__name__ == "v_name":
             obj = astParser.get_variable(self.lhs.Value,None)
-            return obj.vhdl_conversion__._vhdl__compare(obj, rhs)
+            return obj.hdl_conversion__._vhdl__compare(obj, rhs)
 
         elif issubclass(type(self.lhs),v_class):
-            return self.lhs.vhdl_conversion__._vhdl__compare(self.lhs,self.rhs)
+            return self.lhs.hdl_conversion__._vhdl__compare(self.lhs,self.rhs)
 
 
 def body_BoolOp(astParser, Node):
@@ -905,7 +905,7 @@ def body_UnaryOP(astParser,Node):
 def body_subscript(astParser,Node):
     value = astParser.Unfold_body(Node.value)
     sl  = astParser.Unfold_body(Node.slice)
-    return value.vhdl_conversion__._vhdl_slice(value, sl)
+    return value.hdl_conversion__._vhdl_slice(value, sl)
 
 def body_index(astParser,Node):
     sl  = astParser.Unfold_body(Node.value)

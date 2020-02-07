@@ -37,7 +37,7 @@ class axisStream_slave_converter(v_class_converter):
 class axisStream_slave(v_class):
     def __init__(self, Axi_in):
         super().__init__(Axi_in.type+"_slave")
-        self.vhdl_conversion__ =axisStream_slave_converter()
+        self.hdl_conversion__ =axisStream_slave_converter()
         self.rx = port_Slave(Axi_in)
         self.rx  << Axi_in
      
@@ -115,7 +115,7 @@ class axisStream_master_converter(v_class_converter):
 class axisStream_master(v_class):
     def __init__(self, Axi_Out):
         super().__init__(Axi_Out.type + "_master")
-        self.vhdl_conversion__ =axisStream_master_converter()
+        self.hdl_conversion__ =axisStream_master_converter()
         self.tx = port_Master(Axi_Out)
         
         self.tx.data.__Driver__ = None

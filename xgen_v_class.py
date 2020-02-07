@@ -11,10 +11,10 @@ class v_class_converter(vhdl_converter_base):
             t = getattr(obj, x[0])
             if issubclass(type(t),vhdl_base):
                         
-                ret += t.vhdl_conversion__.includes(t,x[0],obj)
+                ret += t.hdl_conversion__.includes(t,x[0],obj)
         
         for x in obj.__ast_functions__:
-            ret += x.vhdl_conversion__.includes(x,None,obj)
+            ret += x.hdl_conversion__.includes(x,None,obj)
         return ret
 
     def recordMember(self,obj, name,parent,Inout=None):
@@ -43,7 +43,7 @@ class v_class_converter(vhdl_converter_base):
         ret = "\nconstant " + name + " : " + TypeName + ":= (\n  "
         start = ""
         for x in member:
-            default = x["symbol"].vhdl_conversion__.recordMemberDefault(x["symbol"], x["name"],obj,InOut_Filter)
+            default = x["symbol"].hdl_conversion__.recordMemberDefault(x["symbol"], x["name"],obj,InOut_Filter)
             if default:
                 ret += start + default
                 start = ",\n  "
@@ -69,12 +69,12 @@ class v_class_converter(vhdl_converter_base):
         for x in obj.__dict__.items():
             t = getattr(obj, x[0])
             if issubclass(type(t),vhdl_base) and not issubclass(type(t),v_class):
-                ret += t.vhdl_conversion__.getHeader(t,x[0],obj)
+                ret += t.hdl_conversion__.getHeader(t,x[0],obj)
 
         for x in obj.__ast_functions__:
             if x.name.lower() == "_onpull" or x.name.lower() == "_onpush":
                 continue
-            ret +=  x.vhdl_conversion__.getHeader(x,None,None)
+            ret +=  x.hdl_conversion__.getHeader(x,None,None)
 
 
         ret += "------- End Psuedo Class " +obj.getName() +" -------------------------\n"
@@ -90,12 +90,12 @@ class v_class_converter(vhdl_converter_base):
         for x in obj.__dict__.items():
             t = getattr(obj, x[0])
             if issubclass(type(t),vhdl_base):
-                ret += t.vhdl_conversion__.getBody(t,x[0],obj)
+                ret += t.hdl_conversion__.getBody(t,x[0],obj)
         
         for x in obj.__ast_functions__:
             if x.name.lower() == "_onpull" or x.name.lower() == "_onpush":
                 continue
-            ret +=  x.vhdl_conversion__.getBody(x,None,None)
+            ret +=  x.hdl_conversion__.getBody(x,None,None)
 
         ret += "------- End Psuedo Class " +obj.getName() +" -------------------------\n  "
         ret += "-------------------------------------------------------------------------\n\n\n"
@@ -177,7 +177,7 @@ class v_class(vhdl_base):
 
     def __init__(self,Name,varSigConst=None):
         super().__init__()
-        self.vhdl_conversion__ = v_class_converter()
+        self.hdl_conversion__ = v_class_converter()
 
         self.name = Name
         self.type = Name
@@ -309,12 +309,12 @@ class v_class(vhdl_base):
 
         ret = "\ntype "+TypeName+" is record \n"
         for x in member:
-            ret += x["symbol"].vhdl_conversion__.recordMember(x["symbol"],x["name"],self,InOut_Filter)
+            ret += x["symbol"].hdl_conversion__.recordMember(x["symbol"],x["name"],self,InOut_Filter)
         ret += "end record;\n\n"
 
 
 
-        ret += self.vhdl_conversion__.make_constant(self,TypeName+ "_null", parent, InOut_Filter)
+        ret += self.hdl_conversion__.make_constant(self,TypeName+ "_null", parent, InOut_Filter)
    
         ret += "\n\n"
         ret += "type "+ TypeName+"_a is array (natural range <>) of "+TypeName+";\n\n"

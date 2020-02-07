@@ -100,14 +100,14 @@ class v_symbol_converter(vhdl_converter_base):
         
         if obj.type == "std_logic":
             if type(rhs).__name__=="v_symbol":
-                return str(obj) + asOp + str(rhs.vhdl_conversion__._vhdl__getValue(rhs, obj.type)) 
+                return str(obj) + asOp + str(rhs.hdl_conversion__._vhdl__getValue(rhs, obj.type)) 
             
             return str(obj) + asOp+  str(rhs) 
         elif "std_logic_vector" in obj.type:
             if str(rhs) == '0':
                 return str(obj) + asOp+ " (others => '0')"
             elif  issubclass(type(rhs),vhdl_base):
-                return str(obj) + asOp +  str(rhs.vhdl_conversion__._vhdl__getValue(rhs, obj.type)) 
+                return str(obj) + asOp +  str(rhs.hdl_conversion__._vhdl__getValue(rhs, obj.type)) 
             elif  type(rhs).__name__=="v_Num":
                 return  """{dest} {asOp} std_logic_vector(to_unsigned({src}, {dest}'length))""".format(
                     dest=str(obj),
@@ -134,7 +134,7 @@ class v_symbol(vhdl_base):
         if not varSigConst:
             varSigConst = getDefaultVarSig()
 
-        self.vhdl_conversion__= v_symbol_converter(includes)
+        self.hdl_conversion__= v_symbol_converter(includes)
         self.type = v_type
         self.DefaultValue = str(DefaultValue)
         self.Inout = Inout

@@ -122,7 +122,7 @@ class vhdl_base0:
     def __init__(self):
         super().__init__()
 
-        self.vhdl_conversion__ = vhdl_converter_base()
+        self.hdl_conversion__ = vhdl_converter_base()
     
     
     def set_simulation_param(self,module, name,writer):
@@ -389,7 +389,7 @@ class v_const(vhdl_base):
         
         if issubclass(type(self.symbol),vhdl_base):
 
-            ret += self.symbol.vhdl_conversion__._vhdl__make_constant(self.symbol, name) 
+            ret += self.symbol.hdl_conversion__._vhdl__make_constant(self.symbol, name) 
 
         else:
             raise Exception("unknown type")
