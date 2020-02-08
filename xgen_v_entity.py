@@ -207,7 +207,7 @@ class v_entiy2text:
         return ret 
 
     def get_definition(self):
-        members= self.getMember()
+    
         ret = ""
 
         ret += self.get_Includes()
@@ -232,9 +232,74 @@ class v_entiy2text:
     def getMember(self):
         return v_entity_getMember(self.entity)
 
+
+class v_entity_list_converter(vhdl_converter_base):
+        def get_architecture_header(self, obj):
+            ret = ""
+            VarSymb = "signal"
+            i = 0
+            for x in obj.nexted_entities:
+                i+=1
+                if x["temp"]:
+                    tempName = obj.vhdl_name +"_"+ str(i) + "_" +type(x["symbol"]).__name__
+                    x["symbol"].set_vhdl_name(tempName)
+                    ret += x["symbol"].hdl_conversion__.get_architecture_header(x["symbol"])
+            return ret
+
+
+        def get_architecture_body(self, obj):
+            return obj.hdl_conversion__._vhdl__create(obj,obj.vhdl_name)
+
+        def _vhdl__create(self,obj, name):
+            ret = ""
+            i = 0
+            start = ""
+            for x in obj.nexted_entities:
+                i+=1
+                if x["temp"]:
+                    tempName = str(obj.vhdl_name) +"_"+  str(i) + "_" +type(x["symbol"]).__name__
+                    if not x["symbol"].vhdl_name:
+                        x["symbol"].set_vhdl_name(tempName)
+                    ret += start + x["symbol"].hdl_conversion__._vhdl__create(x["symbol"], tempName)
+                    start = ";\n  "
+            
+            for i in range(len(obj.nexted_entities) -1):
+                source = obj.nexted_entities[i]
+                destination = obj.nexted_entities[i+1]
+                rhs_StreamIn = destination["symbol"]._StreamIn
+                lhs_StreamOut = source["symbol"]._StreamOut
+                if issubclass( type(lhs_StreamOut),vhdl_base) and issubclass( type(rhs_StreamIn),vhdl_base):
+                    rhs_StreamIn = rhs_StreamIn.hdl_conversion__._vhdl__reasign_type(rhs_StreamIn)
+                    lhs_StreamOut = lhs_StreamOut.hdl_conversion__._vhdl__getValue(lhs_StreamOut, rhs_StreamIn,obj.astParser)
+                    
+                    ret +=start+rhs_StreamIn.hdl_conversion__._vhdl__reasign(rhs_StreamIn, lhs_StreamOut)
+                    start = ";\n  "
+
+            return ret
+
+        def _vhdl__DefineSymbol(self,VarSymb=None):
+            print("Depricated")    
+            ret = ""
+            if not VarSymb:
+                VarSymb = get_varSig(self.varSigConst)
+            i = 0
+            for x in self.nexted_entities:
+                i+=1
+                if x["temp"]:
+                    tempName = self.vhdl_name +"_"+ str(i) + "_" +type(x["symbol"]).__name__
+                    x["symbol"].set_vhdl_name(tempName)
+                    ret += x["symbol"]._vhdl__DefineSymbol(VarSymb)
+
+
+                        
+
+
+            return ret
+
 class v_entity_list(vhdl_base0):
     def __init__(self):
         super().__init__()
+        self.hdl_conversion__ = v_entity_list_converter()
         self.nexted_entities = list()
         self._StreamOut = None
         self._StreamIn  = None
@@ -275,23 +340,7 @@ class v_entity_list(vhdl_base0):
     def set_vhdl_name(self, Name):
         self.vhdl_name  = Name
 
-    def _vhdl__DefineSymbol(self,VarSymb=None):
-        ret = ""
-        if not VarSymb:
-            VarSymb = get_varSig(self.varSigConst)
-        i = 0
-        for x in self.nexted_entities:
-            i+=1
-            if x["temp"]:
-                tempName = self.vhdl_name +"_"+ str(i) + "_" +type(x["symbol"]).__name__
-                x["symbol"].set_vhdl_name(tempName)
-                ret += x["symbol"]._vhdl__DefineSymbol(VarSymb)
 
-
-                    
-
-
-        return ret
     
     def set_simulation_param(self,module, name,writer):
 
@@ -303,30 +352,7 @@ class v_entity_list(vhdl_base0):
                 x["symbol"].set_simulation_param(module, tempName,writer)
             #print(x)
     
-    def _vhdl__create(self, name):
-        ret = ""
-        i = 0
-        start = ""
-        for x in self.nexted_entities:
-            i+=1
-            if x["temp"]:
-                tempName = self.vhdl_name +"_"+  str(i) + "_" +type(x["symbol"]).__name__
-                ret += start + x["symbol"]._vhdl__create(tempName)
-                start = ";\n  "
-        
-        for i in range(len(self.nexted_entities) -1):
-            source = self.nexted_entities[i]
-            destination = self.nexted_entities[i+1]
-            rhs_StreamIn = destination["symbol"]._StreamIn
-            lhs_StreamOut = source["symbol"]._StreamOut
-            if issubclass( type(lhs_StreamOut),vhdl_base) and issubclass( type(rhs_StreamIn),vhdl_base):
-                rhs_StreamIn = rhs_StreamIn.hdl_conversion__._vhdl__reasign_type(rhs_StreamIn)
-                lhs_StreamOut = lhs_StreamOut.hdl_conversion__._vhdl__getValue(lhs_StreamOut, rhs_StreamIn,self.astParser)
-                
-                ret +=start+rhs_StreamIn.hdl_conversion__._vhdl__reasign(rhs_StreamIn, lhs_StreamOut)
-                start = ";\n  "
 
-        return ret
 
     def  __str__(self):
         ret = ""
@@ -351,8 +377,20 @@ class v_entity_converter(vhdl_converter_base):
             return obj.vhdl_name +"_"+ attName
         
         return attName
+    def get_architecture_header(self, obj):
+        ret =""
+        mem = v_entity_getMember(obj)
+        for x in mem:
+            if not x["symbol"].vhdl_name:
+                x["symbol"].set_vhdl_name(obj.vhdl_name +"_"+ x["name"])
+            
+            x["symbol"].Inout = InOut_t.Internal_t
+            ret += x["symbol"].hdl_conversion__.get_architecture_header(x["symbol"])
+
+        return ret 
 
     def _vhdl__DefineSymbol(self, obj, VarSymb="variable"):
+        print("depricated")
         ret =""
         mem = v_entity_getMember(obj)
         for x in mem:
@@ -362,6 +400,39 @@ class v_entity_converter(vhdl_converter_base):
             ret += x["symbol"].hdl_conversion__._vhdl__DefineSymbol(x["symbol"], VarSymb)
 
         return ret 
+
+    def _vhdl__create(self, obj, name):
+        ret = str(name) +" : entity work." + obj._name+" port map ( \n"
+
+        start = "    "
+        mem = v_entity_getMember(obj)
+        for x in mem:
+            if not x["symbol"].vhdl_name:
+                x["symbol"].set_vhdl_name(obj.vhdl_name+"_"+ x["name"])
+
+            ret +=start + x["symbol"].hdl_conversion__._vhdl_make_port(x["symbol"], x["name"] )
+            start = ",\n    "
+
+        ret += "\n)"
+        return ret
+        
+
+
+
+    def get_architecture_body(self, obj):
+        return obj.hdl_conversion__._vhdl__create(obj ,obj.vhdl_name)
+
+    
+
+    def get_entity_definition(self, obj):
+        s = isConverting2VHDL()
+        set_isConverting2VHDL(True)
+        
+        to_text=v_entiy2text(obj)
+
+        ret = to_text.get_definition()
+        set_isConverting2VHDL(s)
+        return ret.strip()
 
 class v_entity(vhdl_base0):
     def __init__(self,srcFileName=None):
@@ -448,15 +519,7 @@ class v_entity(vhdl_base0):
         self._isInstance = True
         return self
 
-    def _get_definition(self):
-        s = isConverting2VHDL()
-        set_isConverting2VHDL(True)
-        
-        to_text=v_entiy2text(self)
 
-        ret = to_text.get_definition()
-        set_isConverting2VHDL(s)
-        return ret.strip()
 
 
 
@@ -465,20 +528,7 @@ class v_entity(vhdl_base0):
 
 
 
-    def _vhdl__create(self, name):
-        ret = str(name) +" : entity work." + self._name+" port map ( \n"
 
-        start = "    "
-        mem = v_entity_getMember(self)
-        for x in mem:
-            if not x["symbol"].vhdl_name:
-                x["symbol"].set_vhdl_name(self.vhdl_name+"_"+ x["name"])
-
-            ret +=start + x["symbol"].hdl_conversion__._vhdl_make_port(x["symbol"], x["name"] )
-            start = ",\n    "
-
-        ret += "\n)"
-        return ret
 
 class v_clk_entity(v_entity):
     def __init__(self,srcFileName=None,clk=None):

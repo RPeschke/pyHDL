@@ -6,43 +6,53 @@ use UNISIM.VComponents.all;
 use ieee.std_logic_unsigned.all;
 
 
-entity rollingCounter is 
-port(
-  Axi_out_m2s : out axiStream_32_m2s := axiStream_32_m2s_null;
-  Axi_out_s2m : in  axiStream_32_s2m := axiStream_32_s2m_null;
-  MaxCount :  in  std_logic_vector(31 downto 0) := x"0000000a";
-  clk :  in  std_logic := '0'
-);
+entity tb_entity is 
 end entity;
 
 
 
-architecture rtl of rollingCounter is
+architecture rtl of tb_entity is
 
-      signal counter : std_logic_vector(32 -1 downto 0) := (others => '0'); 
+signal clkgen_clk : std_logic := '0'; 
+signal maxCount : std_logic_vector(32 -1 downto 0) := 20; 
+signal pipe1_1_rollingCounter_Axi_out_m2s : axiStream_32_m2s := axiStream_32_m2s_null;
+signal pipe1_1_rollingCounter_Axi_out_s2m : axiStream_32_s2m := axiStream_32_s2m_null;
+signal pipe1_2_axiFilter_Axi_in_m2s : axiStream_32_m2s := axiStream_32_m2s_null;
+signal pipe1_2_axiFilter_Axi_in_s2m : axiStream_32_s2m := axiStream_32_s2m_null;
+signal pipe1_2_axiFilter_Axi_out_m2s : axiStream_32_m2s := axiStream_32_m2s_null;
+signal pipe1_2_axiFilter_Axi_out_s2m : axiStream_32_s2m := axiStream_32_s2m_null;
+signal pipe1_3_axiPrint_Axi_in_m2s : axiStream_32_m2s := axiStream_32_m2s_null;
+signal pipe1_3_axiPrint_Axi_in_s2m : axiStream_32_s2m := axiStream_32_s2m_null;
 
 begin
-
-  -----------------------------------
-  p2 : process(clk) is
-    variable v_Axi_out : axiStream_32_master := axiStream_32_master_null;
-    begin
-      if rising_edge(clk) then 
-        pull( v_Axi_out, Axi_out_s2m);
-    
-        if (ready_to_send(v_Axi_out) ) then 
-          send_data( v_Axi_out, counter);
-          counter <= counter + 1;
-          
-        end if;
-      
-        if (counter > MaxCount) then 
-          counter <=  (others => '0');
-          
-        end if;
-          push( v_Axi_out, Axi_out_m2s);
-    end if;
-    
-    end process;
+clkgen : entity work.clk_generator port map ( 
+      clk => clkgen_clk
+  );
+  pipe1_1_rollingCounter : entity work.rollingCounter port map ( 
+      Axi_out_m2s => pipe1_1_rollingCounter_Axi_out_m2s, 
+      Axi_out_s2m => pipe1_1_rollingCounter_Axi_out_s2m,
+      MaxCount => pipe1_1_rollingCounter_MaxCount,
+      clk => pipe1_1_rollingCounter_clk
+  );
+    pipe1_2_axiFilter : entity work.axiFilter port map ( 
+      Axi_in_m2s => pipe1_2_axiFilter_Axi_in_m2s, 
+      Axi_in_s2m => pipe1_2_axiFilter_Axi_in_s2m,
+      Axi_out_m2s => pipe1_2_axiFilter_Axi_out_m2s, 
+      Axi_out_s2m => pipe1_2_axiFilter_Axi_out_s2m,
+      clk => pipe1_2_axiFilter_clk
+  );
+    pipe1_3_axiPrint : entity work.axiPrint port map ( 
+      Axi_in_m2s => pipe1_3_axiPrint_Axi_in_m2s, 
+      Axi_in_s2m => pipe1_3_axiPrint_Axi_in_s2m,
+      clk => pipe1_3_axiPrint_clk
+  );
+    ---------------------------------------------------------------------
+  --  pipe1_2_axiFilter_Axi_in << pipe1_1_rollingCounter_Axi_out
+  pipe1_2_axiFilter_Axi_in_m2s <= pipe1_1_rollingCounter_Axi_out_m2s;
+  pipe1_1_rollingCounter_Axi_out_s2m <= pipe1_2_axiFilter_Axi_in_s2m;
+    ---------------------------------------------------------------------
+  --  pipe1_3_axiPrint_Axi_in << pipe1_2_axiFilter_Axi_out
+  pipe1_3_axiPrint_Axi_in_m2s <= pipe1_2_axiFilter_Axi_out_m2s;
+  pipe1_2_axiFilter_Axi_out_s2m <= pipe1_3_axiPrint_Axi_in_s2m;
   
 end architecture;

@@ -453,13 +453,8 @@ class v_variable_cration(v_ast_base):
 
     def __str__(self):
         #return str(self.lhs.vhdl_name) +" := "+ str(self.lhs.get_value()) 
-        if self.lhs.type == "entity":
-            return self.lhs._vhdl__create(self.rhs)
-
-        if self.lhs.type == "v_entity_list":
-            return self.lhs._vhdl__create(self.rhs)
-
-        return ""
+        self.lhs.vhdl_name = self.rhs
+        return self.lhs.hdl_conversion__.get_architecture_body(self.lhs)
 
 
 

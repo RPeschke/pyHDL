@@ -24,8 +24,8 @@ def file_get_contents(filename):
         return f.read().strip()
 
 
-ax = CodeGen.example4.rollingCounter()
-vhdl = ax._get_definition()
+ax = CodeGen.example4.tb_entity()
+vhdl = ax.hdl_conversion__.get_entity_definition(ax)
 file_set_content("CodeGen/tests/example1_new.vhd",vhdl)
 vhdl_ref = file_get_contents("CodeGen/tests/example1.vhd")
 print(vhdl == vhdl_ref)

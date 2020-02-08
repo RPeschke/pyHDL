@@ -140,36 +140,43 @@ class v_process(vhdl_base):
 
 
 class v_Arch_converter(vhdl_converter_base):
-    def __init__(self,symbols):
-        self.symbols  = symbols
+
 
     def includes(self,obj, name,parent):
         inc_str = ""
-        for x in self.symbols:
+        for x in obj.Symbols:
             inc_str +=  x.hdl_conversion__.includes(x, x.vhdl_name,obj)
         return inc_str
 
     def get_architecture_header(self, obj):
-        return obj.Header
+        header = ""
+        for x in obj.Symbols:
+            if x.type == "undef":
+                continue
+            if  hasattr(x, 'varSigConst') and x.varSigConst == varSig.variable_t:
+                continue
+            header += x.hdl_conversion__.get_architecture_header(x)
+            
+        return header
+
     def get_architecture_body(self, obj):
-        return  obj.body
+        return  str(obj.body)
+
+
     def getHeader(self, obj, name, parent):
         print("getHeader is dep")
-        return obj.Header
+        return ""
 
     def getBody(self,obj, name,parent):
         print("getHeader is dep")
-        return obj.body
+        return ""
 
 class v_Arch(vhdl_base):
-    def __init__(self,body="", Header="",prefix=None,name=None,IsEmpty=False,Symbols=None):
+    def __init__(self,body, Symbols):
         super().__init__()
         self.body = body 
-        self.Header = Header
-        self.name = name
-        self.IsEmpty = IsEmpty
-        self.prefix = prefix
-        self.hdl_conversion__ = v_Arch_converter(Symbols)
+        self.Symbols = Symbols
+        self.hdl_conversion__ = v_Arch_converter()
         
 
 

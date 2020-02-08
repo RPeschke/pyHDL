@@ -198,14 +198,9 @@ class xgenAST:
             body = self.Unfold_body(f)  ## get local vars 
 
             header =""
-            for x in self.LocalVar:
-                if x.type == "undef":
-                    continue
-                if  hasattr(x, 'varSigConst') and x.varSigConst == varSig.variable_t:
-                    continue
-                header += x.hdl_conversion__.get_architecture_header(x)
+
             
-            proc = v_Arch(body=str(body),Header=header,Symbols=self.LocalVar)
+            proc = v_Arch(body=body,Symbols=self.LocalVar)
             ClassInstance.__processList__.append(proc)
 
     def extractFunctionsForEntity(self, ClassInstance, parent):

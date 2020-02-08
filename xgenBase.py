@@ -125,6 +125,11 @@ class vhdl_converter_base:
     def get_architecture_body(self, obj):
         return ""
 
+    def get_packet_definition(self, obj):
+        return ""
+        
+    def get_entity_definition(self, obj):
+        return ""
 
     def get_port_list(self,obj):
         return ""
