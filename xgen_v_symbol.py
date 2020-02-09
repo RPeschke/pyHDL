@@ -109,7 +109,7 @@ class v_symbol_converter(vhdl_converter_base):
         if obj.varSigConst != varSig.signal_t:
             return ""
         
-        ret = obj.vhdl_name + " : "+ InOut_t2str(obj.Inout) + " " + obj.type + " := " + obj.DefaultValue
+        ret = obj.vhdl_name + " : "+ obj.hdl_conversion__.InOut_t2str(obj) + " " + obj.type + " := " + obj.DefaultValue
         return ret
 
 
@@ -124,7 +124,7 @@ class v_symbol_converter(vhdl_converter_base):
         if isProcess():
             obj.__Driver__ = 'process'
 
-        asOp = get_assiment_op(obj.varSigConst)
+        asOp = obj.hdl_conversion__.get_assiment_op(obj)
         
         if obj.type == "std_logic":
             if type(rhs).__name__=="v_symbol":
@@ -197,7 +197,7 @@ class v_symbol(vhdl_base):
 
 
     def to_arglist(self,name,parent):
-        inoutstr = InOut_t2str(self.Inout)
+        inoutstr = obj.hdl_conversion__.InOut_t2str(self)
         if not inoutstr:
             inoutstr = ""
         return name + " : " + inoutstr +" " + self.getType()
@@ -236,20 +236,12 @@ class v_symbol(vhdl_base):
 
 
     def __str__(self):
-        #if self.__Driver__ != None and str( self.__Driver__) != 'process':
-        #    ret =  str(self.__Driver__)
-        #    if ret :
-        #        return ret
-
         if self.vhdl_name:
             return str(self.vhdl_name)
 
-        return ""
+        raise Exception("No Name was given to symbol")
 
     def set_simulation_param(self,module, name,writer):
-        
-
-        #print( "set_simulation_param", self.vhdl_name, name)
         self.__vcd_varobj__ = writer.register_var(module, name, 'integer', size=32)
         self.__vcd_writer__ = writer 
         self.vhdl_name = name

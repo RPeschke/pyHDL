@@ -159,6 +159,25 @@ class vhdl_converter_base:
     def _vhdl__push(self,obj):
         return ""
 
+    def get_assiment_op(self, obj):
+        varSigConst = obj.varSigConst
+        raise_if(varSigConst== varSig.const_t, "cannot asign to constant")
+
+        if varSigConst== varSig.signal_t:
+            asOp = " <= "
+        else: 
+            asOp = " := "
+
+        return asOp
+
+    def InOut_t2str(self, obj):
+        inOut = obj.Inout
+        if inOut == InOut_t.input_t:
+            return " in "
+        elif inOut == InOut_t.output_t:
+            return " out "
+
+        raise Exception("unkown Inout type",inOut)
 
 class vhdl_base0:
     def __init__(self):
@@ -281,21 +300,9 @@ def get_varSig(varSigConst):
 
     raise Exception("unknown type")
 
-def get_assiment_op(varSigConst):
-    raise_if(varSigConst== varSig.const_t, "cannot asign to constant")
 
-    if varSigConst== varSig.signal_t:
-        asOp = " <= "
-    else: 
-        asOp = " := "
 
-    return asOp
 
-def InOut_t2str(inOut):
-    if inOut == InOut_t.input_t:
-        return " in "
-    elif inOut == InOut_t.output_t:
-        return " out "
 
 def InoutFlip(inOut):
     if inOut == InOut_t.input_t:

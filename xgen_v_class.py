@@ -418,8 +418,8 @@ class v_class_converter(vhdl_converter_base):
         return ret
  
     def _vhdl__reasign(self, obj, rhs, context=None):
-        
-        asOp = get_assiment_op(obj.varSigConst)
+
+        asOp = obj.hdl_conversion__.get_assiment_op(obj)
         if obj.Inout == InOut_t.Slave_t:
             raise Exception("cannot assign to slave")
         elif obj.Inout == InOut_t.input_t:
