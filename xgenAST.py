@@ -137,10 +137,7 @@ class xgenAST:
         del self.varScope[-1]
         del self.ContextName[-1]
         
-
-
-    def get_variable(self,name, Node):
-            
+    def try_get_variable(self,name):
         for x in self.LocalVar:
             if name in x.vhdl_name:
                 return x
@@ -149,6 +146,13 @@ class xgenAST:
         for x in self.FuncArgs:
             if name in x["name"]:
                 return x["symbol"]
+        return None
+
+    def get_variable(self,name, Node):
+        
+        x  = self.try_get_variable(name)
+        if x:
+            return x
 
         raise Exception(Node_line_col_2_str(self, Node)+"Unable to find variable: " + name)
 

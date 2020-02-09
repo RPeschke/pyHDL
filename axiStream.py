@@ -27,9 +27,14 @@ class axisStream_slave_converter(v_class_converter):
         return "isReceivingData(" + str(obj) + ") "
 
     def _vhdl__getValue(self,obj, ReturnToObj=None,astParser=None):
-        buff = v_copy(obj.rx.data)
-        buff.vhdl_name = str(obj) + "_buff"
-        astParser.LocalVar.append(buff)
+        vhdl_name = str(obj) + "_buff"
+        buff =  astParser.try_get_variable(vhdl_name)
+
+        if buff == None:
+            buff = v_copy(obj.rx.data)
+            buff.vhdl_name = str(obj) + "_buff"
+            astParser.LocalVar.append(buff)
+
         astParser.AddStatementBefore("read_data(" +str(obj) +", " +str(buff) +' ) ')
         return buff
 
