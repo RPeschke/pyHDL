@@ -253,7 +253,7 @@ class v_class_converter(vhdl_converter_base):
     
 
     def get_architecture_header(self, obj):
-        if obj.Inout != InOut_t.Internal_t:
+        if obj.Inout != InOut_t.Internal_t and obj._isInstance == False:
             return ""
         
         if obj.varSigConst != varSig.signal_t or obj.varSigConst != varSig.signal_t:
@@ -266,11 +266,11 @@ class v_class_converter(vhdl_converter_base):
         t = obj.getTypes()
         if len(t) ==3 and obj.__v_classType__ ==  v_classType_t.transition_t:
             ret = ""
-            ret += VarSymb + " " +str(obj) + "_m2s : " + t["m2s"] +" := " + t["m2s"]+"_null;\n"
-            ret += VarSymb + " " +str(obj) + "_s2m : " + t["s2m"] +" := " + t["s2m"]+"_null;\n"
+            ret += "  " + VarSymb + " " +str(obj) + "_m2s : " + t["m2s"] +" := " + t["m2s"]+"_null;\n"
+            ret += "  " + VarSymb + " " +str(obj) + "_s2m : " + t["s2m"] +" := " + t["s2m"]+"_null;\n"
             return ret
 
-        return VarSymb +" " +str(obj) + " : " +obj.type +" := " + obj.type+"_null;\n"
+        return "  " + VarSymb +" " +str(obj) + " : " +obj.type +" := " + obj.type+"_null;\n"
         
     def get_port_list(self,obj):
         ret = ""
@@ -633,7 +633,7 @@ class v_class(vhdl_base):
             return str(self.__Driver__)
 
         if self.vhdl_name:
-            return self.vhdl_name
+            return str(self.vhdl_name)
 
         return str(self.value)
 

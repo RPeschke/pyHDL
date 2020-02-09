@@ -86,7 +86,7 @@ class v_symbol_converter(vhdl_converter_base):
         return  VarSymb+ " " + name + " : " +obj.type +" := " +  obj.DefaultValue  + "; \n"
     def get_architecture_header(self, obj):
 
-        if obj.Inout != InOut_t.Internal_t:
+        if obj.Inout != InOut_t.Internal_t and obj._isInstance == False:
             return ""
         
         if obj.varSigConst == varSig.variable_t:
@@ -100,7 +100,7 @@ class v_symbol_converter(vhdl_converter_base):
         name = obj.vhdl_name
 
             
-        return  VarSymb+ " " + name + " : " +obj.type +" := " +  obj.DefaultValue  + "; \n"   
+        return  "  " + VarSymb+ " " + name + " : " +obj.type +" := " +  obj.DefaultValue  + "; \n"   
 
     def get_port_list(self,obj):
         if obj.Inout == InOut_t.Internal_t:
@@ -242,7 +242,7 @@ class v_symbol(vhdl_base):
         #        return ret
 
         if self.vhdl_name:
-            return self.vhdl_name
+            return str(self.vhdl_name)
 
         return ""
 

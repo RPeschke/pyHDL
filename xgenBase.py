@@ -53,6 +53,9 @@ def set_isProcess(newStatus):
 
 
 class vhdl_converter_base:
+    def parse_file(self,obj):
+        return ""
+
     def includes(self,obj, name,parent):
         return ""
 
@@ -127,7 +130,7 @@ class vhdl_converter_base:
 
     def get_packet_definition(self, obj):
         return ""
-        
+
     def get_entity_definition(self, obj):
         return ""
 
@@ -160,7 +163,7 @@ class vhdl_converter_base:
 class vhdl_base0:
     def __init__(self):
         super().__init__()
-
+        self._isInstance = False
         self.hdl_conversion__ = vhdl_converter_base()
     
     
@@ -183,7 +186,7 @@ class vhdl_base(vhdl_base0):
 
     def __init__(self):
         super().__init__()
-
+        
 
 
     def getName(self):

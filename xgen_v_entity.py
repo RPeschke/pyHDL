@@ -132,110 +132,14 @@ def v_entity_getMember_expand(entity):
         
         ret=sorted(ret, key=lambda element_: element_["name"])
         return ret
-class v_entiy2text:
-    def __init__(self, input_entity):
-        super().__init__()
-        self.entity = input_entity
-        self.astTree = None
-        if input_entity._srcFileName:
-            self.astTree = xgenAST(input_entity._srcFileName)
+
         
-        self.getProcessBlocks()
 
-    def get_Includes(self):
-        bufffer = ""
-        members= self.getMember()
-        for x in members:
-            bufffer += x["symbol"].hdl_conversion__.includes(x["symbol"],x["name"],None)
-
-        for x in self.entity.__processList__:
-            bufffer += x.hdl_conversion__.includes(x,"",None)
-
-        sp = bufffer.split(";")
-        sp  = [x.strip() for x in sp]
-        sp = sorted(set(sp))
-        ret = ""
-        for x in sp:
-            if len(x)>0:
-                ret += x+";\n"
-        return ret
-         
-    
-    def get_declaration(self):
-        ret = "entity " + self.entity._name + " is \n" 
-        members= self.getMember()
-        start = "  "
-        if len(members)>0:
-            ret+="port(\n"
-            for x in members:
-                sym = x["symbol"]
-                ret += start + sym.hdl_conversion__.get_port_list(sym)
-                start = ";\n  "
-        
-            ret+="\n);\n"
-        ret += "end entity;\n\n"
-        return ret 
-
-    def get_archhitecture_header(self):
-        ret = ""
-        members= self.getMember()
-        
-        for x in members:
-            sym = x["symbol"]
-            sym.set_vhdl_name(x["name"])
-            ret += "  " + sym.hdl_conversion__.get_architecture_header(sym)
-        
-        for x in self.entity.__processList__:
-            ret += x.hdl_conversion__.get_architecture_header(x)
-        return ret 
-
-
-
-    def get_architecture_body(self):
-        ret = ""
-        for x in self.entity.__processList__:
-            ret += x.hdl_conversion__.get_architecture_body(x)
-        return ret 
-
-    def get_archhitecture(self):
-
-        ret = "architecture rtl of "+ self.entity._name +" is\n\n"
-        ret += self.get_archhitecture_header()
-        ret += "\nbegin\n"
-        ret += self.get_architecture_body()
-        ret += "\nend architecture;\n"
-        return ret 
-
-    def get_definition(self):
-    
-        ret = ""
-
-        ret += self.get_Includes()
-        ret += "\n\n"
-        ret += self.get_declaration()
-        ret += "\n\n"
-        ret += self.get_archhitecture()
-        return ret
-
-    def getProcessBlocks(self):
-        ret = ""
-        for x in self.entity.__dir__():
-            if "_proc" in x:
-                print(x)
-        
-        self.astTree.extractArchetectureForEntity(self.entity,None)
-
-
-        return ret 
-
-
-    def getMember(self):
-        return v_entity_getMember(self.entity)
 
 
 class v_entity_list_converter(vhdl_converter_base):
         def get_architecture_header(self, obj):
-            ret = ""
+            ret = "--------------------------"+ obj.vhdl_name  +"-----------------\n"
             VarSymb = "signal"
             i = 0
             for x in obj.nexted_entities:
@@ -244,13 +148,12 @@ class v_entity_list_converter(vhdl_converter_base):
                     tempName = obj.vhdl_name +"_"+ str(i) + "_" +type(x["symbol"]).__name__
                     x["symbol"].set_vhdl_name(tempName)
                     ret += x["symbol"].hdl_conversion__.get_architecture_header(x["symbol"])
+            ret += "-------------------------- end "+ obj.vhdl_name  +"-----------------\n"
             return ret
 
 
         def get_architecture_body(self, obj):
-            return obj.hdl_conversion__._vhdl__create(obj,obj.vhdl_name)
-
-        def _vhdl__create(self,obj, name):
+            
             ret = ""
             i = 0
             start = ""
@@ -260,7 +163,7 @@ class v_entity_list_converter(vhdl_converter_base):
                     tempName = str(obj.vhdl_name) +"_"+  str(i) + "_" +type(x["symbol"]).__name__
                     if not x["symbol"].vhdl_name:
                         x["symbol"].set_vhdl_name(tempName)
-                    ret += start + x["symbol"].hdl_conversion__._vhdl__create(x["symbol"], tempName)
+                    ret += start + x["symbol"].hdl_conversion__.get_architecture_body(x["symbol"])
                     start = ";\n  "
             
             for i in range(len(obj.nexted_entities) -1):
@@ -277,24 +180,7 @@ class v_entity_list_converter(vhdl_converter_base):
 
             return ret
 
-        def _vhdl__DefineSymbol(self,VarSymb=None):
-            print("Depricated")    
-            ret = ""
-            if not VarSymb:
-                VarSymb = get_varSig(self.varSigConst)
-            i = 0
-            for x in self.nexted_entities:
-                i+=1
-                if x["temp"]:
-                    tempName = self.vhdl_name +"_"+ str(i) + "_" +type(x["symbol"]).__name__
-                    x["symbol"].set_vhdl_name(tempName)
-                    ret += x["symbol"]._vhdl__DefineSymbol(VarSymb)
 
-
-                        
-
-
-            return ret
 
 class v_entity_list(vhdl_base0):
     def __init__(self):
@@ -372,66 +258,135 @@ class v_entity_list(vhdl_base0):
         return ret
 
 class v_entity_converter(vhdl_converter_base):
+
+    def __init__(self):
+        super().__init__()
+        self.astTree = None
+
+
+    def parse_file(self,obj):
+        if obj._srcFileName:
+            self.astTree = xgenAST(obj._srcFileName)
+            self.astTree.extractArchetectureForEntity(obj,None)
+
+        
     def _vhdl_get_adtribute(self,obj, attName):
         if obj.vhdl_name:
             return obj.vhdl_name +"_"+ attName
         
         return attName
+
+    def get_archhitecture(self,obj):
+
+        ret = "architecture rtl of "+ obj._name +" is\n\n"
+#        ret +=    self.get_archhitecture_header()
+        ret +=  obj.hdl_conversion__.get_architecture_header(obj)
+        ret += "\nbegin\n"
+        ret +=  obj.hdl_conversion__.get_architecture_body(obj)
+        ret += "\nend architecture;\n"
+        return ret 
+
     def get_architecture_header(self, obj):
-        ret =""
-        mem = v_entity_getMember(obj)
-        for x in mem:
-            if not x["symbol"].vhdl_name:
-                x["symbol"].set_vhdl_name(obj.vhdl_name +"_"+ x["name"])
-            
-            x["symbol"].Inout = InOut_t.Internal_t
-            ret += x["symbol"].hdl_conversion__.get_architecture_header(x["symbol"])
-
-        return ret 
-
-    def _vhdl__DefineSymbol(self, obj, VarSymb="variable"):
-        print("depricated")
-        ret =""
-        mem = v_entity_getMember(obj)
-        for x in mem:
-            if not x["symbol"].vhdl_name:
-                x["symbol"].set_vhdl_name(obj.vhdl_name +"_"+ x["name"])
-
-            ret += x["symbol"].hdl_conversion__._vhdl__DefineSymbol(x["symbol"], VarSymb)
-
-        return ret 
-
-    def _vhdl__create(self, obj, name):
-        ret = str(name) +" : entity work." + obj._name+" port map ( \n"
-
-        start = "    "
-        mem = v_entity_getMember(obj)
-        for x in mem:
-            if not x["symbol"].vhdl_name:
-                x["symbol"].set_vhdl_name(obj.vhdl_name+"_"+ x["name"])
-
-            ret +=start + x["symbol"].hdl_conversion__._vhdl_make_port(x["symbol"], x["name"] )
-            start = ",\n    "
-
-        ret += "\n)"
-        return ret
+        if obj.vhdl_name:
+            name = obj.vhdl_name
+        else :
+            name = obj._name
+        ret = "--------------------------"+ name  +"-----------------\n"
+        members= obj.hdl_conversion__.getMember(obj)
         
+        for x in members:
+            sym = x["symbol"]
+            if sym.vhdl_name == None:
+                sym.set_vhdl_name(x["name"])
+            
+            ret +=  sym.hdl_conversion__.get_architecture_header(sym)
 
+        if obj._isInstance == False:
+            for x in obj.__processList__:
+                ret += x.hdl_conversion__.get_architecture_header(x)
+
+        ret += "-------------------------- end "+ name  +"-----------------\n"
+        return ret 
 
 
     def get_architecture_body(self, obj):
-        return obj.hdl_conversion__._vhdl__create(obj ,obj.vhdl_name)
+        if obj._isInstance == True:
+            ret = str(obj.vhdl_name) +" : entity work." + obj._name+" port map ( \n"
 
+            start = "    "
+            mem = v_entity_getMember(obj)
+            for x in mem:
+                if not x["symbol"].vhdl_name:
+                    x["symbol"].set_vhdl_name(obj.vhdl_name+"_"+ x["name"])
+
+                ret +=start + x["symbol"].hdl_conversion__._vhdl_make_port(x["symbol"], x["name"] )
+                start = ",\n    "
+
+            ret += "\n)"
+            return ret
+        else:
+            ret = ""
+            for x in obj.__processList__:
+                ret += x.hdl_conversion__.get_architecture_body(x)
+            return ret 
+
+
+
+    def getMember(self, obj):
+        return v_entity_getMember(obj)
     
+    def includes(self,obj, name,parent):
+        bufffer = ""
+        members= obj.hdl_conversion__.getMember(obj)
+        for x in members:
+            bufffer += x["symbol"].hdl_conversion__.includes(x["symbol"],x["name"],None)
+
+        for x in obj.__processList__:
+            bufffer += x.hdl_conversion__.includes(x,"",None)
+
+        sp = bufffer.split(";")
+        sp  = [x.strip() for x in sp]
+        sp = sorted(set(sp))
+        ret = ""
+        for x in sp:
+            if len(x)>0:
+                ret += x+";\n"
+        return ret
+
+    def get_declaration(self,obj):
+        ret = "entity " + obj._name + " is \n" 
+        members= obj.hdl_conversion__.getMember(obj)
+        start = "  "
+        if len(members)>0:
+            ret+="port(\n"
+            for x in members:
+                sym = x["symbol"]
+                ret += start + sym.hdl_conversion__.get_port_list(sym)
+                start = ";\n  "
+        
+            ret+="\n);\n"
+        ret += "end entity;\n\n"
+        return ret
+
+    def get_definition(self, obj):
+    
+        ret = ""
+
+        #ret += obj.hdl_conversion__.includes(obj,None,None)
+        ret += "\n\n"
+        ret += obj.hdl_conversion__.get_declaration(obj)
+        ret += "\n\n"
+        ret += obj.hdl_conversion__.get_archhitecture(obj)
+        return ret
 
     def get_entity_definition(self, obj):
-        s = isConverting2VHDL()
-        set_isConverting2VHDL(True)
+        #s = isConverting2VHDL()
+        #set_isConverting2VHDL(True)
         
-        to_text=v_entiy2text(obj)
+        #obj.hdl_conversion__.parse_file(obj)
 
-        ret = to_text.get_definition()
-        set_isConverting2VHDL(s)
+        ret = obj.hdl_conversion__.get_definition(obj)
+        #set_isConverting2VHDL(s)
         return ret.strip()
 
 class v_entity(vhdl_base0):
@@ -450,7 +405,7 @@ class v_entity(vhdl_base0):
         self.__local_symbols__ = list()
         self._StreamOut = None
         self._StreamIn  = None
-        self._isInstance = False
+
         
 
 
@@ -501,8 +456,6 @@ class v_entity(vhdl_base0):
         )
 
 
-    def architecture(self):
-        pass
 
     def __call__(self):
         mem = v_entity_getMember(self)
@@ -510,7 +463,7 @@ class v_entity(vhdl_base0):
             if not issubclass(type(self.__dict__[x["name"]]), vhdl_base):
                 #del self.__dict__[x["name"]]
                 continue
-
+            self.__dict__[x["name"]]._isInstance = True
             if x["symbol"].Inout == InOut_t.Internal_t:
                 #del self.__dict__[x["name"]]
                 continue
