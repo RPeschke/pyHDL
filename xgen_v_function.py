@@ -5,7 +5,7 @@ class v_procedure_converter(vhdl_converter_base):
     def getHeader(self, obj,name, parent):
         classDef =""
         if parent != None and not obj.isFreeFunction:
-            classDef = " self : inout " + parent.getName()
+            classDef = parent.hdl_conversion__.get_self_func_name (parent)
 
         argumentList = optional_concatonat( classDef, "; ", obj.argumentList)
         if obj.name:
@@ -24,7 +24,7 @@ class v_procedure_converter(vhdl_converter_base):
     def getBody(self, obj, name,parent):
         classDef =""
         if parent != None and not obj.isFreeFunction:
-            classDef = " self : inout " + parent.getName()
+            classDef = parent.hdl_conversion__.get_self_func_name (parent)
 
         argumentList = optional_concatonat( classDef, "; ", obj.argumentList)
         if obj.name:
@@ -60,7 +60,7 @@ class v_function_converter(vhdl_converter_base):
     def getHeader(self, obj, name, parent):
         classDef =""
         if parent != None and not obj.isFreeFunction:
-            classDef = " self : " + parent.getName()
+            classDef = parent.hdl_conversion__.get_self_func_name (parent,True)
         argumentList = optional_concatonat( classDef, "; ", obj.argumentList)
         if obj.name:
             name = obj.name
@@ -79,7 +79,7 @@ class v_function_converter(vhdl_converter_base):
     def getBody(self, obj, name,parent):
         classDef =""
         if parent != None and not obj.isFreeFunction:
-            classDef = " self : " + parent.getName()
+            classDef = parent.hdl_conversion__.get_self_func_name(parent,True)
         argumentList = optional_concatonat( classDef, "; ", obj.argumentList)
         
         if obj.name:

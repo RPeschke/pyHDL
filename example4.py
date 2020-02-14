@@ -27,21 +27,37 @@ class axiFilter(v_clk_entity):
 
         
     def architecture(self):
-        @process()
-        def _process1():
-            axiSalve = axisStream_slave(self.Axi_in)
-            axMaster = axisStream_master(self.Axi_out) 
+
+        s_buff = v_signal( v_slv(32) )
+        s_buff2 = v_signal( v_slv(32) )
+        s_sw    = v_signal( v_sl() )
+        @combinational() 
+        def p1():
+            s_buff << self.Axi_in.data    
+            s_buff2 << v_switch( 0 , [
+                v_case(  self.Axi_in.data < 5 , self.Axi_in.data)
+                ]  )
 
 
-            i_buff = v_slv(32)
-            @rising_edge(self.clk)
-            def proc():
-                #print("axiPrint",value(  i_buff) )
-                if axiSalve and axMaster:
-                    i_buff << axiSalve
-                    if i_buff < 10:
-                        axMaster << axiSalve
-                        #print("axiPrint valid",value( i_buff) )
+        axiSalve = axisStream_slave(self.Axi_in)
+        axMaster = axisStream_master(self.Axi_out) 
+
+
+        i_buff = v_variable( v_slv(32) )
+        @rising_edge(self.clk)
+        def proc():
+        #print("axiPrint",value(  i_buff) )
+            s_sw << 0
+            if axiSalve and axMaster:
+                i_buff << axiSalve
+                if i_buff < 10:
+                    axMaster << axiSalve
+                    s_sw << 1
+                    #print("axiPrint valid",value( i_buff) )
+        
+        
+        end_architecture()
+
 
 class axiPrint(v_clk_entity):
     def __init__(self,clk=None):

@@ -79,7 +79,9 @@ class xgenAST:
     "v_bool" : v_bool_to_vhdl,
     "dataType":dataType,
      "rising_edge" : handle_rising_edge,
-     "print"       : handle_print
+     "print"       : handle_print,
+     "v_switch"  : handle_v_switch,
+     "v_case"    : handle_v_case
   #   "v_create"    : handle_v_create
     }
 

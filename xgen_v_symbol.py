@@ -194,10 +194,14 @@ class v_symbol(vhdl_base):
 
         return self.Inout == Inout
 
+    def isVarSigType(self, varSigType):
+        if varSigType == None:
+            return True
 
+        return self.varSigConst == varSigType
 
     def to_arglist(self,name,parent):
-        inoutstr = obj.hdl_conversion__.InOut_t2str(self)
+        inoutstr = self.hdl_conversion__.InOut_t2str(self)
         if not inoutstr:
             inoutstr = ""
         return name + " : " + inoutstr +" " + self.getType()

@@ -37,9 +37,12 @@ class v_class_converter(vhdl_converter_base):
 
         return ""
 
-    def make_constant(self, obj, name,parent=None,InOut_Filter=None):
-        TypeName = obj.getType(InOut_Filter)
-        member = obj.getMember(InOut_Filter)
+    def make_constant(self, obj, name,parent=None,InOut_Filter=None, VaribleSignalFilter = None):
+        TypeName = obj.getType(InOut_Filter,VaribleSignalFilter)
+        member = obj.getMember(InOut_Filter,VaribleSignalFilter)
+        if len(member) == 0:
+            return ""
+        
         ret = "\nconstant " + name + " : " + TypeName + ":= (\n  "
         start = ""
         for x in member:
@@ -62,7 +65,10 @@ class v_class_converter(vhdl_converter_base):
             ret +=  obj.hdl_conversion__.getHeader_make_record(obj, name,parent,InOut_t.input_t)
             ret += "\n\n"
         
-        ret +=  obj.hdl_conversion__.getHeader_make_record(obj, name,parent)
+        ret +=  obj.hdl_conversion__.getHeader_make_record(obj, name,parent,None,varSig.signal_t)
+        ret +=  obj.hdl_conversion__.getHeader_make_record(obj, name,parent,None,varSig.variable_t)
+
+        #ret +=  obj.hdl_conversion__.getHeader_make_record(obj, name,parent)
         
         obj.hdl_conversion__.make_connection(obj,name,parent)
         
@@ -82,9 +88,9 @@ class v_class_converter(vhdl_converter_base):
         return ret
 
 
-    def getHeader_make_record(self,obj, name, parent=None, InOut_Filter=None):
-        TypeName = obj.getType(InOut_Filter)
-        member = obj.getMember(InOut_Filter)
+    def getHeader_make_record(self,obj, name, parent=None, InOut_Filter=None, VaribleSignalFilter = None):
+        TypeName = obj.getType(InOut_Filter, VaribleSignalFilter)
+        member = obj.getMember(InOut_Filter, VaribleSignalFilter)
         
         if len(member) == 0:
             return ""
@@ -96,7 +102,7 @@ class v_class_converter(vhdl_converter_base):
 
 
 
-        ret += obj.hdl_conversion__.make_constant(obj,TypeName+ "_null", parent, InOut_Filter)
+        ret += obj.hdl_conversion__.make_constant(obj,TypeName+ "_null", parent, InOut_Filter,VaribleSignalFilter)
    
         ret += "\n\n"
         ret += "type "+ TypeName+"_a is array (natural range <>) of "+TypeName+";\n\n"
@@ -444,7 +450,29 @@ class v_class_converter(vhdl_converter_base):
 
         return str(obj) + asOp +  str(rhs)
 
+    def get_self_func_name(self, obj, IsFunction = False):
+        inout = " inout "
+        if IsFunction:
+            inout = "  "
+        
+        return "self : " + inout + obj.get_type() 
 
+
+    def _vhdl_get_attribute(self,obj, attName):
+        attName = str(attName)
+        if obj.__v_classType__ == v_classType_t.transition_t:
+            for x in obj.getMember():
+                if x["name"] == attName:
+
+                    if x["symbol"].Inout  == InOut_t.output_t:
+                        suffix = "_m2s"
+                    else:
+                        suffix = "_s2m"
+
+                    return str(obj) + suffix + "." +   attName
+        
+        return str(obj) + "." +str(attName)
+   
 
 class v_class(vhdl_base):
 
@@ -459,6 +487,7 @@ class v_class(vhdl_base):
         self.__NameSlave__  = Name + "_slave"
         self.__NameMaster2Slave__ = Name + "_m2s"
         self.__NameSlave2Master__ = Name+"_s2m"
+        self.__NameSignal__ = Name+"_sig"
         self.__BeforePull__ = ""
         self.__AfterPull__  = ""
         self.__BeforePush__ = ""
@@ -484,7 +513,8 @@ class v_class(vhdl_base):
             self.vhdl_name = name
 
     def _sim_append_update_list(self,up):
-        self._update_list.append(up)
+        for x  in self.getMember():
+            x["symbol"]._sim_append_update_list(up)
 
 
     def _sim_get_value(self):
@@ -512,11 +542,13 @@ class v_class(vhdl_base):
 
 
 
-    def getType(self,Inout=None):
+    def getType(self,Inout=None,varSigType=None):
         if Inout == InOut_t.input_t:
             return self.__NameSlave2Master__
         elif Inout == InOut_t.output_t:
             return self.__NameMaster2Slave__ 
+        elif varSigType== varSig.signal_t:
+            return self.__NameSignal__  
         else:    
             return self.type 
 
@@ -545,9 +577,10 @@ class v_class(vhdl_base):
             raise Exception("wrong combination of Class type and Inout type",self.__v_classType__,Inout)
 
     def set_varSigConst(self, varSigConst):
+        self.varSigConst = varSigConst
         for x  in self.getMember():
             x["symbol"].set_varSigConst(varSigConst)
-                
+             
 
     def isInOutType(self, Inout):
         
@@ -570,7 +603,11 @@ class v_class(vhdl_base):
             return len(mem) > 0
             
 
+    def isVarSigType(self, varSigType):
+        if varSigType == None:
+            return True
 
+        return self.varSigConst == varSigType
 
         
 
@@ -583,13 +620,19 @@ class v_class(vhdl_base):
         pass 
 
     
-    def getMember(self,InOut_Filter=None):
+    def getMember(self,InOut_Filter=None, VaribleSignalFilter = None):
         ret = list()
         for x in self.__dict__.items():
             t = getattr(self, x[0])
-            if issubclass(type(t),vhdl_base) :
-                if t.isInOutType(InOut_Filter):
-                    ret.append({
+            if not issubclass(type(t),vhdl_base) :
+                continue 
+            if not t.isInOutType(InOut_Filter):
+                continue
+            
+            if not t.isVarSigType(VaribleSignalFilter):
+                continue
+
+            ret.append({
                         "name": x[0],
                         "symbol": t
                     })
@@ -667,10 +710,29 @@ class v_class(vhdl_base):
         self._connect(rhs)
 
 
-  
-    
+    def _get_Stream_input(self):
+        return  self
 
+    def _get_Stream_output(self):
+        return self
     
+    def __or__(self,rhs):
+
+        if rhs._StreamIn == None:
+            raise Exception("Input stream not defined")
+        
+        rhs_StreamIn = rhs._get_Stream_input()
+        self_StreamOut = self._get_Stream_output()
+        
+        ret = v_entity_list()
+
+
+        ret.append(self)
+        ret.append(rhs)
+
+        rhs_StreamIn << self_StreamOut
+        return ret
+        
 
 
     def Connect(self,Connections):

@@ -36,7 +36,7 @@ def timed():
     return decorator_timed
 
 def v_create(entity):
-    return entity()
+    return entity._instantiate_()
 
 class wait_for():
     def __init__(self,time,unit="ns"):
@@ -78,6 +78,33 @@ def addPullsPushes_from_closure(symbol,closure):
                 symbol._sim_append_Push_update_list(onPushPull['_onPush'])
             
 
+
+
+def combinational():
+    def decorator_combinational(func):
+        @functools.wraps(func)
+        def wrapper_combinational():
+            return func()
+
+        for symb in func.__closure__:
+            symbol = symb.cell_contents
+            symbol._sim_append_update_list(wrapper_combinational)
+        return wrapper_combinational
+    return decorator_combinational
+
+def v_switch(default_value, v_cases):
+    for c in v_cases:
+        if c["pred"]:
+            return c["value"]
+
+    return default_value
+
+def v_case(pred,value):
+    ret = {
+        "pred" : pred,
+        "value" : value 
+    }
+    return ret
 
 def rising_edge(symbol):
     def decorator_rising_edge(func):
@@ -197,19 +224,17 @@ class v_entity_list(vhdl_base0):
 
         
 
-        if self._StreamOut == None:
-            raise Exception("output stream not defined")
-        if rhs._StreamIn == None:
-            raise Exception("Input stream not defined")
+        rhs_StreamIn = rhs._get_Stream_input()
+        self_StreamOut = self._get_Stream_output()
         
-        rhs._StreamIn << self._StreamOut
+        rhs_StreamIn << self_StreamOut
         
         self.append(rhs)
         return self
     
     def append(self, entity):
         if entity._isInstance == False:
-            entity()
+            entity._instantiate_()
             self.nexted_entities.append({
                 "symbol" : entity,
                 "temp"   : True
@@ -254,7 +279,7 @@ class v_entity_list(vhdl_base0):
                 
                 ret +=start+rhs_StreamIn.hdl_conversion__._vhdl__reasign(rhs_StreamIn, lhs_StreamOut)
                 start = ";\n  "
-
+        self._isInstance = True
         return ret
 
 class v_entity_converter(vhdl_converter_base):
@@ -270,7 +295,7 @@ class v_entity_converter(vhdl_converter_base):
             self.astTree.extractArchetectureForEntity(obj,None)
 
         
-    def _vhdl_get_adtribute(self,obj, attName):
+    def _vhdl_get_attribute(self,obj, attName):
         if obj.vhdl_name:
             return obj.vhdl_name +"_"+ attName
         
@@ -407,20 +432,33 @@ class v_entity(vhdl_base0):
         self._StreamIn  = None
 
         
+    def getMember(self,InOut_Filter=None, VaribleSignalFilter = None):
+        ret = list()
+        for x in self.__dict__.items():
+            t = getattr(self, x[0])
+            if not issubclass(type(t),vhdl_base) :
+                continue 
+            if not t.isInOutType(InOut_Filter):
+                continue
+            
+            if not t.isVarSigType(VaribleSignalFilter):
+                continue
+
+            ret.append({
+                        "name": x[0],
+                        "symbol": t
+                    })
+
+        ret =sorted(ret, key=lambda element_: element_["name"])
+        return ret
 
 
     def __or__(self,rhs):
 
         
-
-        if self._StreamOut == None:
-            raise Exception("output stream not defined")
-        if rhs._StreamIn == None:
-            raise Exception("Input stream not defined")
-        
-        rhs_StreamIn = rhs._StreamIn
-        self_StreamOut = self._StreamOut
-        
+        rhs_StreamIn = rhs._get_Stream_input()
+        self_StreamOut = self._get_Stream_output()
+                
         ret = v_entity_list()
 
 
@@ -456,8 +494,7 @@ class v_entity(vhdl_base0):
         )
 
 
-
-    def __call__(self):
+    def _instantiate_(self):
         mem = v_entity_getMember(self)
         for x in mem:
             if not issubclass(type(self.__dict__[x["name"]]), vhdl_base):
@@ -476,11 +513,25 @@ class v_entity(vhdl_base0):
 
 
 
+
+
     def set_vhdl_name(self,name):
         self.vhdl_name = name   
 
+    def _sim_append_update_list(self,up):
+        for x in self.getMember():
+            x["symbol"]._sim_append_update_list(up)
+    
 
+    def _get_Stream_input(self):
+        if self._StreamIn == None:
+            raise Exception("Input stream not defined")
+        return  self._StreamIn
 
+    def _get_Stream_output(self):
+        if self._StreamOut == None:
+            raise Exception("output stream not defined")
+        return self._StreamOut
 
 
 class v_clk_entity(v_entity):

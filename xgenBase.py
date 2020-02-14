@@ -77,7 +77,7 @@ class vhdl_converter_base:
         return  name + " => " + str(obj)
 
 
-    def _vhdl_get_adtribute(self,obj, attName):
+    def _vhdl_get_attribute(self,obj, attName):
         return str(obj) + "." +str(attName)
 
     def _vhdl_slice(self,obj, sl):
@@ -179,6 +179,8 @@ class vhdl_converter_base:
 
         raise Exception("unkown Inout type",inOut)
 
+
+
 class vhdl_base0:
     def __init__(self):
         super().__init__()
@@ -200,6 +202,15 @@ class vhdl_base0:
             ret["_onPush"] =  getattr(self, '_onPush')
         
         return ret 
+
+    def _sim_append_update_list(self,up):
+        raise Exception("update not implemented")
+
+    def _get_Stream_input(self):
+        raise Exception("update not implemented")
+
+    def _get_Stream_output(self):
+        raise Exception("update not implemented")
 
 class vhdl_base(vhdl_base0):
 
@@ -239,8 +250,7 @@ class vhdl_base(vhdl_base0):
                 yield v_enum(t), x[0]
 
 
-    def _sim_append_update_list(self,up):
-        raise Exception("update not implemented")
+
   
 
 
@@ -269,12 +279,13 @@ def value(Input):
     return Input
 
 class  InOut_t(Enum):
-    input_t = 1
-    output_t = 2    
+    input_t    = 1
+    output_t   = 2    
     Internal_t = 3
-    Master_t = 4
-    Slave_t = 5
-    InOut_tt =6
+    Master_t   = 4
+    Slave_t    = 5
+    InOut_tt   = 6
+    Default_t  = 7
 
 class varSig(Enum):
     variable_t = 1
@@ -325,9 +336,18 @@ class v_classType_t(Enum):
     Record_t =4
 
 
-
+def v_variable(symbol):
+    ret= copy.deepcopy(symbol)
+    ret.setInout(InOut_t.Internal_t)
+    ret.set_varSigConst(varSig.variable_t)
+    return ret
     
-
+    
+def v_signal(symbol):
+    ret= copy.deepcopy(symbol)
+    ret.setInout(InOut_t.Internal_t)
+    ret.set_varSigConst(varSig.signal_t)
+    return ret
     
 def port_out(symbol):
     ret= copy.deepcopy(symbol)
@@ -347,6 +367,12 @@ def port_Master(symbol):
     ret.set_varSigConst(getDefaultVarSig())
     return ret
 
+def signal_port_Master(symbol):
+    ret= copy.deepcopy(symbol)
+    ret.setInout(InOut_t.Master_t)
+    ret.set_varSigConst(varSig.signal_t)
+    return ret
+
 def port_Stream_Master(symbol):
     ret = port_Master(symbol)
     funcrec = inspect.stack()[1]
@@ -358,6 +384,13 @@ def port_Stream_Master(symbol):
     f_locals["self"]._StreamOut = ret
                     
     return ret 
+
+def signal_port_Slave(symbol):
+    ret= copy.deepcopy(symbol)
+    ret.setInout(InOut_t.Slave_t)
+    ret.set_varSigConst(varSig.signal_t)
+    return ret
+
 
 def port_Slave(symbol):
     ret= copy.deepcopy(symbol)

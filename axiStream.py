@@ -168,6 +168,31 @@ class axisStream_master(v_class):
         return self.ready_to_send()
 
 
+class axisStream_slave_signal(v_class):
+    def __init__(self, Axi_Out):
+        super().__init__(Axi_Out.type + "_master_signal")
+        self.__v_classType__         = v_classType_t.Master_t
+        self.hdl_conversion__ =axisStream_master_converter()
+        self.tx = signal_port_Slave(Axi_Out)
+        self.tx << Axi_Out
+
+        self.internal          = v_signal(Axi_Out)
+        self.v_internal          = port_Slave(Axi_Out)
+        self.v_internal << self.internal
+        
+        #self.connect()
+
+
+#    def connect(self):
+#
+#    
+#        def p1():
+#            self.tx.ready       << when(0, self.tx.valid and self.internal.ready , 1 )
+#            self.internal.data  << self.tx.data
+#            self.internal.last  << self.tx.last
+#            self.internal.valid << self.tx.valid
+
+
 
 class axisStream_master_with_strean_counter(v_class):
     def __init__(self, Axi_in):
@@ -291,7 +316,7 @@ def main():
     
     parser = argparse.ArgumentParser(description='Generate Packages')
     parser.add_argument('--OutputPath',    help='Path to where the build system is located',default="build/xgen/xgen_axiStream_32.vhd")
-    parser.add_argument('--PackageName',   help='package Name',default="xgen_axistream_32")
+    parser.add_argument('--PackageName',   help='package Name',default="xgen_axistream_32_SD")
     s = isConverting2VHDL()
     set_isConverting2VHDL(True)
     args = parser.parse_args()
@@ -302,9 +327,10 @@ def main():
     ax = v_package(args.PackageName,sourceFile=__file__,
     PackageContent = [
         ax_t,
-        axisStream_slave(ax_t),
-        axisStream_master(ax_t),
-        axisStream_master_with_strean_counter(ax_t)
+       # axisStream_slave(ax_t),
+       # axisStream_master(ax_t),
+        axisStream_slave_signal(ax_t)
+       # axisStream_master_with_strean_counter(ax_t)
     ]
     
     

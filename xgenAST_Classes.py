@@ -85,8 +85,11 @@ class v_ast_base:
         return ""
         
     def _vhdl__getValue(self,ReturnToObj=None,astParser=None):
+        self._vhdl__setReturnType(ReturnToObj, astParser)
         return str(self)    
 
+    def _vhdl__setReturnType(self,ReturnToObj=None,astParser=None):
+        pass
 
 class v_noop(v_ast_base):
     def __init__(self, *args, **kwargs):
@@ -250,6 +253,39 @@ def body_unfold_porcess_body_timed(astParser,Node):
     setDefaultVarSig(dummy_DefaultVarSig)
 
     return v_process_body_timed_Def(ret,Node.name,astParser.LocalVar,decorator_l)
+
+class porcess_combinational(v_ast_base):
+    def __init__(self, Name, BodyList):
+        self.Name =Name
+        self.Body = BodyList
+
+    def __str__(self):
+        ret = "  -- begin " + self.Name +"\n"
+        
+        for x in self.Body:
+            ret += "  " + str(x) + ";\n"
+        ret += "  -- end " + self.Name 
+        return ret
+
+def body_unfold_porcess_body_combinational(astParser,Node):
+    
+    localContext = astParser.Context
+    
+
+    dummy_DefaultVarSig = getDefaultVarSig()
+    setDefaultVarSig(varSig.variable_t)
+    decorator_l = astParser.Unfold_body(Node.decorator_list)
+
+    ret = list()
+    astParser.Context = ret
+    for x in Node.body:
+        ret.append( astParser.Unfold_body(x))
+
+    astParser.Context = localContext
+    setDefaultVarSig(dummy_DefaultVarSig)
+
+    return porcess_combinational(Node.name, ret)
+
 class v_funDef(v_ast_base):
     def __init__(self,BodyList,dec=None):
         self.BodyList=BodyList
@@ -291,6 +327,10 @@ def body_unfold_functionDef(astParser,Node):
 
     elif len(Node.decorator_list) == 1 and Node.decorator_list[0].func.id== "timed":
         return body_unfold_porcess_body_timed(astParser,Node)
+
+    elif len(Node.decorator_list) == 1 and Node.decorator_list[0].func.id== "combinational":
+        return body_unfold_porcess_body_combinational(astParser,Node)
+
 
     decorator_l = astParser.Unfold_body(Node.decorator_list)
     localContext = astParser.Context
@@ -388,7 +428,7 @@ def body_unfold_Attribute(astParser,Node):
         return v_enum(att)
     
 
-    n = obj.hdl_conversion__._vhdl_get_adtribute(obj,Node.attr)
+    n = obj.hdl_conversion__._vhdl_get_attribute(obj,Node.attr)
 
     att.set_vhdl_name(n)
     
@@ -507,6 +547,48 @@ def  body_unfold_Name(astParser,Node):
 def handle_print(astParser,args,keywords=None):
     return v_noop()
 
+class handle_v_switch_cl(v_ast_base):
+    def __init__(self,Default, cases):
+        self.Default = Default
+        self.cases = cases
+        self.ReturnToObj = None
+
+    def _vhdl__setReturnType(self,ReturnToObj=None,astParser=None):
+        self.ReturnToObj = ReturnToObj
+        for x in self.cases:
+            x._vhdl__setReturnType(ReturnToObj, astParser)
+
+
+
+    def __str__(self):
+        ret = "\n    " 
+        for x in self.cases:
+            ret += str(x)
+
+        ret += str(self.Default)
+        return ret
+
+def handle_v_switch(astParser,args,keywords=None):
+    body = list()
+    for x in args[1].elts:
+        body.append(astParser.Unfold_body(x))
+
+    return handle_v_switch_cl(astParser.Unfold_body(args[0]),body)
+
+
+class handle_v_case_cl(v_ast_base):
+    def __init__(self, value,pred):
+        self.value = value
+        self.pred = pred 
+
+    def __str__(self):
+        
+        ret = str(self.value) + " when " + str(self.pred) + " else\n    "
+        return ret
+
+def handle_v_case(astParser,args,keywords=None):
+    test =v_type_to_bool(astParser,astParser.Unfold_body(args[0]))
+    return handle_v_case_cl(astParser.Unfold_body(args[1]), test)
 
 class v_call(v_ast_base):
     def __init__(self,memFunc, symbol, vhdl):
