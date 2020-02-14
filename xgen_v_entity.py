@@ -282,6 +282,16 @@ class v_entity_list(vhdl_base0):
         self._isInstance = True
         return ret
 
+    def _get_Stream_input(self):
+        if self._StreamIn  == None:
+            raise Exception("ouput not set")
+        return  self._StreamIn
+
+    def _get_Stream_output(self):
+        if self._StreamOut == None:
+            raise Exception("ouput not set")
+        return self._StreamOut
+
 class v_entity_converter(vhdl_converter_base):
 
     def __init__(self):
@@ -321,8 +331,8 @@ class v_entity_converter(vhdl_converter_base):
         
         for x in members:
             sym = x["symbol"]
-            if sym.vhdl_name == None:
-                sym.set_vhdl_name(x["name"])
+            symName = obj.hdl_conversion__._vhdl_get_attribute(obj,x["name"])
+            sym.vhdl_name = symName
             
             ret +=  sym.hdl_conversion__.get_architecture_header(sym)
 

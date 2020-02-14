@@ -74,7 +74,11 @@ class vhdl_converter_base:
         return ""
 
     def _vhdl_make_port(self, obj, name):
-        return  name + " => " + str(obj)
+        objName = str(obj)
+        if obj.__Driver__ != None:
+            objName = str(obj.__Driver__)
+
+        return  name + " => " + objName
 
 
     def _vhdl_get_attribute(self,obj, attName):
