@@ -43,16 +43,16 @@ class axisStream_slave(v_class):
     def __init__(self, Axi_in):
         super().__init__(Axi_in.type+"_slave")
         self.hdl_conversion__ =axisStream_slave_converter()
-        self.rx = port_Slave(Axi_in)
+        self.rx = v_variable( port_Slave(Axi_in))
         self.rx  << Axi_in
      
   
         self.__v_classType__         = v_classType_t.Slave_t
-        self.data_isvalid            = v_sl()
-        self.data_internal2          = v_copy(Axi_in.data)
-        self.data_internal_isvalid2  = v_sl()
-        self.data_internal_was_read2 = v_sl()
-        self.data_internal_isLast2   = v_sl()
+        self.data_isvalid            = v_variable( v_sl() )
+        self.data_internal2          = v_variable( v_copy(Axi_in.data) )
+        self.data_internal_isvalid2  = v_variable( v_sl())
+        self.data_internal_was_read2 =  v_variable(v_sl())
+        self.data_internal_isLast2   =v_variable( v_sl())
         self.__vectorPull__ = True
         self.__vectorPush__ = True
 
@@ -121,7 +121,7 @@ class axisStream_master(v_class):
     def __init__(self, Axi_Out):
         super().__init__(Axi_Out.type + "_master")
         self.hdl_conversion__ =axisStream_master_converter()
-        self.tx = port_Master(Axi_Out)
+        self.tx =v_variable(  port_Master(Axi_Out))
         
         self.tx.data.__Driver__ = None
         self.tx.last.__Driver__ = None
@@ -173,24 +173,26 @@ class axisStream_slave_signal(v_class):
         super().__init__(Axi_Out.type + "_master_signal")
         self.__v_classType__         = v_classType_t.Master_t
         self.hdl_conversion__ =axisStream_master_converter()
-        self.tx = signal_port_Slave(Axi_Out)
-        self.tx << Axi_Out
+        self.rx = signal_port_Slave(Axi_Out)
+        self.rx << Axi_Out
 
-        self.internal          = v_signal(Axi_Out)
-        self.v_internal          = port_Slave(Axi_Out)
+        self.internal       = v_signal(Axi_Out)
+        self.v_internal     = v_variable(Axi_Out)
         self.v_internal << self.internal
         
-        #self.connect()
 
 
+
+#    @architecture
 #    def connect(self):
-#
-#    
+#        @combinational()
 #        def p1():
-#            self.tx.ready       << when(0, self.tx.valid and self.internal.ready , 1 )
-#            self.internal.data  << self.tx.data
-#            self.internal.last  << self.tx.last
-#            self.internal.valid << self.tx.valid
+#            self.rx.ready       << v_switch(0, 
+#                [v_case( self.rx.valid and self.internal.ready , 1)]
+#                )
+#            self.internal.data  << self.rx.data
+#            self.internal.last  << self.rx.last
+#            self.internal.valid << self.rx.valid
 
 
 

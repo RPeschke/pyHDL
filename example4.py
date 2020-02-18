@@ -78,7 +78,7 @@ class axiPrint(v_clk_entity):
                 #print("axiPrint",value(i_buff) )
                 if axiSalve :
                     i_buff << axiSalve
-                    #print("axiPrint valid",value(i_buff) )
+                    print("axiPrint valid",value(i_buff) )
 
 
 
