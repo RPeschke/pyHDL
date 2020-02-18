@@ -717,9 +717,6 @@ class v_class(vhdl_base):
         return self
     
     def __or__(self,rhs):
-
-        if rhs._StreamIn == None:
-            raise Exception("Input stream not defined")
         
         rhs_StreamIn = rhs._get_Stream_input()
         self_StreamOut = self._get_Stream_output()
