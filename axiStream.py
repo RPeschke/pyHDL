@@ -10,10 +10,27 @@ from CodeGen.xgenBase import *
 from CodeGen.xgenPackage import *
 from CodeGen.xgenDB import *
 
+class axisStream_converter(v_class_converter):
+    def includes(self,obj, name,parent):
+        typeName = obj.data.hdl_conversion__.get_type_simple(obj.data)
+        
+        return "use work.axisStream_"+str(typeName)+".all;\n"
+    
+    def get_packet_file_name(self, obj):
+        typeName = obj.data.hdl_conversion__.get_type_simple(obj.data)
+        return "axisStream_"+str(typeName)+".vhd"
+
+    def get_packet_file_content(self, obj):
+        typeName = obj.data.hdl_conversion__.get_type_simple(obj.data)
+        pack =  "axisStream_"+str(typeName)
+
+        fileContent = make_package(pack,  obj.data)
+        return fileContent
 
 class axisStream(v_class):
-    def __init__(self,AxiName,Axitype):
-        super().__init__("axiStream_"+str(AxiName))
+    def __init__(self,Axitype):
+        super().__init__("axiStream_"+Axitype.hdl_conversion__.get_type_simple(Axitype))
+        self.hdl_conversion__ =axisStream_converter()
         AddDataType(  Axitype  )
         self.valid  = port_out( v_sl() )
         self.last   = port_out( v_sl() )
@@ -22,7 +39,7 @@ class axisStream(v_class):
     
 
             
-class axisStream_slave_converter(v_class_converter):
+class axisStream_slave_converter(axisStream_converter):
     def _vhdl__to_bool(self, obj, astParser):
         return "isReceivingData(" + str(obj) + ") "
 
@@ -37,6 +54,19 @@ class axisStream_slave_converter(v_class_converter):
 
         astParser.AddStatementBefore("read_data(" +str(obj) +", " +str(buff) +' ) ')
         return buff
+
+    def includes(self,obj, name,parent):
+        ret = obj.rx.hdl_conversion__.includes(obj.rx,None,None)
+        return ret
+
+    def get_packet_file_name(self, obj):
+        ret = obj.rx.hdl_conversion__.get_packet_file_name(obj.rx)
+        return ret
+
+
+    def get_packet_file_content(self, obj):
+        ret = obj.rx.hdl_conversion__.get_packet_file_content(obj.rx)
+        return ret
 
 
 class axisStream_slave(v_class):
@@ -110,12 +140,24 @@ class axisStream_slave(v_class):
 
 
 
-class axisStream_master_converter(v_class_converter):
+class axisStream_master_converter(axisStream_converter):
     def _vhdl__to_bool(self, obj, astParser):
         return "ready_to_send(" + str(obj) + ") "
     
     def _vhdl__reasign(self,obj, rhs):
         return "send_data( "+str(obj) + ", " +  str(rhs)+")"
+    
+    def includes(self,obj, name,parent):
+        ret = obj.tx.hdl_conversion__.includes(obj.tx,None,None)
+        return ret
+
+    def get_packet_file_name(self, obj):
+        ret = obj.tx.hdl_conversion__.get_packet_file_name(obj.tx)
+        return ret
+
+    def get_packet_file_content(self, obj):
+        ret = obj.tx.hdl_conversion__.get_packet_file_content(obj.tx)
+        return ret
 
 class axisStream_master(v_class):
     def __init__(self, Axi_Out):
@@ -168,11 +210,25 @@ class axisStream_master(v_class):
         return self.ready_to_send()
 
 
+
+class axisStream_slave_signal_converter(axisStream_converter):
+    def includes(self,obj, name,parent):
+        ret = obj.rx.hdl_conversion__.includes(obj.rx,None,None)
+        return ret
+
+    def get_packet_file_name(self, obj):
+        ret = obj.rx.hdl_conversion__.get_packet_file_name(obj.rx)
+        return ret
+
+    def get_packet_file_content(self, obj):
+        ret = obj.rx.hdl_conversion__.get_packet_file_content(obj.rx)
+        return ret
+
 class axisStream_slave_signal(v_class):
     def __init__(self, Axi_Out):
         super().__init__(Axi_Out.type + "_master_signal")
         self.__v_classType__         = v_classType_t.Master_t
-        self.hdl_conversion__ =axisStream_master_converter()
+        self.hdl_conversion__ =axisStream_slave_signal_converter()
         self.rx = signal_port_Slave(Axi_Out)
         self.rx << Axi_Out
 
@@ -314,34 +370,41 @@ def arg2type(AXiName):
 
     return AXiName,AxiType
 
-def main():
-    
-    parser = argparse.ArgumentParser(description='Generate Packages')
-    parser.add_argument('--OutputPath',    help='Path to where the build system is located',default="build/xgen/xgen_axiStream_32.vhd")
-    parser.add_argument('--PackageName',   help='package Name',default="xgen_axistream_32_SD")
+
+def make_package(PackageName,AxiType):
     s = isConverting2VHDL()
     set_isConverting2VHDL(True)
-    args = parser.parse_args()
-    sp = args.PackageName.split("_")
-    AXiName,AxiType = arg2type(sp[2])
 
-    ax_t = axisStream(AXiName,AxiType)
-    ax = v_package(args.PackageName,sourceFile=__file__,
+    ax_t = axisStream(AxiType)
+    ax = v_package(PackageName,sourceFile=__file__,
     PackageContent = [
         ax_t,
-       # axisStream_slave(ax_t),
-       # axisStream_master(ax_t),
-        axisStream_slave_signal(ax_t)
-       # axisStream_master_with_strean_counter(ax_t)
+        axisStream_slave(ax_t),
+        axisStream_master(ax_t),
+       # axisStream_slave_signal(ax_t)
+        axisStream_master_with_strean_counter(ax_t)
     ]
     
     
     )
     fileContent = ax.to_string()
+    set_isConverting2VHDL(s)
+    return fileContent
+
+def main():
+    
+    parser = argparse.ArgumentParser(description='Generate Packages')
+    parser.add_argument('--OutputPath',    help='Path to where the build system is located',default="build/xgen/xgen_axiStream_32.vhd")
+    parser.add_argument('--PackageName',   help='package Name',default="xgen_axistream_32_SD")
+
+    args = parser.parse_args()
+    sp = args.PackageName.split("_")
+    AXiName,AxiType = arg2type(sp[2])
+    fileContent = make_package(args.PackageName,AXiName ,AxiType)
+
     with open(args.OutputPath, "w", newline="\n") as f:
         f.write(fileContent)
         
-    set_isConverting2VHDL(s)
 
 
 if __name__== "__main__":

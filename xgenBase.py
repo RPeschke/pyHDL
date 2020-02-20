@@ -3,6 +3,14 @@ import copy
 import  inspect 
 
 
+def file_get_contents(filename):
+    with open(filename) as f:
+        return f.read().strip()
+
+def file_set_content(filename,content):
+    with open(filename,'w') as f:
+        f.write(content)
+
 def raise_if(condition,errorMessage):
     if condition:
         raise Exception(errorMessage)
@@ -51,8 +59,62 @@ def set_isProcess(newStatus):
 
 
 
+gHDL_objectList = []
+
+
+        
+
+def make_unique_includes(incs):
+    sp = incs.split(";")
+    sp  = [x.strip() for x in sp]
+    sp = sorted(set(sp))
+    ret = ""
+    for x in sp:
+        if len(x)>0:
+            ret += x+";\n"
+    return ret
+
+
+
+    
+    
 
 class vhdl_converter_base:
+
+    def convert_all(self, obj, ouputFolder):
+        FilesDone = ['']
+
+        for x in gHDL_objectList:
+            packetName =  x.hdl_conversion__.get_packet_file_name(x)
+            if packetName not in FilesDone:
+                packet = x.hdl_conversion__.get_packet_file_content(x)
+                if packet:
+                    file_set_content(ouputFolder+"/" +packetName,packet)
+                FilesDone.append(packetName)
+            
+            entiyFileName =  x.hdl_conversion__.get_entity_file_name(x)
+
+            if entiyFileName not in FilesDone:
+                entity_content = x.hdl_conversion__.get_enity_file_content(x)
+                if entity_content:
+                    file_set_content(ouputFolder+"/" +entiyFileName,entity_content)
+                FilesDone.append(entiyFileName)
+
+    def get_packet_file_name(self, obj):
+        return ""
+
+    def get_packet_file_content(self, obj):
+        return ""
+
+    def get_enity_file_content(self, obj):
+        return ""
+
+    def get_entity_file_name(self, obj):
+        return ""
+
+    def get_type_simple(self,obj):
+        return type(obj).__name__
+
     def parse_file(self,obj):
         return ""
 
@@ -188,6 +250,7 @@ class vhdl_converter_base:
 class vhdl_base0:
     def __init__(self):
         super().__init__()
+        gHDL_objectList.append(self)
         self._isInstance = False
         self.hdl_conversion__ = vhdl_converter_base()
     

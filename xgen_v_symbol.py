@@ -154,7 +154,15 @@ class v_symbol_converter(vhdl_converter_base):
                 return str(obj) + asOp +" to_integer(signed("+ str(rhs)+"))"
 
         return str(obj) +asOp +  str(rhs)
-
+    
+    def get_type_simple(self,obj):
+        ret = obj.type
+        if "std_logic_vector" in ret:
+            sp1 = int(ret.split("downto")[0].split("(")[1])
+            sp2 = int(ret.split("downto")[1].split(")")[0])
+            sp3 = sp1 -sp2 +1
+            ret  = "slv"+str(sp3)
+        return ret
 
 class v_symbol(vhdl_base):
     def __init__(self, v_type, DefaultValue, Inout = InOut_t.Internal_t,includes="",value=None,varSigConst=varSig.variable_t):
