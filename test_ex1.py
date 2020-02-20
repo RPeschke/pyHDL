@@ -31,18 +31,8 @@ def file_get_contents(filename):
 #print(vhdl == vhdl_ref)
 #print(vhdl)
 
-tb = CodeGen.example4.tb_entity()
+tb = CodeGen.example4.test_bench_e()
 
 tb.hdl_conversion__.convert_all(tb,"asdadasd")
 
-ax = v_package("CodeGen_example4_tb_entity",sourceFile=__file__,
-    PackageContent = [
-        CodeGen.example4.axiFilter(),
-        CodeGen.example4.axiPrint(),
-        CodeGen.example4.clk_generator(),
-        CodeGen.example4.rollingCounter(),
-        CodeGen.example4.tb_entity()
-    ]
-    )
-fileContent = ax.to_string()
-print(fileContent)
+

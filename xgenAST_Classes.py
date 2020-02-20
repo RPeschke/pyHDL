@@ -48,6 +48,14 @@ def port_in_to_vhdl(astParser,Node,Keywords=None):
 def port_out_to_vhdl(astParser,Node,Keywords=None):
     return port_out(astParser.unfold_argList(Node[0]) )
 
+def variable_port_in_to_vhdl(astParser,Node,Keywords=None):
+    return variable_port_in(astParser.unfold_argList(Node[0]) )
+
+def variable_port_out_to_vhdl(astParser,Node,Keywords=None):
+    return  variable_port_out(astParser.unfold_argList(Node[0]) )
+
+
+
 def v_slv_to_vhdl(astParser,Node,Keywords=None):
     args = list()
     for x in Node:
@@ -270,10 +278,10 @@ class porcess_combinational(v_ast_base):
 def body_unfold_porcess_body_combinational(astParser,Node):
     
     localContext = astParser.Context
-    
+    astParser.push_scope(GNames.process)
 
     dummy_DefaultVarSig = getDefaultVarSig()
-    setDefaultVarSig(varSig.variable_t)
+    setDefaultVarSig(varSig.signal_t)
     decorator_l = astParser.Unfold_body(Node.decorator_list)
 
     ret = list()
@@ -283,6 +291,8 @@ def body_unfold_porcess_body_combinational(astParser,Node):
 
     astParser.Context = localContext
     setDefaultVarSig(dummy_DefaultVarSig)
+    
+    astParser.pop_scope()
 
     return porcess_combinational(Node.name, ret)
 

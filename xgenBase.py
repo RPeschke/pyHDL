@@ -212,7 +212,7 @@ class vhdl_converter_base:
 
         VarSymb = get_varSig(obj.varSigConst)
 
-        return VarSymb +" " +str(obj) + " : " +obj.type +" := " + obj.type+"_null;\n"
+        return VarSymb +" " +str(obj) + " : " +obj.type +" := " + obj.DefaultValue +";\n"
 
 
 
@@ -405,6 +405,7 @@ class v_classType_t(Enum):
 
 def v_variable(symbol):
     ret= copy.deepcopy(symbol)
+    ret._isInstance = False
     ret.setInout(InOut_t.Internal_t)
     ret.set_varSigConst(varSig.variable_t)
     return ret
@@ -412,36 +413,63 @@ def v_variable(symbol):
     
 def v_signal(symbol):
     ret= copy.deepcopy(symbol)
+    ret._isInstance = False
     ret.setInout(InOut_t.Internal_t)
     ret.set_varSigConst(varSig.signal_t)
     return ret
     
 def port_out(symbol):
     ret= copy.deepcopy(symbol)
+    ret._isInstance = False
     ret.setInout(InOut_t.output_t)
     ret.set_varSigConst(getDefaultVarSig())
     return ret
 
+def variable_port_out(symbol):
+    ret= copy.deepcopy(symbol)
+    ret._isInstance = False
+    ret.setInout(InOut_t.output_t)
+    ret.set_varSigConst(varSig.variable_t)
+    return ret
+
 def port_in(symbol):
     ret= copy.deepcopy(symbol)
+    ret._isInstance = False
     ret.setInout(InOut_t.input_t)
     ret.set_varSigConst(getDefaultVarSig())
     return ret
 
+def variable_port_in(symbol):
+    ret= copy.deepcopy(symbol)
+    ret._isInstance = False
+    ret.setInout(InOut_t.input_t)
+    ret.set_varSigConst(varSig.variable_t)
+    return ret
+
 def port_Master(symbol):
     ret= copy.deepcopy(symbol)
+    ret._isInstance = False
     ret.setInout(InOut_t.Master_t)
     ret.set_varSigConst(getDefaultVarSig())
     return ret
 
+def variable_port_Master(symbol):
+    ret= copy.deepcopy(symbol)
+    ret._isInstance = False
+    ret.setInout(InOut_t.Master_t)
+    ret.set_varSigConst(varSig.variable_t)
+    return ret
+
 def signal_port_Master(symbol):
     ret= copy.deepcopy(symbol)
+    ret._isInstance = False
     ret.setInout(InOut_t.Master_t)
     ret.set_varSigConst(varSig.signal_t)
     return ret
 
 def port_Stream_Master(symbol):
     ret = port_Master(symbol)
+    ret._isInstance = False
     funcrec = inspect.stack()[1]
         
     f_locals = funcrec.frame.f_locals
@@ -454,6 +482,7 @@ def port_Stream_Master(symbol):
 
 def signal_port_Slave(symbol):
     ret= copy.deepcopy(symbol)
+    ret._isInstance = False
     ret.setInout(InOut_t.Slave_t)
     ret.set_varSigConst(varSig.signal_t)
     return ret
@@ -461,12 +490,21 @@ def signal_port_Slave(symbol):
 
 def port_Slave(symbol):
     ret= copy.deepcopy(symbol)
+    ret._isInstance = False
     ret.setInout(InOut_t.Slave_t)
     ret.set_varSigConst(getDefaultVarSig())
     return ret
 
+def variable_port_Slave(symbol):
+    ret= copy.deepcopy(symbol)
+    ret._isInstance = False
+    ret.setInout(InOut_t.Slave_t)
+    ret.set_varSigConst(varSig.variable_t)
+    return ret
+
 def port_Stream_Slave(symbol):
     ret = port_Slave(symbol)
+    ret._isInstance = False
     funcrec = inspect.stack()[1]
         
     f_locals = funcrec.frame.f_locals
@@ -478,6 +516,7 @@ def port_Stream_Slave(symbol):
 def v_copy(symbol):
     ret= copy.deepcopy(symbol)
     ret.setInout(InOut_t.Internal_t)
+    ret._isInstance = False
     ret.vhdl_name = None
     ret.set_varSigConst(getDefaultVarSig())
     return ret

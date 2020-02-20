@@ -64,11 +64,13 @@ class v_class_converter(vhdl_converter_base):
             ret += "\n\n"
             ret +=  obj.hdl_conversion__.getHeader_make_record(obj, name,parent,InOut_t.input_t)
             ret += "\n\n"
-        
-        ret +=  obj.hdl_conversion__.getHeader_make_record(obj, name,parent,None,varSig.signal_t)
-        ret +=  obj.hdl_conversion__.getHeader_make_record(obj, name,parent,None,varSig.variable_t)
+            ret +=  obj.hdl_conversion__.getHeader_make_record(obj, name,parent)
+            
+        else:
+            ret +=  obj.hdl_conversion__.getHeader_make_record(obj, name,parent,None,varSig.signal_t)
+            ret +=  obj.hdl_conversion__.getHeader_make_record(obj, name,parent,None,varSig.variable_t)
 
-        #ret +=  obj.hdl_conversion__.getHeader_make_record(obj, name,parent)
+        #
         
         obj.hdl_conversion__.make_connection(obj,name,parent)
         
@@ -460,7 +462,7 @@ class v_class_converter(vhdl_converter_base):
 
     def _vhdl_get_attribute(self,obj, attName):
         attName = str(attName)
-        if obj.__v_classType__ == v_classType_t.transition_t:
+        if obj.__v_classType__ == v_classType_t.transition_t and obj.varSigConst != varSig.variable_t:
             for x in obj.getMember():
                 if x["name"] == attName:
 
@@ -473,6 +475,16 @@ class v_class_converter(vhdl_converter_base):
         
         return str(obj) + "." +str(attName)
    
+    def get_process_header(self,obj):
+        if obj.Inout != InOut_t.Internal_t:
+            return ""
+        
+        if obj.varSigConst != varSig.variable_t:
+            return ""
+
+        VarSymb = get_varSig(obj.varSigConst)
+
+        return VarSymb +" " +str(obj) + " : " +obj.type +" := " + obj.type +"_null;\n"
 
 class v_class(vhdl_base):
 

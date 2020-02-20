@@ -73,7 +73,8 @@ class axisStream_slave(v_class):
     def __init__(self, Axi_in):
         super().__init__(Axi_in.type+"_slave")
         self.hdl_conversion__ =axisStream_slave_converter()
-        self.rx = v_variable( port_Slave(Axi_in))
+        self.varSigConst = varSig.variable_t
+        self.rx =  variable_port_Slave(Axi_in)
         self.rx  << Axi_in
      
   
@@ -87,12 +88,12 @@ class axisStream_slave(v_class):
         self.__vectorPush__ = True
 
 
-    def observe_data(self, dataOut = port_out(dataType())):
+    def observe_data(self, dataOut = variable_port_out(dataType())):
         if self.data_internal_isvalid2:
             dataOut << self.data_internal2
     
     
-    def read_data(self, dataOut = port_out(dataType())):
+    def read_data(self, dataOut = variable_port_out(dataType())):
         if self.data_internal_isvalid2:
             dataOut << self.data_internal2
             self.data_internal_was_read2 << 1
@@ -163,8 +164,8 @@ class axisStream_master(v_class):
     def __init__(self, Axi_Out):
         super().__init__(Axi_Out.type + "_master")
         self.hdl_conversion__ =axisStream_master_converter()
-        self.tx =v_variable(  port_Master(Axi_Out))
-        
+        self.tx =  variable_port_Master( Axi_Out)
+        self.varSigConst = varSig.variable_t
         self.tx.data.__Driver__ = None
         self.tx.last.__Driver__ = None
         self.tx.valid.__Driver__ = None
@@ -182,14 +183,14 @@ class axisStream_master(v_class):
    
 
         
-    def send_data(self, dataIn = port_in(dataType())):
+    def send_data(self, dataIn = variable_port_in(dataType())):
         self.tx.valid   << 1
         self.tx.data    << dataIn    
     
     def ready_to_send(self):
         return not self.tx.valid
 
-    def Send_end_Of_Stream(self, EndOfStream= port_in(v_bool())):
+    def Send_end_Of_Stream(self, EndOfStream= variable_port_in(v_bool())):
         if EndOfStream:
             self.tx.last << 1
         else:
@@ -255,12 +256,12 @@ class axisStream_slave_signal(v_class):
 class axisStream_master_with_strean_counter(v_class):
     def __init__(self, Axi_in):
         super().__init__(Axi_in.type + "_master_with_counter")
-        self.AxiTX = port_Master(axisStream_master(Axi_in))
+        self.AxiTX =  port_Master(axisStream_master(Axi_in))
         self.__v_classType__         = v_classType_t.Master_t
-        self.Counter = v_int(0)
-        self.SendingData = v_sl()
-        self.EndOfStream = v_sl()
-        self.EOF_Counter_max = v_int(0)
+        self.Counter = v_variable(v_int(0))
+        self.SendingData =v_variable(v_sl())
+        self.EndOfStream =v_variable( v_sl())
+        self.EOF_Counter_max = v_variable(v_int(0))
 
 
         self.__BeforePush__ ='''
@@ -380,9 +381,9 @@ def make_package(PackageName,AxiType):
     PackageContent = [
         ax_t,
         axisStream_slave(ax_t),
-        axisStream_master(ax_t),
-       # axisStream_slave_signal(ax_t)
-        axisStream_master_with_strean_counter(ax_t)
+        axisStream_master(ax_t)
+        #axisStream_slave_signal(ax_t)
+        #axisStream_master_with_strean_counter(ax_t)
     ]
     
     

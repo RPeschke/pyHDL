@@ -28,12 +28,12 @@ class axiFilter(v_clk_entity):
         
     def architecture(self):
 
-        s_buff = v_signal( v_slv(32) )
+        s_buff123 = v_signal( v_slv(32) )
         s_buff2 = v_signal( v_slv(32) )
         s_sw    = v_signal( v_sl() )
         @combinational() 
         def p1():
-            s_buff << self.Axi_in.data    
+            s_buff123 << self.Axi_in.data    
             s_buff2 << v_switch( 0 , [
                 v_case(  self.Axi_in.data < 5 , self.Axi_in.data)
                 ]  )
@@ -68,7 +68,7 @@ class axiPrint(v_clk_entity):
         
     def architecture(self):
         @process()
-        def _process1():
+        def process1():
             axiSalve = axisStream_slave(self.Axi_in)
 
             i_buff = v_slv(32)
@@ -113,22 +113,19 @@ class rollingCounter(v_clk_entity):
     def architecture(self):
         
         counter = v_slv(32)
-        @process()
-        def p2():
-            v_Axi_out = axisStream_master(self.Axi_out)
-            @rising_edge(self.clk)
-            def proc():
-                if v_Axi_out:
-                    #print("counter", value( counter) )
-                    v_Axi_out << counter
+        v_Axi_out = axisStream_master(self.Axi_out)
+        @rising_edge(self.clk)
+        def proc():
+            if v_Axi_out:
+                v_Axi_out << counter
                 
-                    counter << counter + 1
+                counter << counter + 1
 
-                if counter > self.MaxCount:
-                    counter << 0
+            if counter > self.MaxCount:
+                counter << 0
 
 
-class tb_entity(v_entity):
+class test_bench_e(v_entity):
     def __init__(self):
         super().__init__(__file__)
         self.architecture()

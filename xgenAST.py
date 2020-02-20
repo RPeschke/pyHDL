@@ -73,6 +73,8 @@ class xgenAST:
         self._unfold_symbol_fun_arg={
     "port_in" : port_in_to_vhdl,
     "port_out" : port_out_to_vhdl,
+    "variable_port_in" :  variable_port_in_to_vhdl,
+    "variable_port_out" : variable_port_out_to_vhdl,
     "v_slv"  : v_slv_to_vhdl,
     "v_sl"  : v_sl_to_vhdl,
     "v_int" : v_int_to_vhdl,
@@ -331,11 +333,7 @@ class xgenAST:
             for y in x:
                 index = index + 1
                 if y.vhdl_name == SymbolName:
-                    if y.varSigConst == varSig.variable_t:
-                        self.LocalVar.append(y)
-                        del x[index]
-                        return y
-                    
+                    self.LocalVar.append(y)
                     return y
 
         if self.parent:

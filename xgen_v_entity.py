@@ -309,7 +309,7 @@ class v_entity_converter(vhdl_converter_base):
         s = isConverting2VHDL()
         set_isConverting2VHDL(True)
         
-        
+        obj._un_instantiate_()
         obj.hdl_conversion__.parse_file(obj)
         
         
@@ -318,7 +318,8 @@ class v_entity_converter(vhdl_converter_base):
         ret += "\n\n"
         
         ret += obj.hdl_conversion__.get_entity_definition(obj)
-
+        
+        obj._instantiate_()
         set_isConverting2VHDL(s)
         return ret
 
@@ -556,6 +557,9 @@ class v_entity(vhdl_base0):
 
 
     def _instantiate_(self):
+        if self._isInstance == True:
+            return self
+            
         mem = v_entity_getMember(self)
         for x in mem:
             if not issubclass(type(self.__dict__[x["name"]]), vhdl_base):
@@ -571,6 +575,9 @@ class v_entity(vhdl_base0):
         return self
 
     def _un_instantiate_(self):
+        if self._isInstance == False:
+            return self
+
         mem = v_entity_getMember(self)
         for x in mem:
             if not issubclass(type(self.__dict__[x["name"]]), vhdl_base):
