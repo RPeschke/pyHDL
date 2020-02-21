@@ -3,7 +3,13 @@ from .xgen_v_function import *
 
 
 class v_class_converter(vhdl_converter_base):
-
+    def __init__(self):
+        super().__init__()
+        self.__BeforePull__ = ""
+        self.__AfterPull__  = ""
+        self.__BeforePush__ = ""
+        self.__AfterPush__  = ""
+        self.__ast_functions__ =list()
 
     def includes(self,obj, name,parent):
         ret = ""
@@ -13,7 +19,7 @@ class v_class_converter(vhdl_converter_base):
                         
                 ret += t.hdl_conversion__.includes(t,x[0],obj)
         
-        for x in obj.__ast_functions__:
+        for x in obj.hdl_conversion__.__ast_functions__:
             ret += x.hdl_conversion__.includes(x,None,obj)
         return ret
 
@@ -79,7 +85,7 @@ class v_class_converter(vhdl_converter_base):
             if issubclass(type(t),vhdl_base) and not issubclass(type(t),v_class):
                 ret += t.hdl_conversion__.getHeader(t,x[0],obj)
 
-        for x in obj.__ast_functions__:
+        for x in obj.hdl_conversion__.__ast_functions__:
             if x.name.lower() == "_onpull" or x.name.lower() == "_onpush":
                 continue
             ret +=  x.hdl_conversion__.getHeader(x,None,None)
@@ -173,30 +179,43 @@ class v_class_converter(vhdl_converter_base):
 
         return ret
 
+    def getBody_onPush(self, obj):
+        for x in obj.hdl_conversion__.__ast_functions__:
+            if x.name.lower() == "_onpush":
+                return x.body
+        return ""
+
+    def getBody_onPull(self, obj):
+        for x in obj.hdl_conversion__.__ast_functions__:
+            if x.name.lower() == "_onpull":
+                return x.body
+        return ""
+
+
     def getConnecting_procedure(self,obj, InOut_Filter,PushPull,ClassName=None,procedureName=None):
         if PushPull== "push":
-            beforeConnecting = obj.__BeforePush__
-            beforeConnecting += obj.getBody_onPush()
-            AfterConnecting = obj.__AfterPush__
+            beforeConnecting = obj.hdl_conversion__.__BeforePush__
+            beforeConnecting += obj.hdl_conversion__.getBody_onPush(obj)
+            AfterConnecting = obj.hdl_conversion__.__AfterPush__
             inout = " out "
             
             if InOut_Filter == InOut_t.input_t:
-                classType = obj.__NameSlave2Master__
+                classType = obj.hdl_conversion__.get_NameSlave2Master(obj)
             elif InOut_Filter == InOut_t.output_t:
-                classType = obj.__NameMaster2Slave__     
+                classType = obj.hdl_conversion__.get_NameMaster2Slave(obj)
             else:
                 raise Exception("unexpected combination")
 
         else:
-            beforeConnecting = obj.__BeforePull__
-            AfterConnecting = obj.__AfterPull__
-            AfterConnecting += obj.getBody_onPull()
+            beforeConnecting = obj.hdl_conversion__.__BeforePull__
+            AfterConnecting = obj.hdl_conversion__.__AfterPull__
+            AfterConnecting += obj.hdl_conversion__.getBody_onPull(obj)
             inout = " in "
 
             if InOut_Filter == InOut_t.input_t:
-                classType = obj.__NameSlave2Master__  
+                classType = obj.hdl_conversion__.get_NameSlave2Master(obj)
             elif InOut_Filter == InOut_t.output_t:
-                classType = obj.__NameMaster2Slave__    
+                classType = obj.hdl_conversion__.get_NameMaster2Slave(obj)
             else:
                 raise Exception("unexpected combination")
 
@@ -234,7 +253,7 @@ class v_class_converter(vhdl_converter_base):
             if issubclass(type(t),vhdl_base):
                 ret += t.hdl_conversion__.getBody(t,x[0],obj)
         
-        for x in obj.__ast_functions__:
+        for x in obj.hdl_conversion__.__ast_functions__:
             if x.name.lower() == "_onpull" or x.name.lower() == "_onpush":
                 continue
             ret +=  x.hdl_conversion__.getBody(x,None,None)
@@ -486,6 +505,22 @@ class v_class_converter(vhdl_converter_base):
 
         return VarSymb +" " +str(obj) + " : " +obj.type +" := " + obj.type +"_null;\n"
 
+    def get_NameMaster(self,obj):
+        return obj.type + "_master"
+
+    def get_NameSlave(self,obj):
+        return obj.type + "_slave"
+
+
+    def get_NameMaster2Slave(self,obj):
+        return obj.name + "_m2s"
+
+    def get_NameSlave2Master(self,obj):
+        return obj.type + "_s2m"
+
+    def get_NameSignal(self,obj):
+        return obj.type + "_sig"
+
 class v_class(vhdl_base):
 
     def __init__(self,Name,varSigConst=None):
@@ -495,23 +530,15 @@ class v_class(vhdl_base):
         self.name = Name
         self.type = Name
         self.__v_classType__ = v_classType_t.transition_t 
-        self.__NameMaster__ = Name + "_master"
-        self.__NameSlave__  = Name + "_slave"
-        self.__NameMaster2Slave__ = Name + "_m2s"
-        self.__NameSlave2Master__ = Name+"_s2m"
-        self.__NameSignal__ = Name+"_sig"
-        self.__BeforePull__ = ""
-        self.__AfterPull__  = ""
-        self.__BeforePush__ = ""
-        self.__AfterPush__  = ""
+
+
         self.__vectorPush__ = False
         self.__vectorPull__ = False
-        self.__ast_functions__ =list()
-        self.__connection__ = list()
+       
         self.Inout  = InOut_t.Internal_t
         self.vhdl_name =None
         self.__Driver__ = None
-        self._update_list = list()
+
 
         
         if not varSigConst:
@@ -556,19 +583,19 @@ class v_class(vhdl_base):
 
     def getType(self,Inout=None,varSigType=None):
         if Inout == InOut_t.input_t:
-            return self.__NameSlave2Master__
+            return self.hdl_conversion__.get_NameSlave2Master(self)
         elif Inout == InOut_t.output_t:
-            return self.__NameMaster2Slave__ 
+            return self.hdl_conversion__.get_NameMaster2Slave(self)
         elif varSigType== varSig.signal_t:
-            return self.__NameSignal__  
+            return self.hdl_conversion__.get_NameSignal(self) 
         else:    
             return self.type 
 
     def getTypes(self):
         return {
             "main" : self.type,
-            "m2s"  : self.__NameMaster2Slave__ ,
-            "s2m"  : self.__NameSlave2Master__
+            "m2s"  : self.hdl_conversion__.get_NameMaster2Slave(self),
+            "s2m"  : self.hdl_conversion__.get_NameSlave2Master(self)
 
         }        
         
@@ -662,30 +689,6 @@ class v_class(vhdl_base):
         members = self.getMember() 
         for x in members:
             x["symbol"].set_simulation_param(module, name+"_"+ x["name"], writer)
-
-
-
-
-
-
- 
-
-
-    def getBody_onPush(self):
-        for x in self.__ast_functions__:
-            if x.name.lower() == "_onpush":
-                return x.body
-
-        return ""
-    
-    def getBody_onPull(self):
-        for x in self.__ast_functions__:
-            if x.name.lower() == "_onpull":
-                return x.body
-
-        return ""
- 
-    
   
     def __str__(self):
         if self.__Driver__ and str( self.__Driver__) != 'process':
@@ -748,9 +751,6 @@ class v_class(vhdl_base):
         
 
 
-    def Connect(self,Connections):
-        self.__connection__.append(Connections)
-        return self
 
 class v_class_master(v_class):
 

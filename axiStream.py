@@ -11,6 +11,10 @@ from CodeGen.xgenPackage import *
 from CodeGen.xgenDB import *
 
 class axisStream_converter(v_class_converter):
+    def __init__(self):
+        super().__init__()
+
+
     def includes(self,obj, name,parent):
         ret =""
         typeName = obj.data.hdl_conversion__.get_type_simple(obj.data)
@@ -50,6 +54,9 @@ class axisStream(v_class):
         return axisStream_slave(self)
 
 class axisStream_slave_converter(axisStream_converter):
+    def __init__(self):
+        super().__init__()
+
     def _vhdl__to_bool(self, obj, astParser):
         return "isReceivingData(" + str(obj) + ") "
 
@@ -145,6 +152,9 @@ class axisStream_slave(v_class_slave):
 
 
 class axisStream_master_converter(axisStream_converter):
+    def __init__(self):
+        super().__init__()
+
     def _vhdl__to_bool(self, obj, astParser):
         return "ready_to_send(" + str(obj) + ") "
     
@@ -204,6 +214,9 @@ class axisStream_master(v_class_master):
 
 
 class axisStream_slave_signal_converter(axisStream_converter):
+    def __init__(self):
+        super().__init__()
+
     def includes(self,obj, name,parent):
         ret = obj.rx.hdl_conversion__.includes(obj.rx,None,None)
         return ret
