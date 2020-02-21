@@ -23,5 +23,5 @@ def file_get_contents(filename):
     with open(filename) as f:
         return f.read().strip()
 
-ax = CodeGen.example4.tb_entity()
+ax = CodeGen.example4.test_bench_e()
 CodeGen.example4.gsimulation.run_timed(ax, 1000,"example4.vcd")

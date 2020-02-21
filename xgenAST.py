@@ -7,10 +7,20 @@ from CodeGen.xgenBase import *
 from CodeGen.xgenAST_Classes import *
 from CodeGen.xgen_v_function import *
 
-def get_subclasses(astList,BaseName):
+
+def check_if_subclasses(BaseNames,baseclasses):
+    for b in BaseNames:
+        if b  in baseclasses:
+            return True
+    return False
+
+def get_subclasses(astList,BaseNames):
     for astObj in astList:
-        if  type(astObj).__name__ == 'ClassDef' and BaseName in [x.id  for x in astObj.bases]:
-            yield astObj
+        if  type(astObj).__name__ == 'ClassDef':
+            baseclasses = [x.id  for x in astObj.bases]
+            if  check_if_subclasses(BaseNames,baseclasses):
+                yield astObj
+
 
 dataType_ = list()
 def dataType(astParser=None, args=None):
@@ -66,7 +76,10 @@ class xgenAST:
         '_vhdl__getValue',
         "_vhdl__reasign",
         '_connect',
-        "_sim_get_value"
+        "_sim_get_value",
+        "get_master",
+        "get_slave"
+
         ]
 
         self.local_function ={}
@@ -115,9 +128,9 @@ class xgenAST:
         with open(sourceFileName, "r") as source:
             self.tree = ast.parse(source.read())
 
-        self.ast_v_classes = list(get_subclasses(self.tree.body,'v_class'))
-        self.ast_v_Entities = list(get_subclasses(self.tree.body,'v_entity'))
-        self.ast_v_Entities.extend( list(get_subclasses(self.tree.body,'v_clk_entity')))
+        self.ast_v_classes = list(get_subclasses(self.tree.body,['v_class','v_class_master',"v_class_slave"]))
+        self.ast_v_Entities = list(get_subclasses(self.tree.body,['v_entity']))
+        self.ast_v_Entities.extend( list(get_subclasses(self.tree.body,['v_clk_entity'])))
     
     def AddStatementBefore(self,Statement):
         if not self.Context == None:

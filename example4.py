@@ -39,8 +39,8 @@ class axiFilter(v_clk_entity):
                 ]  )
 
 
-        axiSalve = axisStream_slave(self.Axi_in)
-        axMaster = axisStream_master(self.Axi_out) 
+        axiSalve = get_salve(self.Axi_in)
+        axMaster = get_master(self.Axi_out) 
 
 
         i_buff = v_variable( v_slv(32) )
@@ -69,7 +69,7 @@ class axiPrint(v_clk_entity):
     def architecture(self):
         @process()
         def process1():
-            axiSalve = axisStream_slave(self.Axi_in)
+            axiSalve =  get_salve(self.Axi_in)
 
             i_buff = v_slv(32)
 
@@ -97,9 +97,9 @@ class clk_generator(v_entity):
             def proc():
                 self.clk << 1
                 #print("======================")
-                yield wait_for(10)
+                yield wait_for(1)
                 self.clk << 0
-                yield wait_for(10)
+                yield wait_for(1)
 
 
 class rollingCounter(v_clk_entity):
@@ -113,7 +113,7 @@ class rollingCounter(v_clk_entity):
     def architecture(self):
         
         counter = v_slv(32)
-        v_Axi_out = axisStream_master(self.Axi_out)
+        v_Axi_out = get_master(self.Axi_out)
         @rising_edge(self.clk)
         def proc():
             if v_Axi_out:

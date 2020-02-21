@@ -577,6 +577,7 @@ class handle_v_switch_cl(v_ast_base):
     def __str__(self):
         ret = "\n    " 
         for x in self.cases:
+            x = x._vhdl__getValue(self.ReturnToObj)
             ret += str(x)
         default = self.Default._vhdl__getValue(self.ReturnToObj)
         

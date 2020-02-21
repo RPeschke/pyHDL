@@ -625,7 +625,11 @@ class v_class(vhdl_base):
 
 
 
+    def get_master(self):
+        raise Exception("Function not implemented")
 
+    def get_slave(self):
+        raise Exception("Function not implemented")
 
 
     def make_serializer(self):
@@ -748,3 +752,28 @@ class v_class(vhdl_base):
         self.__connection__.append(Connections)
         return self
 
+class v_class_master(v_class):
+
+    def __init__(self,Name,varSigConst=None):
+        super().__init__(Name,varSigConst)
+        self.__vectorPush__   = True
+        self.__vectorPull__   = True
+        self.__v_classType__  = v_classType_t.Master_t
+        self.varSigConst       = varSig.variable_t
+
+
+class v_class_slave(v_class):
+
+    def __init__(self,Name,varSigConst=None):
+        super().__init__(Name,varSigConst)
+        self.__vectorPush__   = True
+        self.__vectorPull__   = True
+        self.__v_classType__  = v_classType_t.Slave_t
+        self.varSigConst       = varSig.variable_t
+
+
+def get_master(transObj):
+    return transObj.get_master()
+
+def get_salve(transObj):
+    return transObj.get_slave()

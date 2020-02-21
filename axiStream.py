@@ -42,9 +42,13 @@ class axisStream(v_class):
         self.last   = port_out( v_sl() )
         self.data   = port_out( Axitype  )
         self.ready  = port_in( v_sl() )
-    
 
-            
+    def get_master(self):
+        return axisStream_master(self)
+
+    def get_slave(self):
+        return axisStream_slave(self)
+
 class axisStream_slave_converter(axisStream_converter):
     def _vhdl__to_bool(self, obj, astParser):
         return "isReceivingData(" + str(obj) + ") "
@@ -75,23 +79,18 @@ class axisStream_slave_converter(axisStream_converter):
         return ret
 
 
-class axisStream_slave(v_class):
+class axisStream_slave(v_class_slave):
     def __init__(self, Axi_in):
         super().__init__(Axi_in.type+"_slave")
         self.hdl_conversion__ =axisStream_slave_converter()
-        self.varSigConst = varSig.variable_t
         self.rx =  variable_port_Slave(Axi_in)
         self.rx  << Axi_in
-     
-  
-        self.__v_classType__         = v_classType_t.Slave_t
+    
         self.data_isvalid            = v_variable( v_sl() )
         self.data_internal2          = v_variable( v_copy(Axi_in.data) )
         self.data_internal_isvalid2  = v_variable( v_sl())
-        self.data_internal_was_read2 =  v_variable(v_sl())
-        self.data_internal_isLast2   =v_variable( v_sl())
-        self.__vectorPull__ = True
-        self.__vectorPush__ = True
+        self.data_internal_was_read2 = v_variable(v_sl())
+        self.data_internal_isLast2   = v_variable( v_sl())
 
 
     def observe_data(self, dataOut = variable_port_out(dataType())):
@@ -113,11 +112,9 @@ class axisStream_slave(v_class):
         return  self.data_internal_isvalid2  and  self.data_internal_isLast2
 
     def __bool__(self):
-        
         return self.isReceivingData()
 
     def _onPull(self):
-
         if self.rx.ready and self.rx.valid:
             self.data_isvalid << 1
         
@@ -166,26 +163,14 @@ class axisStream_master_converter(axisStream_converter):
         ret = obj.tx.hdl_conversion__.get_packet_file_content(obj.tx)
         return ret
 
-class axisStream_master(v_class):
+class axisStream_master(v_class_master):
     def __init__(self, Axi_Out):
         super().__init__(Axi_Out.type + "_master")
         self.hdl_conversion__ =axisStream_master_converter()
         self.tx =  variable_port_Master( Axi_Out)
-        self.varSigConst = varSig.variable_t
-        self.tx.data.__Driver__ = None
-        self.tx.last.__Driver__ = None
-        self.tx.valid.__Driver__ = None
-        self.tx.ready.__Driver__ = None
-
-
         Axi_Out  << self.tx
 
-        
-        #self.tx._connect(Axi_Out)
-        self.__v_classType__         = v_classType_t.Master_t
-        self.__vectorPull__ = True
-        self.__vectorPush__ = True
-    
+
    
 
         
@@ -239,9 +224,9 @@ class axisStream_slave_signal(v_class):
         self.rx = signal_port_Slave(Axi_Out)
         self.rx << Axi_Out
 
-        self.internal       = v_signal(Axi_Out)
-        self.v_internal     = v_variable(Axi_Out)
-        self.v_internal << self.internal
+        self.internal     =  v_signal(Axi_Out)
+        self.v_internal   =  v_variable(Axi_Out)
+        self.v_internal   << self.internal
         
 
 
@@ -407,7 +392,7 @@ def main():
     args = parser.parse_args()
     sp = args.PackageName.split("_")
     AXiName,AxiType = arg2type(sp[2])
-    fileContent = make_package(args.PackageName,AXiName ,AxiType)
+    fileContent = make_package(args.PackageName,AxiType)
 
     with open(args.OutputPath, "w", newline="\n") as f:
         f.write(fileContent)
