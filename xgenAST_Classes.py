@@ -59,7 +59,11 @@ def variable_port_out_to_vhdl(astParser,Node,Keywords=None):
 def v_slv_to_vhdl(astParser,Node,Keywords=None):
     args = list()
     for x in Node:
-        args.append(astParser.Unfold_body(x))
+        x_obj = astParser.Unfold_body(x)
+        if type(x_obj).__name__ == "v_Num":
+            args.append(x_obj.value )
+        else:
+            args.append(x_obj)
 
     kwargs = {}
     for x in Keywords:
@@ -574,8 +578,9 @@ class handle_v_switch_cl(v_ast_base):
         ret = "\n    " 
         for x in self.cases:
             ret += str(x)
-
-        ret += str(self.Default)
+        default = self.Default._vhdl__getValue(self.ReturnToObj)
+        
+        ret += str(default)
         return ret
 
 def handle_v_switch(astParser,args,keywords=None):

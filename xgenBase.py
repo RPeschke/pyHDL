@@ -64,14 +64,17 @@ gHDL_objectList = []
 
         
 
-def make_unique_includes(incs):
+def make_unique_includes(incs,exclude=None):
     sp = incs.split(";")
     sp  = [x.strip() for x in sp]
     sp = sorted(set(sp))
     ret = ""
     for x in sp:
-        if len(x)>0:
-            ret += x+";\n"
+        if len(x)==0:
+            continue
+        if exclude and "work."+exclude+".all" in x:
+            continue
+        ret += x+";\n"
     return ret
 
 

@@ -429,13 +429,8 @@ class v_entity_converter(vhdl_converter_base):
         for x in obj.__processList__:
             bufffer += x.hdl_conversion__.includes(x,"",None)
 
-        sp = bufffer.split(";")
-        sp  = [x.strip() for x in sp]
-        sp = sorted(set(sp))
-        ret = ""
-        for x in sp:
-            if len(x)>0:
-                ret += x+";\n"
+
+        ret = make_unique_includes(bufffer)
         return ret
 
     def get_declaration(self,obj):

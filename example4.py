@@ -34,7 +34,7 @@ class axiFilter(v_clk_entity):
         @combinational() 
         def p1():
             s_buff123 << self.Axi_in.data    
-            s_buff2 << v_switch( 0 , [
+            s_buff2 << v_switch( 50 , [
                 v_case(  self.Axi_in.data < 5 , self.Axi_in.data)
                 ]  )
 

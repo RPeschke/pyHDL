@@ -12,9 +12,15 @@ from CodeGen.xgenDB import *
 
 class axisStream_converter(v_class_converter):
     def includes(self,obj, name,parent):
+        ret =""
         typeName = obj.data.hdl_conversion__.get_type_simple(obj.data)
         
-        return "use work.axisStream_"+str(typeName)+".all;\n"
+        ret += "use work.axisStream_"+str(typeName)+".all;\n"
+        members = obj.getMember() 
+        for x in members:
+            ret += x["symbol"].hdl_conversion__.includes(x["symbol"],name,parent)
+
+        return ret
     
     def get_packet_file_name(self, obj):
         typeName = obj.data.hdl_conversion__.get_type_simple(obj.data)

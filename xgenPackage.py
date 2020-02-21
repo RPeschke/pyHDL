@@ -21,13 +21,7 @@ class v_package_converter(vhdl_converter_base):
             t = to_v_object(t)
             
             bufffer += t.hdl_conversion__.includes(t,"",obj)
-        sp = bufffer.split(";")
-        sp  = [x.strip() for x in sp]
-        sp = sorted(set(sp))
-        ret = ""
-        for x in sp:
-            if len(x)>0:
-                ret += x+";\n"
+        ret = make_unique_includes(bufffer, obj.PackageName)
         return ret
 
     def getHeader(self, obj, name,parent):
