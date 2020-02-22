@@ -226,9 +226,6 @@ class vhdl_converter_base:
 
 
 
-    def _vhdl__make_constant(self, obj, name):
-        return str(obj) + " := " +  str(rhs) +";\n"
-
     def _vhdl__Pull(self,obj):
         return ""
 

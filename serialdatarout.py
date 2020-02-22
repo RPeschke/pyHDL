@@ -11,7 +11,7 @@ from CodeGen.klm_scrod_bus import *
 from enum import Enum 
 import copy 
 
-Bitwidth = v_const("Bitwidth", v_int(15))
+Bitwidth = v_int(15,varSigConst=varSig.const_t)
 asicN= v_slv(4)
 
 class SerialDataConfig(v_class):

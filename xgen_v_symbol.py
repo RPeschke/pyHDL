@@ -113,9 +113,6 @@ class v_symbol_converter(vhdl_converter_base):
         return ret
 
 
-    def _vhdl__make_constant(self,obj, name):
-        return "constant " + name + " : " +  obj.type +" := " + str(obj.DefaultValue) +";\n"
-
 
     def _vhdl__reasign(self, obj, rhs, context=None):
         if issubclass(type(rhs),vhdl_base0)  and str( obj.__Driver__) != 'process':
