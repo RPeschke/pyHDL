@@ -59,23 +59,14 @@ def addPullsPushes(symbol):
     f_locals4  = funcrec4.frame.f_locals
     for y in f_locals:
         if not y in f_locals4 and y != "self" and issubclass(type(f_locals[y]), vhdl_base0):
-            onPushPull = f_locals[y]._sim_get_push_pull()
-            if  onPushPull['_onPull']:
-                symbol._sim_append_Pull_update_list( onPushPull['_onPull'])
+            f_locals[y]._sim_set_push_pull(symbol)
 
-            if onPushPull['_onPush']:
-                symbol._sim_append_Push_update_list(onPushPull['_onPush'])
             
 def addPullsPushes_from_closure(symbol,closure):
     for x in closure:
         y = x.cell_contents
         if issubclass(type(y), vhdl_base0):
-            onPushPull = y._sim_get_push_pull()
-            if  onPushPull['_onPull']:
-                symbol._sim_append_Pull_update_list( onPushPull['_onPull'])
-
-            if onPushPull['_onPush']:
-                symbol._sim_append_Push_update_list(onPushPull['_onPush'])
+            y._sim_set_push_pull(symbol)
             
 
 

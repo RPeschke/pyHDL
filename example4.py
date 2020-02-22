@@ -11,7 +11,7 @@ from CodeGen.xgenBase import *
 from CodeGen.xgen_v_symbol import *
 from CodeGen.axiStream import *
 from CodeGen.xgen_v_entity import *
-
+from CodeGen.xgen_v_list import *
 
 from CodeGen.xgen_simulation import *
 
@@ -133,6 +133,9 @@ class test_bench_e(v_entity):
 
 
     def architecture(self):
+        
+
+        
         clkgen = v_create(clk_generator())
 
         maxCount = v_slv(32,20)
@@ -141,6 +144,21 @@ class test_bench_e(v_entity):
         pipe1  = rollingCounter(clkgen.clk,maxCount)  \
                     | axiFilter(clkgen.clk) \
                     | axiPrint(clkgen.clk)
+        
+
+        sList = v_list(v_slv(32), 10)
+        mList = v_variable(v_list(v_slv(32), 10))
+        Counter  = v_slv(32)
+        Counter2 = v_slv(32)
+        @rising_edge(clkgen.clk)
+        def proc():
+            mList[Counter] << Counter2
+            Counter2 << Counter2 + 1
+            Counter  << Counter + 1
+            if Counter > 8:
+                Counter << 0
+
+            sList << mList
         
         end_architecture()
 

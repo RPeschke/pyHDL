@@ -153,8 +153,6 @@ class v_Arch_converter(vhdl_converter_base):
         for x in obj.Symbols:
             if x.type == "undef":
                 continue
-            if  hasattr(x, 'varSigConst') and x.varSigConst == varSig.variable_t:
-                continue
             header += x.hdl_conversion__.get_architecture_header(x)
             
         return header

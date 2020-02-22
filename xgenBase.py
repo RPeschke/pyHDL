@@ -15,6 +15,13 @@ def raise_if(condition,errorMessage):
     if condition:
         raise Exception(errorMessage)
 
+
+def get_value_or_default(value,default):
+    if value == None:
+        return default
+
+    return value
+
 def add_symbols_to_entiy():
     funcrec = inspect.stack()
     for x in funcrec:
@@ -149,7 +156,7 @@ class vhdl_converter_base:
     def _vhdl_get_attribute(self,obj, attName):
         return str(obj) + "." +str(attName)
 
-    def _vhdl_slice(self,obj, sl):
+    def _vhdl_slice(self,obj, sl,astParser=None):
         raise Exception("Not implemented")
         return obj
     
@@ -261,17 +268,16 @@ class vhdl_base0:
     def set_simulation_param(self,module, name,writer):
         pass
 
-    def _sim_get_push_pull(self):
-        ret = {
-            "_onPull" : None,
-            "_onPush" : None
-        }
-        if hasattr(self, "_onPull"):
-            ret["_onPull"] =  getattr(self, '_onPull')
-        if hasattr(self, "_onPush"):
-            ret["_onPush"] =  getattr(self, '_onPush')
-        
-        return ret 
+
+    def _sim_set_push_pull(self, symbol):
+            
+            if hasattr(self, "_onPull"):
+                symbol._sim_append_Pull_update_list( getattr(self, '_onPull'))
+
+            if hasattr(self, "_onPush"):
+                symbol._sim_append_Push_update_list(getattr(self, '_onPush'))
+
+
 
     def _sim_append_update_list(self,up):
         raise Exception("update not implemented")
@@ -345,6 +351,9 @@ def optional_concatonat(first, delimer, Second):
 def value(Input):
     if issubclass(type(Input), vhdl_base):
         return Input._sim_get_value()
+    
+    if type(Input).__name__ == "v_Num":
+        return Input.value
 
     return Input
 
@@ -516,12 +525,13 @@ def port_Stream_Slave(symbol):
     f_locals["self"]._StreamIn = ret
                     
     return ret 
-def v_copy(symbol):
+def v_copy(symbol,varSig=None):
     ret= copy.deepcopy(symbol)
     ret.setInout(InOut_t.Internal_t)
     ret._isInstance = False
     ret.vhdl_name = None
-    ret.set_varSigConst(getDefaultVarSig())
+    if varSig == None:
+        ret.set_varSigConst(getDefaultVarSig())
     return ret
 
 def port(symbol):
@@ -542,47 +552,3 @@ def port(symbol):
         raise Exception("Unexpected type " , type(symbol))
 
 
-class v_list(vhdl_base):
-    def __init__(self,Internal_Type,size):
-        self.Internal_Type = Internal_Type
-        self.size = size
-
-    def getHeader(self, name,parent):
-        ty = self.Internal_Type.getTypes()
-        ret = "---------- Start  Array of " +name + "------------------------\n"
-        for n in ty:
-            if n == "main":
-                newTypeName = name+ "_" +str(self.size)
-            else:
-                newTypeName = name + "_" +str(self.size) +"_"+ n
-            
-            ret += "type "+ newTypeName +" is array ( " + str(self.size - 1) + " downto 0 ) of "+ty[n]+";\n"
-            ret += "constant " +newTypeName+"_null : " + newTypeName +" := ( others => " + ty[n]+"_null );\n" 
-        
-        ret += "---------- End  Array of " +name + "------------------------\n\n\n"
-
-        return ret
-
-
-    def getName(self):
-        return type(self).__name__
-
-
-class v_const(vhdl_base):
-    def __init__(self,name, symbol):
-        self.symbol = symbol
-        self.name  = name
-    
-    def getHeader(self, name,parent):
-        ret =""
-        if not name:
-            name = self.name
-        
-        if issubclass(type(self.symbol),vhdl_base):
-
-            ret += self.symbol.hdl_conversion__._vhdl__make_constant(self.symbol, name) 
-
-        else:
-            raise Exception("unknown type")
-
-        return ret

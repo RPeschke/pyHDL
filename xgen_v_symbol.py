@@ -36,7 +36,7 @@ class v_symbol_converter(vhdl_converter_base):
     def getFuncArg(self,obj, name,parent):
         return name + " : " + obj.type   
 
-    def _vhdl_slice(self,obj,sl):
+    def _vhdl_slice(self,obj,sl,astParser=None):
         if "std_logic_vector" in self.type:
             ret = v_sl(obj.Inout)
             ret.vhdl_name = obj.vhdl_name+"("+str(sl)+")"
@@ -164,6 +164,11 @@ class v_symbol_converter(vhdl_converter_base):
             ret  = "slv"+str(sp3)
         return ret
 
+    def _vhdl__getValue(self,obj, ReturnToObj=None,astParser=None):
+        if ReturnToObj == "integer":
+            return  "to_integer(signed( " + str(obj)  + "))"
+        
+        return obj
 class v_symbol(vhdl_base):
     def __init__(self, v_type, DefaultValue, Inout = InOut_t.Internal_t,includes="",value=None,varSigConst=varSig.variable_t):
         super().__init__()
