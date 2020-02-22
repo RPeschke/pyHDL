@@ -67,18 +67,16 @@ class axiPrint(v_clk_entity):
 
         
     def architecture(self):
-        @process()
-        def process1():
-            axiSalve =  get_salve(self.Axi_in)
+        axiSalve =  get_salve(self.Axi_in)
 
-            i_buff = v_slv(32)
+        i_buff = v_slv(32)
 
-            @rising_edge(self.clk)
-            def proc():
-                #print("axiPrint",value(i_buff) )
-                if axiSalve :
-                    i_buff << axiSalve
-                    print("axiPrint valid",value(i_buff) )
+        @rising_edge(self.clk)
+        def proc():
+            
+            if axiSalve :
+                i_buff << axiSalve
+                print("axiPrint valid",value(i_buff) )
 
 
 
@@ -90,16 +88,13 @@ class clk_generator(v_entity):
 
     def architecture(self):
         
-        @process()
-        def p1():
-
-            @timed()
-            def proc():
-                self.clk << 1
-                #print("======================")
-                yield wait_for(1)
-                self.clk << 0
-                yield wait_for(1)
+        @timed()
+        def proc():
+            self.clk << 1
+            #print("======================")
+            yield wait_for(1)
+            self.clk << 0
+            yield wait_for(1)
 
 
 class rollingCounter(v_clk_entity):
