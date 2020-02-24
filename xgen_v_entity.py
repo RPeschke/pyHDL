@@ -432,7 +432,10 @@ class v_entity_converter(vhdl_converter_base):
             ret+="port(\n"
             for x in members:
                 sym = x["symbol"]
-                ret += start + sym.hdl_conversion__.get_port_list(sym)
+                #ret += start + sym.hdl_conversion__.get_port_list(sym)
+                portdef = sym.hdl_conversion__.get_port_list(sym)
+                if portdef:
+                    ret += start +portdef
                 start = ";\n  "
         
             ret+="\n);\n"

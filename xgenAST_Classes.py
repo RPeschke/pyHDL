@@ -735,6 +735,13 @@ def body_LShift(astParser,Node):
 
     return v_re_assigne(var, rhs)
 
+def hasNumericalValue(symb):
+    if type(symb).__name__ == "int":
+        return True
+    if type(symb).__name__ == "v_Num":
+        return True
+
+    return False
 class v_add(v_ast_base):
     def __init__(self,lhs, rhs):
         self.lhs = lhs
@@ -742,7 +749,9 @@ class v_add(v_ast_base):
         self.type = lhs.type
         
 
-        
+    def get_value(self):
+        return value(self.lhs) + value(self.rhs)
+
 
     def __str__(self):
         if issubclass(type(self.lhs),vhdl_base):
@@ -756,11 +765,37 @@ def body_add(astParser,Node):
     if issubclass( type(lhs),vhdl_base):
         return v_add(lhs, rhs)
 
+    if hasNumericalValue(lhs) and hasNumericalValue(rhs):
+        return v_Num(value(lhs) + value(rhs))
+        
     var = astParser.get_variable(lhs.Value, Node)
 
     return v_add(var, rhs)
 
+class v_sub(v_ast_base):
+    def __init__(self,lhs, rhs):
+        self.lhs = lhs
+        self.rhs = rhs
+        self.type = lhs.type
+        
 
+        
+
+    def __str__(self):
+        if issubclass(type(self.lhs),vhdl_base):
+            return self.lhs.hdl_conversion__._vhdl__Sub(self.lhs, self.rhs)
+
+        return str(self.lhs) + " - " +  str(self.rhs) 
+
+def body_sub(astParser,Node):
+    rhs =  astParser.Unfold_body(Node.right)
+    lhs =  astParser.Unfold_body(Node.left)
+    if issubclass( type(lhs),vhdl_base):
+        return v_sub(lhs, rhs)
+
+    var = astParser.get_variable(lhs.Value, Node)
+
+    return v_sub(var, rhs)
 
 class v_stream_assigne(v_ast_base):
     def __init__(self,lhs, rhs,StreamOut,lhsEntity,context=None):
@@ -1139,4 +1174,4 @@ def for_loop_indexed_based(astParser,Node):
 
 def body_handle_len(astParser,args,keywords=None):
     l = astParser.Unfold_body(args[0])
-    return v_Str(l.hdl_conversion__.length(l))
+    return l.hdl_conversion__.length(l)

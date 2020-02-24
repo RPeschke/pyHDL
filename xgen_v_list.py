@@ -1,5 +1,5 @@
 from .xgenBase import * 
-
+from .xgen_v_symbol import *
 
 class v_list_converter(vhdl_converter_base):
     def __init__(self):
@@ -101,7 +101,7 @@ end {objType}_pack;
             )
         return ret
         
-        
+  
     def _vhdl__reasign(self, obj, rhs, context=None):
         asOp = obj.hdl_conversion__.get_assiment_op(obj)
         return str(obj.vhdl_name) + asOp +  str(rhs.vhdl_name)
@@ -142,7 +142,10 @@ end {objType}_pack;
 
         raise Exception("Not implemented")
 
-    
+    def length(self,obj):
+        ret = v_int()
+        ret.vhdl_name=str(obj)+"'length"
+        return ret  
 class v_list(vhdl_base):
     def __init__(self,Internal_Type,size,varSigConst=None):
         super().__init__()
@@ -150,6 +153,8 @@ class v_list(vhdl_base):
         self.Internal_Type = Internal_Type
         self.driver = None
         self.content = []
+        self.Inout  = InOut_t.Internal_t
+        self.__Driver__ = None
         for i in range( value(size)):
             self.content.append( v_copy(Internal_Type) )
 
@@ -237,3 +242,7 @@ class v_list(vhdl_base):
         elif Inout== InOut_t.output_t:
             return self.vhdl_name+"_m2s"
         return self.vhdl_name
+
+    def _sim_append_update_list(self,up):
+        for x in self.content:
+            x._sim_append_update_list(up)

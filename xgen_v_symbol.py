@@ -170,6 +170,10 @@ class v_symbol_converter(vhdl_converter_base):
     def get_default_value(self,obj):
         return obj.DefaultValue
 
+    def length(self,obj):
+        ret = v_int()
+        ret.vhdl_name=str(obj)+"'length"
+        return ret
 
 
 class v_symbol(vhdl_base):
@@ -184,8 +188,8 @@ class v_symbol(vhdl_base):
         self.Inout = Inout
         self.inc = ""
         self.vhdl_name = None
-        self.value = value
-        self.nextValue  = value
+        self.value = get_value_or_default(value, DefaultValue)
+        self.nextValue  = get_value_or_default(value, DefaultValue)
         self.varSigConst=varSigConst
         self.__Driver__ = None 
         self._update_list = list()
@@ -458,9 +462,11 @@ def v_slv(BitWidth=None,Default=0, Inout=InOut_t.Internal_t,varSigConst=None):
         varSigConst=varSigConst
     )
 
-def v_int(Default="0", Inout=InOut_t.Internal_t, varSigConst=None):
+def v_int(Default=0, Inout=InOut_t.Internal_t, varSigConst=None):
+    
     return v_symbol(
-        v_type= "integer", 
+        v_type= "integer",
+        value= value(Default), 
         DefaultValue=str(Default), 
         Inout = Inout,
         includes=slv_includes,

@@ -165,6 +165,9 @@ class vhdl_converter_base:
 
     def _vhdl__add(self,obj,args):
         return str(obj) + " + " + str(args)
+    
+    def _vhdl__Sub(self,obj,args):
+        return str(obj) + " - " + str(args)
 
     def _vhdl__to_bool(self,obj, astParser):
         return "pyhdl_to_bool(" + str(obj) + ") "
@@ -363,6 +366,8 @@ def value(Input):
     if type(Input).__name__ == "v_Num":
         return Input.value
 
+    if hasattr(Input,"get_value"):
+        return Input.get_value()
     return Input
 
 class  InOut_t(Enum):
@@ -396,6 +401,8 @@ def get_varSig(varSigConst):
         return "signal"
     elif varSigConst == varSig.variable_t:
         return  "variable"
+    elif varSigConst == varSig.const_t:
+        return  "constant"
 
     raise Exception("unknown type")
 
@@ -438,7 +445,14 @@ def v_signal(symbol):
     ret.setInout(InOut_t.Internal_t)
     ret.set_varSigConst(varSig.signal_t)
     return ret
-    
+
+def v_const(symbol):
+    ret= copy.deepcopy(symbol)
+    ret._isInstance = False
+    ret.setInout(InOut_t.Internal_t)
+    ret.set_varSigConst(varSig.const_t)
+    return ret
+
 def port_out(symbol):
     ret= copy.deepcopy(symbol)
     ret._isInstance = False

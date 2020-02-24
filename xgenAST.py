@@ -122,6 +122,7 @@ class xgenAST:
             "BoolOp"        : body_BoolOp,
             "UnaryOp"       : body_UnaryOP,
             "Add"           : body_add,
+            "Sub"           : body_sub,
             'Subscript'     : body_subscript,
             "Index"         : body_index,
             'Yield'         : body_unfold_yield,
