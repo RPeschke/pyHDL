@@ -150,13 +150,16 @@ class test_bench_e(v_entity):
         @rising_edge(clkgen.clk)
         def proc():
             mList[Counter] << Counter2
+
             Counter2 << Counter2 + 1
             Counter  << Counter + 1
+
+            for x in axList_m:
+                if x:
+                    x  << Counter2
+                
             if Counter > 8:
                 Counter << 0
-
-            axList_m[0] << Counter
-
             sList << mList
         
         end_architecture()

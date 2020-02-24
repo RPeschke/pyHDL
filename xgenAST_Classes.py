@@ -1045,3 +1045,51 @@ def body_unfold_yield(astParser,Node):
     
     arg = astParser.Unfold_body(Node.value)
     return v_yield(arg)
+
+
+
+class v_for(v_ast_base):
+    def __init__(self,arg,body):
+        self.arg = arg
+        self.body = body
+
+    def __str__(self):
+        ret = "for " + str(self.arg) +" loop \n"
+        for x in self.body:
+            ret += str(x)
+        ret += ";\n"
+        ret += "end loop"
+        return ret
+
+def body_unfold_for(astParser,Node):
+    itt = Node.iter.id
+    obj=astParser.getInstantByName(Node.iter.id)
+
+    arg = "i in 0 to " + obj.hdl_conversion__.length(obj) +" -1"
+
+
+    vhdl_name = str(Node.target.id)
+    buff =  astParser.try_get_variable(vhdl_name)
+
+    if buff == None:
+        buff = v_copy(obj.Internal_Type)
+        buff.vhdl_name = str(obj) + "(i)"
+        buff.varSigConst = varSig.reference_t
+        astParser.FuncArgs.append({'ScopeType':"", 'name' : str(Node.target.id),'symbol': buff})
+
+
+
+    body = for_body(astParser,Node.body)
+
+
+    return v_for(arg,body)
+
+def for_body(astParser,Node):
+    localContext = astParser.Context
+    ret = list()
+    astParser.Context  = ret
+    for x in Node:
+        l = astParser.Unfold_body(x)
+        ret.append(l)
+    astParser.Context =localContext 
+    return ret

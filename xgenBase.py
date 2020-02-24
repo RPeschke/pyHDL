@@ -261,6 +261,10 @@ class vhdl_converter_base:
 
     def get_Name_array(self,obj):
         return obj.hdl_conversion__.get_type_simple(obj)+"_a"
+
+    def length(self,obj):
+        return str(obj)+"'length"
+
 class vhdl_base0:
     def __init__(self):
         super().__init__()
@@ -374,6 +378,7 @@ class varSig(Enum):
     variable_t = 1
     signal_t =2 
     const_t =3
+    reference_t = 4
 
 v_defaults ={
 "defVarSig" : varSig.variable_t

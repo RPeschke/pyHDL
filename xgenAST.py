@@ -123,7 +123,8 @@ class xgenAST:
             "Add"           : body_add,
             'Subscript'     : body_subscript,
             "Index"         : body_index,
-            'Yield'         : body_unfold_yield
+            'Yield'         : body_unfold_yield,
+            "For"           : body_unfold_for
         }
         with open(sourceFileName, "r") as source:
             self.tree = ast.parse(source.read())
@@ -156,7 +157,7 @@ class xgenAST:
         
     def try_get_variable(self,name):
         for x in self.LocalVar:
-            if name in x.vhdl_name:
+            if name == x.vhdl_name:
                 return x
 
 
