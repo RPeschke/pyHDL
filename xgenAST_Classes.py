@@ -1049,6 +1049,7 @@ def body_unfold_yield(astParser,Node):
 
 
 class v_for(v_ast_base):
+    range_counter = 0
     def __init__(self,arg,body):
         self.arg = arg
         self.body = body
@@ -1065,7 +1066,9 @@ def body_unfold_for(astParser,Node):
     itt = Node.iter.id
     obj=astParser.getInstantByName(Node.iter.id)
 
-    arg = "i in 0 to " + obj.hdl_conversion__.length(obj) +" -1"
+    itt = "i"+str(v_for.range_counter)
+    v_for.range_counter += 1
+    arg = itt + " in 0 to " + obj.hdl_conversion__.length(obj) +" -1"
 
 
     vhdl_name = str(Node.target.id)
@@ -1073,14 +1076,15 @@ def body_unfold_for(astParser,Node):
 
     if buff == None:
         buff = v_copy(obj.Internal_Type)
-        buff.vhdl_name = str(obj) + "(i)"
+        buff.vhdl_name = str(obj) + "("+itt+")"
         buff.varSigConst = varSig.reference_t
-        astParser.FuncArgs.append({'ScopeType':"", 'name' : str(Node.target.id),'symbol': buff})
-
+        astParser.FuncArgs.append({'ScopeType':"", 'name' : vhdl_name,'symbol': buff})
+    else:
+        raise Exception("name already used")
 
 
     body = for_body(astParser,Node.body)
-
+    astParser.FuncArgs =  [ x for x in astParser.FuncArgs if x['name'] != vhdl_name ]
 
     return v_for(arg,body)
 
