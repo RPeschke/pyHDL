@@ -65,12 +65,12 @@ class TXWaveFormReadout(v_clk_entity):
         data_pipe = \
             self.ConfigIn \
                 | InputDelay(self.globals) \
-                | splitter(0, 0)
+                | splitter\
                 | TX_write_handler(self.globals,self.TX_Bus.WriteSignals) \
                 | TX_WillkonsonControl(self.globals,self.TX_Bus.SamplingSignals) \
                 | SerialDataRoutProcess_cl(self.globals,self.TX_Bus.ShiftRegister)\
                 | SerialOutputCOnverter(self.globals) \
-                | pedestal_Substraction(self.globals, splitter(1))
+                | pedestal_Substraction(self.globals, splitter)
                 | ax_fifo(self.globals) \
                 | \
             self.Data_out

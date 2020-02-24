@@ -252,8 +252,15 @@ class vhdl_converter_base:
 
         raise Exception("unkown Inout type",inOut)
 
+    def get_default_value(self,obj):
+        return obj.type + "_null"
 
 
+    def extract_conversion_types(self, obj):
+        return [{ "suffix":"", "symbol": obj}]
+
+    def get_Name_array(self,obj):
+        return obj.hdl_conversion__.get_type_simple(obj)+"_a"
 class vhdl_base0:
     def __init__(self):
         super().__init__()

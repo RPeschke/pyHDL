@@ -143,6 +143,8 @@ class test_bench_e(v_entity):
 
         sList = v_list(v_slv(32), 10)
         mList = v_variable(v_list(v_slv(32), 10))
+        axList = v_list(axisStream(v_slv(32)), 10)
+        axList_m =  get_master(axList)
         Counter  = v_slv(32)
         Counter2 = v_slv(32)
         @rising_edge(clkgen.clk)
@@ -152,6 +154,8 @@ class test_bench_e(v_entity):
             Counter  << Counter + 1
             if Counter > 8:
                 Counter << 0
+
+            axList_m[0] << Counter
 
             sList << mList
         

@@ -521,6 +521,39 @@ class v_class_converter(vhdl_converter_base):
     def get_NameSignal(self,obj):
         return obj.type + "_sig"
 
+    def get_type_simple(self,obj):
+        return obj.type
+
+    def extract_conversion_types(self, obj):
+        ret =[]
+        t = obj.getTypes()
+        if len(t) ==3 and obj.__v_classType__ ==  v_classType_t.transition_t:
+            
+            
+            x = v_class(obj.hdl_conversion__.get_NameSlave2Master(obj), obj.varSigConst)
+            x.__v_classType__ = v_classType_t.Record_t
+            x.Inout=InOut_t.input_t
+            ys= obj.getMember(InOut_t.input_t)
+            for y in ys: 
+                setattr(x, y["name"], y["symbol"])
+            ret.append({ "suffix":"_s2m", "symbol": x})
+
+            x = v_class(obj.hdl_conversion__.get_NameSlave2Master(obj), obj.varSigConst)
+            x.__v_classType__ = v_classType_t.Record_t
+            x.Inout=InOut_t.output_t
+            ys= obj.getMember(InOut_t.output_t)
+            for y in ys: 
+                setattr(x, y["name"], y["symbol"])
+            ret.append({ "suffix":"_m2s", "symbol": x})
+
+            #ret.append({ "suffix":"", "symbol": obj})
+        
+        elif obj.__v_classType__ ==  v_classType_t.Master_t:
+            ret.append({ "suffix":"", "symbol": obj})
+        elif obj.__v_classType__ ==  v_classType_t.Slave_t:
+            ret.append({ "suffix":"", "symbol": obj})
+        return ret
+            
 class v_class(vhdl_base):
 
     def __init__(self,Name,varSigConst=None):
@@ -534,7 +567,7 @@ class v_class(vhdl_base):
 
         self.__vectorPush__ = False
         self.__vectorPull__ = False
-       
+
         self.Inout  = InOut_t.Internal_t
         self.vhdl_name =None
         self.__Driver__ = None
@@ -604,7 +637,9 @@ class v_class(vhdl_base):
 
 
     def setInout(self,Inout):
-        if self.__v_classType__ == v_classType_t.transition_t:
+        if self.Inout == Inout:
+            return 
+        elif self.__v_classType__ == v_classType_t.transition_t:
             self.Inout = Inout
         elif self.__v_classType__ == v_classType_t.Record_t:
             self.Inout = Inout

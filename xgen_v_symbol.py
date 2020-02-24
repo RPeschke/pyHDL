@@ -166,6 +166,12 @@ class v_symbol_converter(vhdl_converter_base):
             return  "to_integer(signed( " + str(obj)  + "))"
         
         return obj
+
+    def get_default_value(self,obj):
+        return obj.DefaultValue
+
+
+
 class v_symbol(vhdl_base):
     def __init__(self, v_type, DefaultValue, Inout = InOut_t.Internal_t,includes="",value=None,varSigConst=varSig.variable_t):
         super().__init__()

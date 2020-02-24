@@ -55,16 +55,20 @@ end {objType}_pack;
 
     def get_architecture_header(self, obj):
         ret =""
-        if obj.varSigConst == varSig.variable_t:
-            return ret
-        VarSymb = get_varSig(obj.varSigConst)
-        ret += """  {VarSymb} {objName} : {objType}({size} - 1 downto 0)  := (others => {defaults});\n""".format(
-            VarSymb=VarSymb,
-            objName=obj.vhdl_name,
-            objType=obj.type,
-            defaults=obj.Internal_Type.DefaultValue,
-            size = obj.size
-        )
+
+        obj1 =obj.Internal_Type.hdl_conversion__.extract_conversion_types(obj.Internal_Type)
+        
+        for x in obj1:
+            if x["symbol"].varSigConst == varSig.variable_t:
+                continue
+
+            ret += """  {VarSymb} {objName} : {objType}({size} - 1 downto 0)  := (others => {defaults});\n""".format(
+                VarSymb=get_varSig(x["symbol"].varSigConst),
+                objName=obj.get_vhdl_name(x["symbol"].Inout),
+                objType=x["symbol"].hdl_conversion__.get_Name_array(x["symbol"]),
+                defaults=x["symbol"].hdl_conversion__.get_default_value(x["symbol"]),
+                size = obj.size
+            )
         return ret
 
     def getHeader(self,obj, name,parent):
@@ -80,17 +84,21 @@ end {objType}_pack;
 
         return ret
     def get_process_header(self,obj):
-        if obj.varSigConst != varSig.variable_t:
-            return ""
         ret =""
-        VarSymb = get_varSig(obj.varSigConst)
-        ret += """  {VarSymb} {objName} : {objType}({size} - 1 downto 0) := (others => {defaults});\n""".format(
-            VarSymb=VarSymb,
-            objName=obj.vhdl_name,
-            objType=obj.type,
-            defaults=obj.Internal_Type.DefaultValue,
-            size = obj.size
-        )
+
+        obj1 =obj.Internal_Type.hdl_conversion__.extract_conversion_types(obj.Internal_Type)
+        
+        for x in obj1:
+            if x["symbol"].varSigConst != varSig.variable_t:
+                continue
+
+            ret += """  {VarSymb} {objName} : {objType}({size} - 1 downto 0)  := (others => {defaults});\n""".format(
+                VarSymb=get_varSig(x["symbol"].varSigConst),
+                objName=obj.get_vhdl_name(x["symbol"].Inout),
+                objType=x["symbol"].hdl_conversion__.get_Name_array(x["symbol"]),
+                defaults=x["symbol"].hdl_conversion__.get_default_value(x["symbol"]),
+                size = obj.size
+            )
         return ret
         
         
@@ -99,16 +107,48 @@ end {objType}_pack;
         return str(obj.vhdl_name) + asOp +  str(rhs.vhdl_name)
 
     def _vhdl__Pull(self,obj):
+        ret = ""
+        if obj.driver == None:
+            return ret
+
+        if obj.Internal_Type.__vectorPull__ == True:
+            driver_name  = str(obj.driver)
+            if obj.Internal_Type.__v_classType__ == v_classType_t.Master_t:
+                driver_name =  str(obj.driver) +"_s2m"
+            elif obj.Internal_Type.__v_classType__ == v_classType_t.Slave_t:
+                driver_name = str(obj.driver) +"_m2s"
+
+            ret += "  pull(" + str(obj) +", "+ driver_name +");\n  "
+            return ret
+
+
         raise Exception("Not implemented")
 
     def _vhdl__push(self,obj):
+        ret = ""
+        if obj.driver == None:
+            return ret
+
+        if obj.Internal_Type.__vectorPush__ == True:
+            driver_name  = str(obj.driver)
+            if obj.Internal_Type.__v_classType__ == v_classType_t.Master_t:
+                driver_name = str(obj.driver) +"_m2s"
+            elif obj.Internal_Type.__v_classType__ == v_classType_t.Slave_t:
+                driver_name =  str(obj.driver) +"_s2m"
+
+            ret += "  push(" + str(obj) +", "+ driver_name +");\n  "
+            return ret
+
+
         raise Exception("Not implemented")
+
     
 class v_list(vhdl_base):
     def __init__(self,Internal_Type,size,varSigConst=None):
         super().__init__()
         self.hdl_conversion__ = v_list_converter()
         self.Internal_Type = Internal_Type
+        self.driver = None
         self.content = []
         for i in range( value(size)):
             self.content.append( v_copy(Internal_Type) )
@@ -145,6 +185,7 @@ class v_list(vhdl_base):
 
     def set_varSigConst(self, varSigConst):
         self.varSigConst = varSigConst
+        self.Internal_Type.set_varSigConst(varSigConst)
         for x in self.content:
             x.set_varSigConst(varSigConst)
 
@@ -166,6 +207,7 @@ class v_list(vhdl_base):
         for x in self.content:
             ret.append(x.get_master() )
 
+        ret.driver = self
         return ret
 
 
@@ -174,6 +216,21 @@ class v_list(vhdl_base):
         ret = v_list(master_t,0,master_t.varSigConst)
         for x in self.content:
             ret.append(x.get_master())
-
+        
+        ret.driver = self
         return ret
 
+    def __str__(self):
+        return str(self.vhdl_name)
+
+    def get_vhdl_name(self,Inout=None):
+        if Inout== None:
+            return self.vhdl_name
+
+
+        if Inout== InOut_t.input_t:
+            return self.vhdl_name+"_s2m"
+        
+        elif Inout== InOut_t.output_t:
+            return self.vhdl_name+"_m2s"
+        return self.vhdl_name
