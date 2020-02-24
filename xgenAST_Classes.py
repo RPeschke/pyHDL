@@ -1063,6 +1063,25 @@ class v_for(v_ast_base):
         return ret
 
 def body_unfold_for(astParser,Node):
+    if hasattr(Node.iter,"id"):
+        return for_loop_ranged_based(astParser,Node)
+
+    if type(Node.iter).__name__ == "Call" and Node.iter.func.id == "range":
+        return for_loop_indexed_based(astParser,Node)
+    
+
+def for_body(astParser,Node):
+    localContext = astParser.Context
+    ret = list()
+    astParser.Context  = ret
+    for x in Node:
+        l = astParser.Unfold_body(x)
+        ret.append(l)
+    astParser.Context =localContext 
+    return ret
+
+
+def for_loop_ranged_based(astParser,Node):
     itt = Node.iter.id
     obj=astParser.getInstantByName(Node.iter.id)
 
@@ -1088,12 +1107,36 @@ def body_unfold_for(astParser,Node):
 
     return v_for(arg,body)
 
-def for_body(astParser,Node):
-    localContext = astParser.Context
-    ret = list()
-    astParser.Context  = ret
-    for x in Node:
+def for_loop_indexed_based(astParser,Node):
+    args = list()
+    for x in Node.iter.args:
         l = astParser.Unfold_body(x)
-        ret.append(l)
-    astParser.Context =localContext 
-    return ret
+        args.append(l)
+    
+    #obj=astParser.getInstantByName(Node.iter.id)
+
+    itt = "i"+str(v_for.range_counter)
+    v_for.range_counter += 1
+    arg = itt + " in 0 to " + str(args[0]) +" -1"
+
+
+    vhdl_name = str(Node.target.id)
+    buff =  astParser.try_get_variable(vhdl_name)
+
+    if buff == None:
+        buff = v_int()
+        buff.vhdl_name = itt
+        buff.varSigConst = varSig.reference_t
+        astParser.FuncArgs.append({'ScopeType':"", 'name' : vhdl_name,'symbol': buff})
+    else:
+        raise Exception("name already used")
+
+
+    body = for_body(astParser,Node.body)
+    astParser.FuncArgs =  [ x for x in astParser.FuncArgs if x['name'] != vhdl_name ]
+
+    return v_for(arg,body)
+
+def body_handle_len(astParser,args,keywords=None):
+    l = astParser.Unfold_body(args[0])
+    return v_Str(l.hdl_conversion__.length(l))

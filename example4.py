@@ -154,9 +154,9 @@ class test_bench_e(v_entity):
             Counter2 << Counter2 + 1
             Counter  << Counter + 1
 
-            for x in axList_m:
-                if x:
-                    x  << Counter2
+            for x in range(len(axList_m)):
+                if axList_m[x]:
+                    axList_m[x]  << Counter2
                 
             if Counter > 8:
                 Counter << 0

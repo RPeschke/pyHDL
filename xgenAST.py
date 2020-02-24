@@ -96,7 +96,8 @@ class xgenAST:
      "rising_edge" : handle_rising_edge,
      "print"       : handle_print,
      "v_switch"  : handle_v_switch,
-     "v_case"    : handle_v_case
+     "v_case"    : handle_v_case,
+     "len"       : body_handle_len
   #   "v_create"    : handle_v_create
     }
 

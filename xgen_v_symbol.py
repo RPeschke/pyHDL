@@ -162,7 +162,7 @@ class v_symbol_converter(vhdl_converter_base):
         return ret
 
     def _vhdl__getValue(self,obj, ReturnToObj=None,astParser=None):
-        if ReturnToObj == "integer":
+        if ReturnToObj == "integer" and  "std_logic_vector" in obj.type:
             return  "to_integer(signed( " + str(obj)  + "))"
         
         return obj
