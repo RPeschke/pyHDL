@@ -142,3 +142,5 @@ class test_bench_e123(v_entity):
         fifo   =  v_create(axiFifo(clkgen.clk))
         fifo.Axi_in << axigen.Axi_out
         axp.Axi_in << fifo.Axi_out
+        
+        end_architecture()

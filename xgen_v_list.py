@@ -227,6 +227,9 @@ class v_list(vhdl_base):
 
     def __str__(self):
         return str(self.vhdl_name)
+        
+    def __len__(self):
+        return len(self.content)
 
     def length(self):
         return str(self)+"'length"

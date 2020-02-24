@@ -289,6 +289,10 @@ class v_symbol(vhdl_base):
     def __add__(self,rhs):
         
         return value(self) + value(rhs) 
+
+    def __sub__(self,rhs):
+        
+        return value(self) - value(rhs) 
         
     def __lt__(self,rhs):
         return value(self) < value(rhs) 
