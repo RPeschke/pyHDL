@@ -282,14 +282,11 @@ class v_entity_list(vhdl_base0):
         return ret
 
     def _get_Stream_input(self):
-        if self._StreamIn  == None:
-            raise Exception("ouput not set")
-        return  self._StreamIn
+        return self.nexted_entities[0]["symbol"]._get_Stream_output()
+
 
     def _get_Stream_output(self):
-        if self._StreamOut == None:
-            raise Exception("ouput not set")
-        return self._StreamOut
+        return self.nexted_entities[-1]["symbol"]._get_Stream_output()
 
 class v_entity_converter(vhdl_converter_base):
 

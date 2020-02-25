@@ -137,10 +137,8 @@ class test_bench_e123(v_entity):
     def architecture(self):
         clkgen = v_create(clk_generator())
         maxCount = v_slv(32,20)
-        axigen =   v_create(rollingCounter(clkgen.clk,maxCount))
-        axp    =  v_create(axiPrint(clkgen.clk))
-        fifo   =  v_create(axiFifo(clkgen.clk))
-        fifo.Axi_in << axigen.Axi_out
-        axp.Axi_in << fifo.Axi_out
+        pipe1 = rollingCounter(clkgen.clk,maxCount) \
+            | axiFifo(clkgen.clk)  \
+            | axiPrint(clkgen.clk) 
         
         end_architecture()
