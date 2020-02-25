@@ -95,3 +95,8 @@ class v_enum(vhdl_base):
 
     
 
+    def _issubclass_(self,test):
+        if super()._issubclass_(test):
+            return True
+        return "v_enum" == test
+        

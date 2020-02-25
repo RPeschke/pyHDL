@@ -471,6 +471,11 @@ class v_entity(vhdl_base0):
         return self._StreamOut
 
 
+    def _issubclass_(self,test):
+        if super()._issubclass_(test):
+            return True
+        return "v_entity" == test
+        
 class v_clk_entity(v_entity):
     def __init__(self,srcFileName=None,clk=None):
         super().__init__(srcFileName)

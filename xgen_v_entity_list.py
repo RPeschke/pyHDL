@@ -145,3 +145,9 @@ class v_entity_list(vhdl_base0):
 
     def _get_Stream_output(self):
         return self.nexted_entities[-1]["symbol"]._get_Stream_output()
+
+
+    def _issubclass_(self,test):
+        if super()._issubclass_(test):
+            return True
+        return "v_entity_list" == test

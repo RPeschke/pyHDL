@@ -249,3 +249,8 @@ class v_list(vhdl_base):
     def _sim_append_update_list(self,up):
         for x in self.content:
             x._sim_append_update_list(up)
+
+    def _issubclass_(self,test):
+        if super()._issubclass_(test):
+            return True
+        return "v_list" == test
