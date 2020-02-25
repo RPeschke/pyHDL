@@ -13,13 +13,13 @@ class v_symbol_converter(vhdl_converter_base):
 
 
     def recordMember(self,obj, name, parent,Inout=None):
-        if issubclass(type(parent),v_class):
+        if parent._issubclass_("v_class"):
             return "  " + name + " : " +obj.type +"; \n"
 
         return ""
 
     def recordMemberDefault(self, obj,name,parent,Inout=None):
-        if issubclass(type(parent),v_class):
+        if parent._issubclass_("v_class"):
             return name + " => " + obj.DefaultValue 
 
         return ""
@@ -28,7 +28,7 @@ class v_symbol_converter(vhdl_converter_base):
         if obj.vhdl_name:
             name = obj.vhdl_name
 
-        if issubclass(type(parent),v_class):
+        if parent._issubclass_("v_class"):
              return ""
             
         return name + " : " +obj.type +" := " +  obj.DefaultValue  + "; \n"
@@ -385,7 +385,10 @@ class v_symbol(vhdl_base):
 
 
 
-
+    def _issubclass_(self,test):
+        if super()._issubclass_(test):
+            return True
+        return "v_symbol" == test
 
 
 

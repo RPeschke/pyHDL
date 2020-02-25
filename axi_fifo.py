@@ -16,67 +16,6 @@ from CodeGen.xgen_v_list import *
 from CodeGen.xgen_simulation import *
 
 
-class clk_generator(v_entity):
-    def __init__(self):
-        super().__init__(__file__)
-        self.clk = port_out(v_sl())
-        self.architecture()
-
-    def architecture(self):
-        
-        @timed()
-        def proc():
-            self.clk << 1
-            #print("======================")
-            yield wait_for(1)
-            self.clk << 0
-            yield wait_for(1)
-
-
-class rollingCounter(v_clk_entity):
-    def __init__(self,clk=None,MaxCount=v_slv(32,100)):
-        super().__init__(__file__, clk)
-        self.Axi_out = port_Stream_Master( axisStream(v_slv(32)))
-        self.MaxCount = port_in(v_slv(32,10))
-        self.MaxCount << MaxCount
-        self.architecture()
-    
-    def architecture(self):
-        
-        counter = v_slv(32)
-        v_Axi_out = get_master(self.Axi_out)
-        @rising_edge(self.clk)
-        def proc():
-            if v_Axi_out:
-                v_Axi_out << counter
-                
-                counter << counter + 1
-
-            if counter > self.MaxCount:
-                counter << 0
-
-
-
-class axiPrint(v_clk_entity):
-    def __init__(self,clk=None):
-        super().__init__(__file__, clk)
-        self.Axi_in =  port_Stream_Slave(axisStream(v_slv(32)))
-        self.architecture()
-
-        
-    def architecture(self):
-        axiSalve =  get_salve(self.Axi_in)
-
-        i_buff = v_slv(32)
-
-        @rising_edge(self.clk)
-        def proc():
-            
-            if axiSalve :
-                i_buff << axiSalve
-                print("axiPrint valid",value(i_buff) )
-
-
 class axiFifo(v_clk_entity):
     def __init__(self,clk=None,itype =v_slv(32),depth=10):
         super().__init__(__file__, clk)
@@ -117,9 +56,9 @@ class axiFifo(v_clk_entity):
             if self.Axi_out.ready and i_valid:
                 i_valid << 0
                 tail_index << tail_index + 1
+                counter    << counter - 1
 
             if  not i_valid and counter > 0:
-                counter    << counter - 1
                 i_valid << 1
 
 
@@ -128,17 +67,4 @@ class axiFifo(v_clk_entity):
         
             self.Axi_out.valid << i_valid 
 
-        end_architecture()
-class test_bench_e123(v_entity):
-    def __init__(self):
-        super().__init__(__file__)
-        self.architecture()
-
-    def architecture(self):
-        clkgen = v_create(clk_generator())
-        maxCount = v_slv(32,20)
-        pipe1 = rollingCounter(clkgen.clk,maxCount) \
-            | axiFifo(clkgen.clk)  \
-            | axiPrint(clkgen.clk) 
-        
         end_architecture()

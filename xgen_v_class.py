@@ -1,6 +1,6 @@
 from .xgenBase import * 
 from .xgen_v_function import *
-
+from .xgen_v_entity_list import *
 
 class v_class_converter(vhdl_converter_base):
     def __init__(self):
@@ -784,7 +784,10 @@ class v_class(vhdl_base):
         rhs_StreamIn << self_StreamOut
         return ret
         
-
+    def _issubclass_(self,test):
+        if super()._issubclass_(test):
+            return True
+        return "v_class" == test
 
 
 class v_class_master(v_class):

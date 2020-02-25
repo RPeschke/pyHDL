@@ -274,7 +274,7 @@ class vhdl_base0:
         gHDL_objectList.append(self)
         self._isInstance = False
         self.hdl_conversion__ = vhdl_converter_base()
-    
+        #self._isInstance = True
     
     def set_simulation_param(self,module, name,writer):
         pass
@@ -298,6 +298,17 @@ class vhdl_base0:
 
     def _get_Stream_output(self):
         raise Exception("update not implemented")
+    
+    def _instantiate_(self):
+        self._isInstance = True
+        return self
+    
+    def _un_instantiate_(self):
+        self._isInstance = False
+        return self
+    
+    def _issubclass_(self,test):
+        return "vhdl_base0" == test
 
 class vhdl_base(vhdl_base0):
 
@@ -338,7 +349,10 @@ class vhdl_base(vhdl_base0):
 
 
 
-  
+    def _issubclass_(self,test):
+        if super()._issubclass_(test):
+            return True
+        return "vhdl_base" == test
 
 
 
