@@ -3,14 +3,12 @@ import functools
 import argparse
 import os,sys,inspect
 import copy
-currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-parentdir = os.path.dirname(currentdir)
-sys.path.insert(0,parentdir) 
-from CodeGen.xgenBase import *
-from CodeGen.xgen_v_symbol import *
-from CodeGen.axiStream import *
-from CodeGen.xgen_v_entity import *
-from CodeGen.xgen_v_list import *
+
+from .xgenBase import *
+from .xgen_v_symbol import *
+from .axiStream import *
+from .xgen_v_entity import *
+from .xgen_v_list import *
 
 
 

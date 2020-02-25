@@ -32,7 +32,7 @@ class test_bench_e123(v_entity):
 
 tb = test_bench_e123()
 
-#tb.hdl_conversion__.convert_all(tb,"stream_delay")
+tb.hdl_conversion__.convert_all(tb,"stream_delay")
 
-tb1 = test_bench_e123()
-gsimulation.run_timed(tb1, 1000,"stream_delay.vcd")
+#tb1 = test_bench_e123()
+#gsimulation.run_timed(tb1, 1000,"stream_delay.vcd")
