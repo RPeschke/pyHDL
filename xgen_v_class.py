@@ -2,6 +2,7 @@ from .xgenBase import *
 from .xgen_v_function import *
 from .xgen_v_entity_list import *
 
+from .xgen_simulation import *
 
 class v_class_converter(vhdl_converter_base):
     def __init__(self):
@@ -834,12 +835,34 @@ class v_class(vhdl_base):
         for i in range(len(self_members)):
             self_members[i]['symbol'] << rhs_members[i]['symbol']
 
+    def _connect_running(self,rhs):
+        if self.Inout != rhs.Inout and self.Inout != InOut_t.Internal_t and rhs.Inout != InOut_t.Internal_t and rhs.Inout != InOut_t.Slave_t and self.Inout != InOut_t.Master_t and self.Inout != InOut_t.input_t and self.Inout != InOut_t.output_t:
+            raise Exception("Unable to connect different InOut types")
+        
+        rhs = rhs._sim_get_value()
 
+        if type(self).__name__ != type(rhs).__name__:
+            raise Exception("Unable to connect different types")
+        
+        
+        self_members  = self.get_s2m_signals()
+        rhs_members  = rhs.get_s2m_signals()
+
+        for i in range(len(self_members)):
+            rhs_members[i]['symbol'] << self_members[i]['symbol']
+
+        self_members  = self.get_m2s_signals()
+        rhs_members  = rhs.get_m2s_signals()
+        for i in range(len(self_members)):
+            self_members[i]['symbol'] << rhs_members[i]['symbol']
 
     def __lshift__(self, rhs):
-        if self.__Driver__ :
-            raise Exception("symbol has already a driver", str(self))
-        self._connect(rhs)
+        if gsimulation.isRunning():
+            self._connect_running(rhs)
+        else:
+            if self.__Driver__ :
+                raise Exception("symbol has already a driver", str(self))
+            self._connect(rhs)
 
 
     def _get_Stream_input(self):

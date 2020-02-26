@@ -199,7 +199,7 @@ class axisStream_master(v_class_master):
         if self.tx.ready: 
             self.tx.valid << 0 
             self.tx.last  << 0  
-            self.tx.data  << 0
+#            self.tx.data  << 0
     
     def __lshift__(self, rhs):
         self.send_data(value(rhs))

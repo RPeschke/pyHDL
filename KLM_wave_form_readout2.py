@@ -54,7 +54,7 @@ class InputDelay(v_entity):
     def __init__(self,k_globals =klm_globals(),InputType = SerialDataConfig()):
         super().__init__(__file__)
         self.globals  = port_Slave(k_globals)
-        
+        self.globals  << k_globals
         self.ConfigIn = port_Stream_Slave(axisStream( InputType))
         self.ConfigOut = port_Stream_Master(axisStream( InputType))
         self.architecture()
@@ -69,6 +69,27 @@ class InputDelay(v_entity):
 
         end_architecture()
 
+
+class InputDelay_print(v_entity):
+    def __init__(self,k_globals =klm_globals(),InputType = SerialDataConfig()):
+        super().__init__(__file__)
+        self.globals  = port_Slave(k_globals)
+        self.globals << k_globals
+        self.ConfigIn = port_Stream_Slave(axisStream( InputType))
+        self.architecture()
+
+
+    def architecture(self):
+        d =  v_copy(self.ConfigIn.data)
+        ax_slave = get_salve(self.ConfigIn)
+        @rising_edge(self.globals.clk)
+        def proc():
+            if ax_slave:
+               d << ax_slave
+
+
+        end_architecture()
+
 class InputDelay_tb(v_entity):
     def __init__(self):
         super().__init__(srcFileName=__file__)
@@ -79,18 +100,22 @@ class InputDelay_tb(v_entity):
         k_globals =klm_globals()
         data = SerialDataConfig()
         dut  = v_create(InputDelay(k_globals) )
-
+        axprint  =  v_create( InputDelay_print(k_globals))
+        axprint.ConfigIn << dut.ConfigOut
         k_globals.clk << clkgen.clk
         mast = get_master(dut.ConfigIn)
+        
+
         @rising_edge(clkgen.clk)
         def proc():
             if mast:
                 mast << data
+                data.column_select << data.column_select + 1
 
         end_architecture()
 def main():
     tb  =v_create(InputDelay_tb())
-
-    tb.hdl_conversion__.convert_all(tb,"pyhdl_waveform")
+    gsimulation.run_timed(tb, 1000,"InputDelay_tb.vcd")
+    #tb.hdl_conversion__.convert_all(tb,"pyhdl_waveform")
 
 main()

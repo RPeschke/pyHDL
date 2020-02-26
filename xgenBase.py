@@ -589,21 +589,6 @@ def v_copy(symbol,varSig=None):
         ret.set_varSigConst(getDefaultVarSig())
     return ret
 
-def port(symbol):
-    if issubclass(type(symbol),v_class):
-        if symbol.__v_classType__ == v_classType_t.Master_t:
 
-            symbol.setInout(InOut_t.Master_t)
-        elif symbol.__v_classType__ == v_classType_t.Slave_t:
-
-            symbol.setInout(InOut_t.Slave_t)
-        
-        else:
-            raise Exception("Unexpected class type " , symbol.__v_classType__)
-
-            
-        return symbol
-    else:
-        raise Exception("Unexpected type " , type(symbol))
 
 
