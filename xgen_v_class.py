@@ -2,6 +2,75 @@ from .xgenBase import *
 from .xgen_v_function import *
 from .xgen_v_entity_list import *
 
+def get_member_connect_m2s(lhs,rhs):
+    if lhs.__v_classType__ ==v_classType_t.Record_t:
+        self_members = []
+        rhs_members = []
+        
+    elif  lhs.Inout == InOut_t.Master_t and rhs.Inout == InOut_t.Master_t:
+        self_members = lhs.getMember(InOut_t.output_t)
+        rhs_members = rhs.getMember(InOut_t.output_t)
+        
+    elif  lhs.Inout == InOut_t.Master_t and rhs.Inout == InOut_t.Slave_t:
+        self_members = lhs.getMember(InOut_t.input_t)
+        rhs_members = rhs.getMember(InOut_t.output_t)
+        
+    elif  lhs.Inout == InOut_t.Slave_t and rhs.Inout == InOut_t.Slave_t:
+        self_members = lhs.getMember(InOut_t.input_t)
+        rhs_members = rhs.getMember(InOut_t.input_t)        
+    elif  lhs.Inout == InOut_t.Master_t and rhs.Inout == InOut_t.Internal_t:
+        self_members = lhs.getMember(InOut_t.input_t)
+        rhs_members = rhs.getMember(InOut_t.input_t)      
+    elif  lhs.Inout == InOut_t.Internal_t and rhs.Inout == InOut_t.Internal_t:
+        self_members = lhs.getMember(InOut_t.input_t)
+        rhs_members = rhs.getMember(InOut_t.input_t) 
+    elif  lhs.Inout == InOut_t.Internal_t and rhs.Inout == InOut_t.Slave_t:
+        self_members = lhs.getMember(InOut_t.input_t)
+        rhs_members = rhs.getMember(InOut_t.input_t) 
+    elif  lhs.Inout == InOut_t.Slave_t and rhs.Inout == InOut_t.Internal_t:
+        self_members = lhs.getMember(InOut_t.input_t)
+        rhs_members = rhs.getMember(InOut_t.output_t) 
+    elif  lhs.Inout == InOut_t.Internal_t and rhs.Inout == InOut_t.Master_t:
+        self_members = lhs.getMember(InOut_t.output_t)
+        rhs_members = rhs.getMember(InOut_t.output_t) 
+
+    return self_members,rhs_members
+
+def get_member_connect_s2m(lhs,rhs):
+    if lhs.__v_classType__ ==v_classType_t.Record_t:
+        self_members = []
+        rhs_members = []
+        
+    elif  lhs.Inout == InOut_t.Master_t and rhs.Inout == InOut_t.Master_t:
+        self_members = lhs.getMember(InOut_t.input_t)
+        rhs_members = rhs.getMember(InOut_t.input_t)
+        
+    elif  lhs.Inout == InOut_t.Master_t and rhs.Inout == InOut_t.Slave_t:
+        self_members = lhs.getMember(InOut_t.output_t)
+        rhs_members = rhs.getMember(InOut_t.input_t)
+        
+    elif  lhs.Inout == InOut_t.Slave_t and rhs.Inout == InOut_t.Slave_t:
+        self_members = lhs.getMember(InOut_t.output_t)
+        rhs_members = rhs.getMember(InOut_t.output_t)        
+    elif  lhs.Inout == InOut_t.Master_t and rhs.Inout == InOut_t.Internal_t:
+        self_members = lhs.getMember(InOut_t.input_t)
+        rhs_members = rhs.getMember(InOut_t.input_t)      
+    elif  lhs.Inout == InOut_t.Internal_t and rhs.Inout == InOut_t.Internal_t:
+        self_members = lhs.getMember(InOut_t.input_t)
+        rhs_members = rhs.getMember(InOut_t.input_t) 
+    elif  lhs.Inout == InOut_t.Internal_t and rhs.Inout == InOut_t.Slave_t:
+        self_members = lhs.getMember(InOut_t.input_t)
+        rhs_members = rhs.getMember(InOut_t.input_t) 
+    elif  lhs.Inout == InOut_t.Slave_t and rhs.Inout == InOut_t.Internal_t:
+        self_members = lhs.getMember(InOut_t.output_t)
+        rhs_members = rhs.getMember(InOut_t.input_t) 
+    elif  lhs.Inout == InOut_t.Internal_t and rhs.Inout == InOut_t.Master_t:
+        self_members = lhs.getMember(InOut_t.input_t)
+        rhs_members = rhs.getMember(InOut_t.input_t) 
+
+    return self_members,rhs_members
+
+
 class v_class_converter(vhdl_converter_base):
     def __init__(self):
         super().__init__()
@@ -753,73 +822,12 @@ class v_class(vhdl_base):
         if type(self).__name__ != type(rhs).__name__:
             raise Exception("Unable to connect different types")
 
-        
-        if self.__v_classType__ ==v_classType_t.Record_t:
-            self_members = []
-            rhs_members = []
-        
-        elif  self.Inout == InOut_t.Master_t and rhs.Inout == InOut_t.Master_t:
-            self_members = self.getMember(InOut_t.input_t)
-            rhs_members = rhs.getMember(InOut_t.input_t)
-        
-        elif  self.Inout == InOut_t.Master_t and rhs.Inout == InOut_t.Slave_t:
-            self_members = self.getMember(InOut_t.output_t)
-            rhs_members = rhs.getMember(InOut_t.input_t)
-        
-        elif  self.Inout == InOut_t.Slave_t and rhs.Inout == InOut_t.Slave_t:
-            self_members = self.getMember(InOut_t.output_t)
-            rhs_members = rhs.getMember(InOut_t.output_t)        
-        elif  self.Inout == InOut_t.Master_t and rhs.Inout == InOut_t.Internal_t:
-            self_members = self.getMember(InOut_t.input_t)
-            rhs_members = rhs.getMember(InOut_t.input_t)      
-        elif  self.Inout == InOut_t.Internal_t and rhs.Inout == InOut_t.Internal_t:
-            self_members = self.getMember(InOut_t.input_t)
-            rhs_members = rhs.getMember(InOut_t.input_t) 
-        elif  self.Inout == InOut_t.Internal_t and rhs.Inout == InOut_t.Slave_t:
-            self_members = self.getMember(InOut_t.input_t)
-            rhs_members = rhs.getMember(InOut_t.input_t) 
-        elif  self.Inout == InOut_t.Slave_t and rhs.Inout == InOut_t.Internal_t:
-            self_members = self.getMember(InOut_t.output_t)
-            rhs_members = rhs.getMember(InOut_t.input_t) 
-        elif  self.Inout == InOut_t.Internal_t and rhs.Inout == InOut_t.Master_t:
-            self_members = self.getMember(InOut_t.input_t)
-            rhs_members = rhs.getMember(InOut_t.input_t) 
+        self_members,rhs_members  = get_member_connect_s2m(self, rhs)
+
         for i in range(len(self_members)):
             rhs_members[i]['symbol'] << self_members[i]['symbol']
-        
 
-
-        if self.__v_classType__ ==v_classType_t.Record_t:
-            self_members = []
-            rhs_members = []
-        
-        elif  self.Inout == InOut_t.Master_t and rhs.Inout == InOut_t.Master_t:
-            self_members = self.getMember(InOut_t.output_t)
-            rhs_members = rhs.getMember(InOut_t.output_t)
-        
-        elif  self.Inout == InOut_t.Master_t and rhs.Inout == InOut_t.Slave_t:
-            self_members = self.getMember(InOut_t.input_t)
-            rhs_members = rhs.getMember(InOut_t.output_t)
-        
-        elif  self.Inout == InOut_t.Slave_t and rhs.Inout == InOut_t.Slave_t:
-            self_members = self.getMember(InOut_t.input_t)
-            rhs_members = rhs.getMember(InOut_t.input_t)        
-        elif  self.Inout == InOut_t.Master_t and rhs.Inout == InOut_t.Internal_t:
-            self_members = self.getMember(InOut_t.input_t)
-            rhs_members = rhs.getMember(InOut_t.input_t)      
-        elif  self.Inout == InOut_t.Internal_t and rhs.Inout == InOut_t.Internal_t:
-            self_members = self.getMember(InOut_t.input_t)
-            rhs_members = rhs.getMember(InOut_t.input_t) 
-        elif  self.Inout == InOut_t.Internal_t and rhs.Inout == InOut_t.Slave_t:
-            self_members = self.getMember(InOut_t.input_t)
-            rhs_members = rhs.getMember(InOut_t.input_t) 
-        elif  self.Inout == InOut_t.Slave_t and rhs.Inout == InOut_t.Internal_t:
-            self_members = self.getMember(InOut_t.input_t)
-            rhs_members = rhs.getMember(InOut_t.output_t) 
-        elif  self.Inout == InOut_t.Internal_t and rhs.Inout == InOut_t.Master_t:
-            self_members = self.getMember(InOut_t.output_t)
-            rhs_members = rhs.getMember(InOut_t.output_t) 
-
+        self_members,rhs_members=  get_member_connect_m2s(self,rhs)
         for i in range(len(self_members)):
             self_members[i]['symbol'] << rhs_members[i]['symbol']
 
