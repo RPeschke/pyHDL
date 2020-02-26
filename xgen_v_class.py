@@ -639,16 +639,26 @@ class v_class(vhdl_base):
     def setInout(self,Inout):
         if self.Inout == Inout:
             return 
-        elif self.__v_classType__ == v_classType_t.transition_t:
+        elif self.__v_classType__ == v_classType_t.transition_t :
             self.Inout = Inout
+        elif self.__v_classType__ == v_classType_t.Record_t  and Inout == InOut_t.Master_t:
+            self.Inout = InOut_t.output_t
+        elif self.__v_classType__ == v_classType_t.Record_t and Inout == InOut_t.Slave_t:
+            self.Inout = InOut_t.input_t
         elif self.__v_classType__ == v_classType_t.Record_t:
             self.Inout = Inout
+        
         elif self.__v_classType__ == v_classType_t.Master_t and Inout == InOut_t.Master_t:
             self.Inout = Inout
         elif self.__v_classType__ == v_classType_t.Slave_t and Inout == InOut_t.Slave_t:
             self.Inout = Inout    
         else:
             raise Exception("wrong combination of Class type and Inout type",self.__v_classType__,Inout)
+
+        members = self.getMember()
+        for x in members:
+            x["symbol"].setInout(Inout)
+
 
     def set_varSigConst(self, varSigConst):
         self.varSigConst = varSigConst
@@ -737,22 +747,79 @@ class v_class(vhdl_base):
 
 
     def _connect(self,rhs):
-        if self.Inout != rhs.Inout and self.Inout != InOut_t.Internal_t and rhs.Inout != InOut_t.Internal_t and rhs.Inout != InOut_t.Slave_t and self.Inout != InOut_t.Master_t:
+        if self.Inout != rhs.Inout and self.Inout != InOut_t.Internal_t and rhs.Inout != InOut_t.Internal_t and rhs.Inout != InOut_t.Slave_t and self.Inout != InOut_t.Master_t and self.Inout != InOut_t.input_t and self.Inout != InOut_t.output_t:
             raise Exception("Unable to connect different InOut types")
         
         if type(self).__name__ != type(rhs).__name__:
             raise Exception("Unable to connect different types")
 
         
-
+        if self.__v_classType__ ==v_classType_t.Record_t:
+            self_members = []
+            rhs_members = []
         
-        self_members = self.getMember(InOut_t.input_t)
-        rhs_members = rhs.getMember(InOut_t.input_t)
+        elif  self.Inout == InOut_t.Master_t and rhs.Inout == InOut_t.Master_t:
+            self_members = self.getMember(InOut_t.input_t)
+            rhs_members = rhs.getMember(InOut_t.input_t)
+        
+        elif  self.Inout == InOut_t.Master_t and rhs.Inout == InOut_t.Slave_t:
+            self_members = self.getMember(InOut_t.output_t)
+            rhs_members = rhs.getMember(InOut_t.input_t)
+        
+        elif  self.Inout == InOut_t.Slave_t and rhs.Inout == InOut_t.Slave_t:
+            self_members = self.getMember(InOut_t.output_t)
+            rhs_members = rhs.getMember(InOut_t.output_t)        
+        elif  self.Inout == InOut_t.Master_t and rhs.Inout == InOut_t.Internal_t:
+            self_members = self.getMember(InOut_t.input_t)
+            rhs_members = rhs.getMember(InOut_t.input_t)      
+        elif  self.Inout == InOut_t.Internal_t and rhs.Inout == InOut_t.Internal_t:
+            self_members = self.getMember(InOut_t.input_t)
+            rhs_members = rhs.getMember(InOut_t.input_t) 
+        elif  self.Inout == InOut_t.Internal_t and rhs.Inout == InOut_t.Slave_t:
+            self_members = self.getMember(InOut_t.input_t)
+            rhs_members = rhs.getMember(InOut_t.input_t) 
+        elif  self.Inout == InOut_t.Slave_t and rhs.Inout == InOut_t.Internal_t:
+            self_members = self.getMember(InOut_t.output_t)
+            rhs_members = rhs.getMember(InOut_t.input_t) 
+        elif  self.Inout == InOut_t.Internal_t and rhs.Inout == InOut_t.Master_t:
+            self_members = self.getMember(InOut_t.input_t)
+            rhs_members = rhs.getMember(InOut_t.input_t) 
         for i in range(len(self_members)):
             rhs_members[i]['symbol'] << self_members[i]['symbol']
         
-        self_members = self.getMember(InOut_t.output_t)
-        rhs_members = rhs.getMember(InOut_t.output_t)
+
+
+        if self.__v_classType__ ==v_classType_t.Record_t:
+            self_members = []
+            rhs_members = []
+        
+        elif  self.Inout == InOut_t.Master_t and rhs.Inout == InOut_t.Master_t:
+            self_members = self.getMember(InOut_t.output_t)
+            rhs_members = rhs.getMember(InOut_t.output_t)
+        
+        elif  self.Inout == InOut_t.Master_t and rhs.Inout == InOut_t.Slave_t:
+            self_members = self.getMember(InOut_t.input_t)
+            rhs_members = rhs.getMember(InOut_t.output_t)
+        
+        elif  self.Inout == InOut_t.Slave_t and rhs.Inout == InOut_t.Slave_t:
+            self_members = self.getMember(InOut_t.input_t)
+            rhs_members = rhs.getMember(InOut_t.input_t)        
+        elif  self.Inout == InOut_t.Master_t and rhs.Inout == InOut_t.Internal_t:
+            self_members = self.getMember(InOut_t.input_t)
+            rhs_members = rhs.getMember(InOut_t.input_t)      
+        elif  self.Inout == InOut_t.Internal_t and rhs.Inout == InOut_t.Internal_t:
+            self_members = self.getMember(InOut_t.input_t)
+            rhs_members = rhs.getMember(InOut_t.input_t) 
+        elif  self.Inout == InOut_t.Internal_t and rhs.Inout == InOut_t.Slave_t:
+            self_members = self.getMember(InOut_t.input_t)
+            rhs_members = rhs.getMember(InOut_t.input_t) 
+        elif  self.Inout == InOut_t.Slave_t and rhs.Inout == InOut_t.Internal_t:
+            self_members = self.getMember(InOut_t.input_t)
+            rhs_members = rhs.getMember(InOut_t.output_t) 
+        elif  self.Inout == InOut_t.Internal_t and rhs.Inout == InOut_t.Master_t:
+            self_members = self.getMember(InOut_t.output_t)
+            rhs_members = rhs.getMember(InOut_t.output_t) 
+
         for i in range(len(self_members)):
             self_members[i]['symbol'] << rhs_members[i]['symbol']
 

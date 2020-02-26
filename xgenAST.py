@@ -201,7 +201,7 @@ class xgenAST:
             self.local_function ={}
             if  f.name in self.functionNameVetoList:
                 continue
-            print(f.name)
+            # print(f.name)
             self.parent = parent
             self.FuncArgs = list()
             self.LocalVar = list()
@@ -232,7 +232,7 @@ class xgenAST:
             self.local_function ={}
             if  f.name in self.functionNameVetoList:
                 continue
-            print(f.name)
+            #print(f.name)
             self.parent = parent
             self.FuncArgs = list()
             self.LocalVar = list()

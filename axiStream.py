@@ -38,7 +38,7 @@ class axisStream(v_class):
     def __init__(self,Axitype):
         super().__init__("axiStream_"+Axitype.hdl_conversion__.get_type_simple(Axitype))
         self.hdl_conversion__ =axisStream_converter()
-        AddDataType(  Axitype  )
+        AddDataType( v_copy( Axitype ) )
         self.valid  = port_out( v_sl() )
         self.last   = port_out( v_sl() )
         self.data   = port_out( Axitype  )

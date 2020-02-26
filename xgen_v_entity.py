@@ -300,6 +300,8 @@ class v_entity_converter(vhdl_converter_base):
             for x in members:
                 sym = x["symbol"]
                 #ret += start + sym.hdl_conversion__.get_port_list(sym)
+                if sym.vhdl_name == None:
+                    sym.vhdl_name = x["name"]
                 portdef = sym.hdl_conversion__.get_port_list(sym)
                 if portdef:
                     ret += start +portdef
@@ -482,3 +484,8 @@ class v_clk_entity(v_entity):
         self.clk    =  port_in(v_sl())
         if clk != None:
             self.clk <<  clk
+
+    def _issubclass_(self,test):
+        if super()._issubclass_(test):
+            return True
+        return "v_clk_entity" == test

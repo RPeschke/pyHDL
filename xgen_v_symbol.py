@@ -244,8 +244,21 @@ class v_symbol(vhdl_base):
         }
 
     def setInout(self,Inout):
+        if self.Inout == InOut_t.Internal_t and  Inout == InOut_t.Master_t:
+            self.Inout = InOut_t.output_t
+            return 
+        elif Inout == InOut_t.Master_t:
+            return 
+
+        elif self.Inout == InOut_t.Internal_t and  Inout == InOut_t.Slave_t:
+            self.Inout = InOut_t.input_t
+            return 
+        elif Inout == InOut_t.Slave_t:
+            self.Inout = InoutFlip(self.Inout)
+            return 
         self.Inout = Inout
-            
+
+
     def set_varSigConst(self, varSigConst):
         self.varSigConst = varSigConst
         

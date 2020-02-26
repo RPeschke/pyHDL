@@ -480,6 +480,11 @@ class v_Num(v_ast_base):
         if ReturnToObj.type =="integer":
             return  str(self.value)
             
+        if str(self) == '0':
+            ret = v_copy(ReturnToObj)
+            ret.vhdl_name = ReturnToObj.type + "_null"
+            return ret
+
         return "convert2"+ ReturnToObj.get_type().replace(" ","") + "(" + str(self) +")"
         
 def body_unfold_Num(astParser,Node):

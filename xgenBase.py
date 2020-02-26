@@ -31,7 +31,7 @@ def add_symbols_to_entiy():
             for y in f_locals:
                 if y != "self" and issubclass(type(f_locals[y]), vhdl_base0):
                     f_locals["self"]._add_symbol(y,f_locals[y])
-                    print(y)
+                    #print(y)
 
 
 __VHDL__OPS_to2str= {
