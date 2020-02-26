@@ -12,6 +12,8 @@ from CodeGen.xgen_v_symbol import *
 from CodeGen.axiStream import *
 from CodeGen.xgen_v_entity import *
 
+from CodeGen.axi_stream_delay import *
+
 
 from CodeGen.xgen_simulation import *
 
@@ -43,19 +45,29 @@ class register_t(v_class):
 class klm_globals(v_class):
     def __init__(self):
         super().__init__("klm_globals")
-        self.clk   = port_out( v_sl() )
-        self.rst   = port_out( v_sl() )
-        self.reg   = port_out(register_t() )
+        self.__v_classType__       = v_classType_t.Record_t
+        self.clk   =  v_sl() 
+        self.rst   =  v_sl() 
+        self.reg   =  register_t() 
 
-class InputDelay(v_clk_entity):
+class InputDelay(v_entity):
     def __init__(self,k_globals =klm_globals()):
-        print("Sdasdas")
-        super().__init__(__file__, k_globals.clk)
+        super().__init__(__file__)
         self.globals  = port_Slave(k_globals)
         InputType = SerialDataConfig()
         self.ConfigIn = port_Stream_Slave(axisStream( InputType))
         self.ConfigOut = port_Stream_Master(axisStream( InputType))
-        #self.architecture()
+        self.architecture()
+
+
+    def architecture(self):
+        
+        pipe = self.ConfigIn \
+            | stream_delay_one(self.globals.clk, self.ConfigIn.data) \
+            | \
+        self.ConfigOut   
+
+        end_architecture()
 
 
 

@@ -14,7 +14,7 @@ from .xgen_simulation import *
 
 
 class stream_delay_one(v_clk_entity):
-    def __init__(self,clk=None,itype =v_slv(32)):
+    def __init__(self,clk=v_sl(),itype =v_slv(32)):
         super().__init__(__file__, clk)
         self.Axi_in = port_Stream_Slave(axisStream(itype))
         self.Axi_out = port_Stream_Master(axisStream(itype))

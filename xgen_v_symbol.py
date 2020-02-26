@@ -263,6 +263,8 @@ class v_symbol(vhdl_base):
         self.varSigConst = varSigConst
         
     
+    def flipInout(self):
+        self.Inout = InoutFlip(self.Inout)
 
     
     
@@ -333,7 +335,11 @@ class v_symbol(vhdl_base):
             for x in self._Push_update_list:
                 x()
 
-
+    def _instantiate_(self):
+        self._isInstance = True
+        self.Inout = InoutFlip(self.Inout)
+        return self
+        
     # rhs is source
     def _connect(self,rhs):
         if self.Inout != rhs.Inout:

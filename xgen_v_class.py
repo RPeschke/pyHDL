@@ -1,6 +1,7 @@
 from .xgenBase import * 
 from .xgen_v_function import *
 from .xgen_v_entity_list import *
+from .xgen_make_package import make_package
 
 def get_member_connect_m2s(lhs,rhs):
     if lhs.__v_classType__ ==v_classType_t.Record_t:
@@ -13,7 +14,7 @@ def get_member_connect_m2s(lhs,rhs):
         
     elif  lhs.Inout == InOut_t.Master_t and rhs.Inout == InOut_t.Slave_t:
         self_members = lhs.getMember(InOut_t.input_t)
-        rhs_members = rhs.getMember(InOut_t.output_t)
+        rhs_members = rhs.getMember(InOut_t.input_t)#
         
     elif  lhs.Inout == InOut_t.Slave_t and rhs.Inout == InOut_t.Slave_t:
         self_members = lhs.getMember(InOut_t.input_t)
@@ -47,7 +48,7 @@ def get_member_connect_s2m(lhs,rhs):
         
     elif  lhs.Inout == InOut_t.Master_t and rhs.Inout == InOut_t.Slave_t:
         self_members = lhs.getMember(InOut_t.output_t)
-        rhs_members = rhs.getMember(InOut_t.input_t)
+        rhs_members = rhs.getMember(InOut_t.output_t) #
         
     elif  lhs.Inout == InOut_t.Slave_t and rhs.Inout == InOut_t.Slave_t:
         self_members = lhs.getMember(InOut_t.output_t)
@@ -91,6 +92,13 @@ class v_class_converter(vhdl_converter_base):
         for x in obj.hdl_conversion__.__ast_functions__:
             ret += x.hdl_conversion__.includes(x,None,obj)
         return ret
+
+    def get_packet_file_name(self, obj):
+        return obj.hdl_conversion__.get_type_simple(obj)+"_pack.vhd"
+
+    def get_packet_file_content(self, obj):
+        pack = make_package(obj.hdl_conversion__.get_type_simple(obj)+"_pack",[obj])
+        return pack.to_string()
 
     def recordMember(self,obj, name,parent,Inout=None):
         if issubclass(type(parent),v_class):
@@ -386,6 +394,13 @@ class v_class_converter(vhdl_converter_base):
             ret += obj.vhdl_name + "_m2s : out " +types["m2s"] + " := " + types["m2s"] + "_null;\n  "
             ret += obj.vhdl_name + "_s2m : in  " +types["s2m"] + " := " + types["s2m"] + "_null"
             
+        elif obj.Inout == InOut_t.input_t:
+            types = obj.getTypes()
+            ret += obj.vhdl_name + " : in  " +types["main"] + " := " + types["main"] + "_null"
+        
+        elif obj.Inout == InOut_t.output_t:
+            types = obj.getTypes()
+            ret += obj.vhdl_name + " : out  " +types["main"] + " := " + types["main"] + "_null"           
         return ret
 
 
@@ -401,6 +416,8 @@ class v_class_converter(vhdl_converter_base):
 
 
     def _vhdl__Pull(self,obj):
+        if obj.__v_classType__  == v_classType_t.Record_t:
+            return ""
         args = ""
         for x in obj.hdl_conversion__.getMemberArgsImpl(obj, InOut_t.input_t,""):
             
@@ -409,6 +426,8 @@ class v_class_converter(vhdl_converter_base):
         return "    pull( " +str(obj) +args+");\n"
 
     def _vhdl__push(self,obj):
+        if obj.__v_classType__  == v_classType_t.Record_t:
+            return ""
         args = ""
         for x in obj.hdl_conversion__.getMemberArgsImpl(obj, InOut_t.output_t,""):
             
@@ -659,6 +678,7 @@ class v_class(vhdl_base):
 
 
     def _sim_get_value(self):
+        return self
         raise Exception("not yet implemented")
 
     def getName(self):
@@ -703,7 +723,11 @@ class v_class(vhdl_base):
         
 
 
-
+    def flipInout(self):
+        self.Inout = InoutFlip(self.Inout)
+        members = self.getMember()
+        for x in members:
+            x["symbol"].flipInout()
 
     def setInout(self,Inout):
         if self.Inout == Inout:
@@ -822,12 +846,14 @@ class v_class(vhdl_base):
         if type(self).__name__ != type(rhs).__name__:
             raise Exception("Unable to connect different types")
 
-        self_members,rhs_members  = get_member_connect_s2m(self, rhs)
+        self_members  = self.get_s2m_signals()
+        rhs_members  = rhs.get_s2m_signals()
 
         for i in range(len(self_members)):
             rhs_members[i]['symbol'] << self_members[i]['symbol']
 
-        self_members,rhs_members=  get_member_connect_m2s(self,rhs)
+        self_members  = self.get_m2s_signals()
+        rhs_members  = rhs.get_m2s_signals()
         for i in range(len(self_members)):
             self_members[i]['symbol'] << rhs_members[i]['symbol']
 
@@ -863,6 +889,84 @@ class v_class(vhdl_base):
         if super()._issubclass_(test):
             return True
         return "v_class" == test
+    
+    def _instantiate_(self):
+        self_members = self.getMember()
+        for x in self_members:
+            x["symbol"]._instantiate_()
+
+        self.Inout = InoutFlip(self.Inout)
+        self._isInstance = True
+        return self
+
+    def get_m2s_signals(self):
+        linput = InOut_t.input_t
+        louput = InOut_t.output_t
+
+
+
+
+        if self.__v_classType__ ==v_classType_t.Record_t and self.Inout == InOut_t.Master_t:
+            self_members = self.getMember(louput)
+            return self_members
+        
+        elif self.__v_classType__ ==v_classType_t.Record_t and self.Inout == InOut_t.Slave_t:
+            self_members = self.getMember(louput)
+            return self_members
+
+        elif self.__v_classType__ ==v_classType_t.Record_t and self.Inout == InOut_t.input_t:
+            self_members = self.getMember( linput)
+            return self_members
+        elif self.__v_classType__ ==v_classType_t.Record_t and self.Inout == InOut_t.output_t:
+            self_members = self.getMember(louput)
+            return self_members
+        elif self.__v_classType__ ==v_classType_t.Record_t and self.Inout == InOut_t.Internal_t:
+            self_members = self.getMember()
+            return self_members       
+        elif  self.Inout == InOut_t.Master_t:
+            self_members = self.getMember(louput)
+            return self_members
+            
+        elif  self.Inout == InOut_t.Slave_t:
+            self_members = self.getMember(linput)
+            return self_members
+        elif  self.Inout == InOut_t.Internal_t:
+            self_members = self.getMember(louput)
+            return self_members            
+        
+    def get_s2m_signals(self):
+        linput = InOut_t.input_t
+        louput = InOut_t.output_t
+
+
+
+        if self.__v_classType__ ==v_classType_t.Record_t and self.Inout == InOut_t.Slave_t:
+            self_members = self.getMember(linput)
+            return self_members
+        
+        elif self.__v_classType__ ==v_classType_t.Record_t and self.Inout == InOut_t.Master_t:
+            self_members = self.getMember(louput)
+            return self_members
+
+        elif self.__v_classType__ ==v_classType_t.Record_t and self.Inout == InOut_t.output_t:
+            self_members = self.getMember(linput)#
+            return self_members
+        elif self.__v_classType__ ==v_classType_t.Record_t and self.Inout == InOut_t.input_t:
+            self_members = self.getMember(louput)
+            return self_members
+        elif self.__v_classType__ ==v_classType_t.Record_t and self.Inout == InOut_t.Internal_t:
+            
+            return []
+        elif  self.Inout == InOut_t.Master_t:
+            self_members = self.getMember(linput)
+            return self_members
+            
+        elif  self.Inout == InOut_t.Slave_t:
+            self_members = self.getMember(louput)
+            return self_members
+        elif  self.Inout == InOut_t.Internal_t:
+            self_members = self.getMember(linput)
+            return self_members      
 
 
 class v_class_master(v_class):

@@ -423,11 +423,7 @@ class v_entity(vhdl_base0):
             if not issubclass(type(self.__dict__[x["name"]]), vhdl_base):
                 #del self.__dict__[x["name"]]
                 continue
-            self.__dict__[x["name"]]._isInstance = True
-            if x["symbol"].Inout == InOut_t.Internal_t:
-                #del self.__dict__[x["name"]]
-                continue
-            self.__dict__[x["name"]].Inout = InoutFlip( self.__dict__[x["name"]].Inout )
+            self.__dict__[x["name"]]._instantiate_()
         
         self._isInstance = True
         return self
@@ -442,10 +438,7 @@ class v_entity(vhdl_base0):
                 #del self.__dict__[x["name"]]
                 continue
             self.__dict__[x["name"]]._isInstance = False
-            if x["symbol"].Inout == InOut_t.Internal_t:
-                #del self.__dict__[x["name"]]
-                continue
-            self.__dict__[x["name"]].Inout = InoutFlip( self.__dict__[x["name"]].Inout )
+            self.__dict__[x["name"]].flipInout()
         
         self._isInstance = False
         return self

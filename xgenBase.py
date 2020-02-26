@@ -316,7 +316,9 @@ class vhdl_base(vhdl_base0):
         super().__init__()
         
 
-
+    def flipInout(self):
+        pass
+    
     def getName(self):
         return type(self).__name__
 
