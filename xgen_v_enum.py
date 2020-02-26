@@ -1,5 +1,5 @@
 from .xgenBase import *
-from .xgen_v_class import * 
+
 
 class v_enum(vhdl_base):
     def __init__(self,EnumIn,EnumVal=None,name=None):
@@ -32,7 +32,7 @@ class v_enum(vhdl_base):
             self.vhdl_name = name
 
     def getHeader(self, name,parent):
-        if issubclass(type(parent),v_class):
+        if  parent._issubclass_("v_class"):
              return ""
             
         # type T_STATE is (RESET, START, EXECUTE, FINISH);
@@ -47,7 +47,7 @@ class v_enum(vhdl_base):
         return ret
 
     def recordMember(self,name, parent,Inout=None):
-        if issubclass(type(parent),v_class):
+        if parent._issubclass_("v_class"):
             if self.Inout == InOut_t.Slave_t:
                 Inout = InoutFlip(Inout)
             return "  " + name + " : " +self.name +"; \n"
@@ -55,7 +55,7 @@ class v_enum(vhdl_base):
         return ""
 
     def recordMemberDefault(self, name, parent,Inout=None):
-        if issubclass(type(parent),v_class):
+        if parent._issubclass_("v_class"):
             if self.Inout == InOut_t.Slave_t:
                 Inout = InoutFlip(Inout)
 

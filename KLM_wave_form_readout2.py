@@ -16,7 +16,7 @@ from CodeGen.axi_stream_delay import *
 
 
 from CodeGen.xgen_simulation import *
-
+from CodeGen.clk_generator import *
 
 
 
@@ -51,10 +51,10 @@ class klm_globals(v_class):
         self.reg   =  register_t() 
 
 class InputDelay(v_entity):
-    def __init__(self,k_globals =klm_globals()):
+    def __init__(self,k_globals =klm_globals(),InputType = SerialDataConfig()):
         super().__init__(__file__)
         self.globals  = port_Slave(k_globals)
-        InputType = SerialDataConfig()
+        
         self.ConfigIn = port_Stream_Slave(axisStream( InputType))
         self.ConfigOut = port_Stream_Master(axisStream( InputType))
         self.architecture()
@@ -69,10 +69,27 @@ class InputDelay(v_entity):
 
         end_architecture()
 
+class InputDelay_tb(v_entity):
+    def __init__(self):
+        super().__init__(srcFileName=__file__)
+        self.architecture()
 
+    def architecture(self):
+        clkgen = v_create(clk_generator())
+        k_globals =klm_globals()
+        data = SerialDataConfig()
+        dut  = v_create(InputDelay(k_globals) )
 
+        k_globals.clk << clkgen.clk
+        mast = get_master(dut.ConfigIn)
+        @rising_edge(clkgen.clk)
+        def proc():
+            if mast:
+                mast << data
+
+        end_architecture()
 def main():
-    tb  =v_create(InputDelay())
+    tb  =v_create(InputDelay_tb())
 
     tb.hdl_conversion__.convert_all(tb,"pyhdl_waveform")
 

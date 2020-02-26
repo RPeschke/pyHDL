@@ -242,7 +242,9 @@ class v_symbol(vhdl_base):
         return {
             "main" : self.type
         }
-
+    def resetInout(self):
+        self.Inout = InOut_t.Internal_t
+        
     def setInout(self,Inout):
         if self.Inout == InOut_t.Internal_t and  Inout == InOut_t.Master_t:
             self.Inout = InOut_t.output_t

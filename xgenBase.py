@@ -309,7 +309,8 @@ class vhdl_base0:
     
     def _issubclass_(self,test):
         return "vhdl_base0" == test
-
+    def _remove_drivers(self):
+        self.__Driver__ = None
 class vhdl_base(vhdl_base0):
 
     def __init__(self):
@@ -318,7 +319,8 @@ class vhdl_base(vhdl_base0):
 
     def flipInout(self):
         pass
-    
+    def resetInout(self):
+        pass
     def getName(self):
         return type(self).__name__
 
@@ -367,7 +369,7 @@ class vhdl_base(vhdl_base0):
 
     def _sim_get_value(self):
         raise Exception("not implemented")
-
+    
 
 def optional_concatonat(first, delimer, Second):
     if first and Second:
@@ -452,6 +454,7 @@ def v_variable(symbol):
     ret._isInstance = False
     ret.setInout(InOut_t.Internal_t)
     ret.set_varSigConst(varSig.variable_t)
+    ret._remove_drivers()
     return ret
     
     
@@ -460,6 +463,7 @@ def v_signal(symbol):
     ret._isInstance = False
     ret.setInout(InOut_t.Internal_t)
     ret.set_varSigConst(varSig.signal_t)
+    ret._remove_drivers()
     return ret
 
 def v_const(symbol):
@@ -467,6 +471,7 @@ def v_const(symbol):
     ret._isInstance = False
     ret.setInout(InOut_t.Internal_t)
     ret.set_varSigConst(varSig.const_t)
+    ret._remove_drivers()
     return ret
 
 def port_out(symbol):
@@ -474,6 +479,7 @@ def port_out(symbol):
     ret._isInstance = False
     ret.setInout(InOut_t.output_t)
     ret.set_varSigConst(getDefaultVarSig())
+    ret._remove_drivers()
     return ret
 
 def variable_port_out(symbol):
@@ -481,6 +487,7 @@ def variable_port_out(symbol):
     ret._isInstance = False
     ret.setInout(InOut_t.output_t)
     ret.set_varSigConst(varSig.variable_t)
+    ret._remove_drivers()
     return ret
 
 def port_in(symbol):
@@ -488,6 +495,7 @@ def port_in(symbol):
     ret._isInstance = False
     ret.setInout(InOut_t.input_t)
     ret.set_varSigConst(getDefaultVarSig())
+    ret._remove_drivers()
     return ret
 
 def variable_port_in(symbol):
@@ -495,6 +503,7 @@ def variable_port_in(symbol):
     ret._isInstance = False
     ret.setInout(InOut_t.input_t)
     ret.set_varSigConst(varSig.variable_t)
+    ret._remove_drivers()
     return ret
 
 def port_Master(symbol):
@@ -502,6 +511,7 @@ def port_Master(symbol):
     ret._isInstance = False
     ret.setInout(InOut_t.Master_t)
     ret.set_varSigConst(getDefaultVarSig())
+    ret._remove_drivers()
     return ret
 
 def variable_port_Master(symbol):
@@ -509,6 +519,7 @@ def variable_port_Master(symbol):
     ret._isInstance = False
     ret.setInout(InOut_t.Master_t)
     ret.set_varSigConst(varSig.variable_t)
+    ret._remove_drivers()
     return ret
 
 def signal_port_Master(symbol):
@@ -516,6 +527,7 @@ def signal_port_Master(symbol):
     ret._isInstance = False
     ret.setInout(InOut_t.Master_t)
     ret.set_varSigConst(varSig.signal_t)
+    ret._remove_drivers()
     return ret
 
 def port_Stream_Master(symbol):
@@ -528,7 +540,7 @@ def port_Stream_Master(symbol):
     raise_if(f_locals["self"]._StreamOut != None, "the _StreamOut is already set")
  
     f_locals["self"]._StreamOut = ret
-                    
+    ret._remove_drivers()                
     return ret 
 
 def signal_port_Slave(symbol):
@@ -536,6 +548,7 @@ def signal_port_Slave(symbol):
     ret._isInstance = False
     ret.setInout(InOut_t.Slave_t)
     ret.set_varSigConst(varSig.signal_t)
+    ret._remove_drivers()
     return ret
 
 
@@ -544,6 +557,7 @@ def port_Slave(symbol):
     ret._isInstance = False
     ret.setInout(InOut_t.Slave_t)
     ret.set_varSigConst(getDefaultVarSig())
+    ret._remove_drivers()
     return ret
 
 def variable_port_Slave(symbol):
@@ -551,6 +565,7 @@ def variable_port_Slave(symbol):
     ret._isInstance = False
     ret.setInout(InOut_t.Slave_t)
     ret.set_varSigConst(varSig.variable_t)
+    ret._remove_drivers()
     return ret
 
 def port_Stream_Slave(symbol):
@@ -562,13 +577,14 @@ def port_Stream_Slave(symbol):
     raise_if(f_locals["self"]._StreamIn != None, "the _StreamIn is already set")
     
     f_locals["self"]._StreamIn = ret
-                    
+    ret._remove_drivers()  
     return ret 
 def v_copy(symbol,varSig=None):
     ret= copy.deepcopy(symbol)
-    ret.setInout(InOut_t.Internal_t)
+    ret.resetInout()
     ret._isInstance = False
     ret.vhdl_name = None
+    ret._remove_drivers()
     if varSig == None:
         ret.set_varSigConst(getDefaultVarSig())
     return ret

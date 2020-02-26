@@ -63,6 +63,8 @@ def addPullsPushes(symbol):
 
             
 def addPullsPushes_from_closure(symbol,closure):
+    if closure == None:
+        return
     for x in closure:
         y = x.cell_contents
         if issubclass(type(y), vhdl_base0):
