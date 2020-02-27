@@ -51,10 +51,11 @@ class klm_globals(v_class):
         self.reg   =  register_t() 
 
 class InputDelay(v_entity):
-    def __init__(self,k_globals =klm_globals(),InputType = SerialDataConfig()):
+    def __init__(self,k_globals =None,InputType = SerialDataConfig()):
         super().__init__(__file__)
-        self.globals  = port_Slave(k_globals)
-        self.globals  << k_globals
+        self.globals  = port_Slave(klm_globals())
+        if k_globals != None:
+            self.globals  << k_globals
         self.ConfigIn = port_Stream_Slave(axisStream( InputType))
         self.ConfigOut = port_Stream_Master(axisStream( InputType))
         self.architecture()
@@ -64,6 +65,8 @@ class InputDelay(v_entity):
         
         pipe = self.ConfigIn \
             | stream_delay_one(self.globals.clk, self.ConfigIn.data) \
+            | stream_delay_one(self.globals.clk, self.ConfigIn.data) \
+            | stream_delay_one(self.globals.clk, self.ConfigIn.data) \
             | \
         self.ConfigOut   
 
@@ -71,10 +74,11 @@ class InputDelay(v_entity):
 
 
 class InputDelay_print(v_entity):
-    def __init__(self,k_globals =klm_globals(),InputType = SerialDataConfig()):
+    def __init__(self,k_globals =None,InputType = SerialDataConfig()):
         super().__init__(__file__)
-        self.globals  = port_Slave(k_globals)
-        self.globals << k_globals
+        self.globals  = port_Slave(klm_globals())
+        if k_globals != None:
+            self.globals << k_globals
         self.ConfigIn = port_Stream_Slave(axisStream( InputType))
         self.architecture()
 
@@ -86,6 +90,7 @@ class InputDelay_print(v_entity):
         def proc():
             if ax_slave:
                d << ax_slave
+               print(value(d.column_select))
 
 
         end_architecture()
@@ -100,7 +105,9 @@ class InputDelay_tb(v_entity):
         k_globals =klm_globals()
         data = SerialDataConfig()
         dut  = v_create(InputDelay(k_globals) )
+
         axprint  =  v_create( InputDelay_print(k_globals))
+
         axprint.ConfigIn << dut.ConfigOut
         k_globals.clk << clkgen.clk
         mast = get_master(dut.ConfigIn)

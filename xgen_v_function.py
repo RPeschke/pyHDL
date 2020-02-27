@@ -158,7 +158,10 @@ class v_Arch_converter(vhdl_converter_base):
         return header
 
     def get_architecture_body(self, obj):
-        return  str(obj.body)
+        body = ""  
+        body += str(obj.body)
+
+        return body
 
 
     def getHeader(self, obj, name, parent):

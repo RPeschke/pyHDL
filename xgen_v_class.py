@@ -324,16 +324,15 @@ class v_class_converter(vhdl_converter_base):
 
         VarSymb = get_varSig(obj.varSigConst)
 
-        if obj.__Driver__ and str( obj.__Driver__) != 'process':
-            return ""
+
         t = obj.getTypes()
         if len(t) ==3 and obj.__v_classType__ ==  v_classType_t.transition_t:
             ret = ""
-            ret += "  " + VarSymb + " " +str(obj) + "_m2s : " + t["m2s"] +" := " + t["m2s"]+"_null;\n"
-            ret += "  " + VarSymb + " " +str(obj) + "_s2m : " + t["s2m"] +" := " + t["s2m"]+"_null;\n"
+            ret += "  " + VarSymb + " " +obj.get_vhdl_name() + "_m2s : " + t["m2s"] +" := " + t["m2s"]+"_null;\n"
+            ret += "  " + VarSymb + " " +obj.get_vhdl_name() + "_s2m : " + t["s2m"] +" := " + t["s2m"]+"_null;\n"
             return ret
 
-        return "  " + VarSymb +" " +str(obj) + " : " +obj.type +" := " + obj.type+"_null;\n"
+        return "  " + VarSymb +" " +obj.get_vhdl_name() + " : " +obj.type +" := " + obj.type+"_null;\n"
         
     def get_port_list(self,obj):
         ret = ""
@@ -367,11 +366,14 @@ class v_class_converter(vhdl_converter_base):
         t = obj.getTypes()
         if len(t) ==3 and obj.__v_classType__ ==  v_classType_t.transition_t:
             ret = ""
-            ret += name + "_m2s => " + str(obj)+"_m2s, \n    "
-            ret += name + "_s2m => " + str(obj)+"_s2m"
+            ret += name + "_m2s => " + obj.get_vhdl_name()+"_m2s, \n    "
+            ret += name + "_s2m => " + obj.get_vhdl_name()+"_s2m"
             return ret
+
+        if obj.__Driver__ != None:
+            return  name + " => " + obj.__Driver__.get_vhdl_name()    
             
-        return  name + " => " + str(obj)
+        return  name + " => " + obj.get_vhdl_name()
 
 
     def _vhdl__Pull(self,obj):
@@ -516,13 +518,13 @@ class v_class_converter(vhdl_converter_base):
 
         t = obj.getTypes()
         if len(t) ==3 and obj.__v_classType__ ==  v_classType_t.transition_t:
-            ret ="---------------------------------------------------------------------\n--  " + str(obj) +" << " + str (rhs)+"\n" 
+            ret ="---------------------------------------------------------------------\n--  " + obj.get_vhdl_name() +" << " + rhs.get_vhdl_name()+"\n" 
             
             ret += obj.get_vhdl_name(InOut_t.output_t) + asOp + rhs.get_vhdl_name(InOut_t.output_t) +";\n" 
             ret += rhs.get_vhdl_name(InOut_t.input_t) + asOp + obj.get_vhdl_name(InOut_t.input_t)
             return ret 
 
-        return str(obj) + asOp +  str(rhs)
+        return obj.get_vhdl_name() + asOp +  rhs.get_vhdl_name()
 
     def get_self_func_name(self, obj, IsFunction = False):
         inout = " inout "
@@ -543,9 +545,9 @@ class v_class_converter(vhdl_converter_base):
                     else:
                         suffix = "_s2m"
 
-                    return str(obj) + suffix + "." +   attName
+                    return obj.get_vhdl_name() + suffix + "." +   attName
         
-        return str(obj) + "." +str(attName)
+        return obj.get_vhdl_name() + "." +str(attName)
    
     def get_process_header(self,obj):
         if obj.Inout != InOut_t.Internal_t:
@@ -654,16 +656,16 @@ class v_class(vhdl_base):
 
     def get_vhdl_name(self,Inout=None):
         if Inout== None:
-            return self.vhdl_name
+            return str(self.vhdl_name)
         
         if self.__v_classType__ == v_classType_t.Slave_t:
             Inout = InoutFlip(Inout)
 
         if Inout== InOut_t.input_t:
-            return self.vhdl_name+"_s2m"
+            return str(self.vhdl_name)+"_s2m"
         
         elif Inout== InOut_t.output_t:
-            return self.vhdl_name+"_m2s"
+            return str(self.vhdl_name)+"_m2s"
         return None
 
 
@@ -787,7 +789,8 @@ class v_class(vhdl_base):
                 continue 
             if not t.isInOutType(InOut_Filter):
                 continue
-            
+            if x[0] == '__Driver__':
+                continue
             if not t.isVarSigType(VaribleSignalFilter):
                 continue
 
@@ -823,7 +826,8 @@ class v_class(vhdl_base):
         
         if type(self).__name__ != type(rhs).__name__:
             raise Exception("Unable to connect different types")
-
+        
+        self.__Driver__ = rhs
         self_members  = self.get_s2m_signals()
         rhs_members  = rhs.get_s2m_signals()
 
@@ -860,8 +864,8 @@ class v_class(vhdl_base):
         if gsimulation.isRunning():
             self._connect_running(rhs)
         else:
-            if self.__Driver__ :
-                raise Exception("symbol has already a driver", str(self))
+            if self.__Driver__ and not isConverting2VHDL():
+                raise Exception("symbol has already a driver", obj.get_vhdl_name())
             self._connect(rhs)
 
 
