@@ -641,8 +641,13 @@ class v_class(vhdl_base):
     def set_vhdl_name(self,name, Overwrite = False):
         if self.vhdl_name and self.vhdl_name != name and Overwrite == False:
             raise Exception("double Conversion to vhdl")
-        else:
-            self.vhdl_name = name
+        
+        self.vhdl_name = name
+
+        mem = self.getMember()
+        for x in mem:
+            x["symbol"].set_vhdl_name(name+"."+x["name"],Overwrite)
+
 
     def _sim_append_update_list(self,up):
         for x  in self.getMember():

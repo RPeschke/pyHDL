@@ -224,7 +224,7 @@ class xgenAST:
             header =""
 
             
-            proc = v_Arch(body=body,Symbols=self.LocalVar, Arch_vars=self.Archetecture_vars)
+            proc = v_Arch(body=body,Symbols=self.LocalVar, Arch_vars=self.Archetecture_vars,ports=ClassInstance.getMember())
             ClassInstance.__processList__.append(proc)
 
     def extractFunctionsForEntity(self, ClassInstance, parent):

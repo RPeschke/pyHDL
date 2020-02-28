@@ -162,6 +162,18 @@ class v_Arch_converter(vhdl_converter_base):
             header += x['symbol'].hdl_conversion__.get_architecture_header(x['symbol'])    
         return header
 
+
+    def make_signal_list(self, obj, retList, objList):
+        
+        for x in objList:
+            retList.append(x)
+            obj.hdl_conversion__.make_signal_list(
+                obj,
+                retList, 
+                x['symbol'].getMember(VaribleSignalFilter=varSig.signal_t)
+            )
+
+  
     def make_signal_connections(self, obj, objList):
         ret = ""
         for x in objList:
@@ -171,19 +183,48 @@ class v_Arch_converter(vhdl_converter_base):
                 ret += obj.hdl_conversion__.make_signal_connections(obj,x['symbol'].getMember(VaribleSignalFilter=varSig.signal_t))
 
         return ret
+    def make_signal_connections2(self, obj, objList):
+        ret = ""
+        for x in objList:
+            print(x["name"])
+            if x['symbol'].__Driver__ == None:
+                continue
+            if x['symbol'].DriverIsProcess():
+                continue 
+            if  x['symbol'].__Driver__.vhdl_name == None:
+                continue 
+            if  x['symbol'].varSigConst != varSig.signal_t:
+                continue
+            if  x['symbol'].__Driver__.varSigConst != varSig.signal_t:
+                continue
+            if not x['symbol'].vhdl_name:
+                continue 
+            if not list_is_in_list(x['symbol'].__Driver__, objList):
+                continue
+            ret += x['symbol'].hdl_conversion__._vhdl__reasign(x['symbol'],x['symbol'].__Driver__)  +";\n  "
 
+        return ret
     def get_architecture_body(self, obj):
         body = ""  
         body += str(obj.body)
         for x in obj.Symbols:
             if x.type == "undef":
                 continue
-            body += x.hdl_conversion__.get_architecture_body(x)+";\n  "
+            line = x.hdl_conversion__.get_architecture_body(x) 
+            if line.strip():
+                body += "\n  " +line+";\n  "
         
         for x in obj.Arch_vars:
-            body += x['symbol'].hdl_conversion__.get_architecture_body(x['symbol'])  +";\n  "
+            line = x['symbol'].hdl_conversion__.get_architecture_body(x['symbol'])
+            if line.strip():
+                body += "\n  " + line  +";\n  "
         
-        body +=obj.hdl_conversion__.make_signal_connections(obj, obj.Arch_vars)
+        retList =[]
+        obj.hdl_conversion__.make_signal_list(obj,retList,  obj.ports)
+        obj.hdl_conversion__.make_signal_list(obj,retList,  obj.Arch_vars)
+        retlist2 = list_make_unque(retList)
+        body +=obj.hdl_conversion__.make_signal_connections2(obj, retlist2)
+        #body +=obj.hdl_conversion__.make_signal_connections(obj, obj.Arch_vars)
  
         return body
 
@@ -197,14 +238,28 @@ class v_Arch_converter(vhdl_converter_base):
         return ""
 
 class v_Arch(vhdl_base):
-    def __init__(self,body, Symbols,Arch_vars):
+    def __init__(self,body, Symbols,Arch_vars,ports):
         super().__init__()
         self.body = body 
         self.Symbols = Symbols
         self.Arch_vars = Arch_vars
         self.hdl_conversion__ = v_Arch_converter()
+        self.ports = ports
         
 
 
 
+def list_is_in_list(obj, ret):
+    for y in ret:
+        if obj is y["symbol"]:
+            return True
+    return False
+
+def list_make_unque(objList):
+    ret = []
+    for x in objList:
+        if not list_is_in_list(x["symbol"],ret):
+            ret.append(x)
+
+    return ret
 

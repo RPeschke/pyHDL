@@ -32,17 +32,7 @@ class v_entity_list_converter(vhdl_converter_base):
                     ret += start + x["symbol"].hdl_conversion__.get_architecture_body(x["symbol"])
                     start = ";\n  "
             
-            for i in range(len(obj.nexted_entities) -1):
-                source = obj.nexted_entities[i]
-                destination = obj.nexted_entities[i+1]
-                rhs_StreamIn = destination["symbol"]._get_Stream_input()
-                lhs_StreamOut = source["symbol"]._get_Stream_output()
-                if issubclass( type(lhs_StreamOut),vhdl_base) and issubclass( type(rhs_StreamIn),vhdl_base):
-                    rhs_StreamIn = rhs_StreamIn.hdl_conversion__._vhdl__reasign_type(rhs_StreamIn)
-                    lhs_StreamOut = lhs_StreamOut.hdl_conversion__._vhdl__getValue(lhs_StreamOut, rhs_StreamIn,obj.astParser)
-                    
-                    ret +=start+rhs_StreamIn.hdl_conversion__._vhdl__reasign(rhs_StreamIn, lhs_StreamOut)
-                    start = ";\n  "
+
 
             return ret
 
@@ -103,7 +93,12 @@ class v_entity_list(vhdl_base0):
             })
 
 
-
+    def getMember(self,InOut_Filter=None, VaribleSignalFilter = None):
+        ret = list()
+        for x in self.nexted_entities:
+            mem = x["symbol"].getMember(InOut_Filter, VaribleSignalFilter)
+            ret += mem
+        return ret
 
     def set_vhdl_name(self,name, Overwrite = False):
         if self.vhdl_name and self.vhdl_name != name and Overwrite == False:
