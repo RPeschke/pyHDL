@@ -122,7 +122,7 @@ class InputDelay_tb(v_entity):
         end_architecture()
 def main():
     tb  =v_create(InputDelay_tb())
-    gsimulation.run_timed(tb, 1000,"InputDelay_tb.vcd")
-    #tb.hdl_conversion__.convert_all(tb,"pyhdl_waveform")
+    #gsimulation.run_timed(tb, 1000,"InputDelay_tb.vcd")
+    tb.hdl_conversion__.convert_all(tb,"pyhdl_waveform")
 
 main()

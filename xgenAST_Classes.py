@@ -300,6 +300,45 @@ def body_unfold_porcess_body_combinational(astParser,Node):
 
     return porcess_combinational(Node.name, ret)
 
+class architecure_body(v_ast_base):
+    def __init__(self, Name, BodyList):
+        self.Name =Name
+        self.Body = BodyList
+
+    def __str__(self):
+        ret = "  -- begin " + self.Name +"\n"
+        
+        for x in self.Body:
+            v = str(x)
+            if v.strip():
+                ret += "  " + v + ";\n"
+        ret += "  -- end " + self.Name 
+        return ret
+
+def body_unfold_architecture_body(astParser,Node):
+    
+    localContext = astParser.Context
+    astParser.push_scope("architecture")
+
+    dummy_DefaultVarSig = getDefaultVarSig()
+    setDefaultVarSig(varSig.signal_t)
+    decorator_l = astParser.Unfold_body(Node.decorator_list)
+
+    ret = list()
+    astParser.Context = ret
+    for x in Node.body:
+        if type(x).__name__ == "FunctionDef":
+            ret.append( astParser.Unfold_body(x))
+        elif type(x).__name__ == "Assign":
+            ret.append( astParser.Unfold_body(x))
+
+    astParser.Context = localContext
+    setDefaultVarSig(dummy_DefaultVarSig)
+    
+    astParser.pop_scope()
+
+    return architecure_body(Node.name, ret)
+
 class v_funDef(v_ast_base):
     def __init__(self,BodyList,dec=None):
         self.BodyList=BodyList
@@ -344,6 +383,9 @@ def body_unfold_functionDef(astParser,Node):
 
     elif len(Node.decorator_list) == 1 and Node.decorator_list[0].func.id== "combinational":
         return body_unfold_porcess_body_combinational(astParser,Node)
+
+    elif Node.name ==  "architecture":
+        return body_unfold_architecture_body(astParser,Node)
 
 
     decorator_l = astParser.Unfold_body(Node.decorator_list)
@@ -524,6 +566,11 @@ def  body_unfold_assign(astParser,Node):
     if len(Node.targets)>1:
         raise Exception(Node_line_col_2_str(astParser, Node)+"Multible Targets are not supported")
 
+
+    for x in astParser.Archetecture_vars:
+        if x["name"] == Node.targets[0].id:
+            x["symbol"].set_vhdl_name(Node.targets[0].id)
+            return v_noop()
     for x in astParser.LocalVar:
         if Node.targets[0].id in x.vhdl_name:
             raise Exception(Node_line_col_2_str(astParser, Node)+" Target already exist. Use << operate to assigne new value to existing object.")

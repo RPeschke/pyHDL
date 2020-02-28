@@ -380,19 +380,24 @@ class v_class_converter(vhdl_converter_base):
         if obj.__v_classType__  == v_classType_t.Record_t:
             return ""
         args = ""
-        for x in obj.hdl_conversion__.getMemberArgsImpl(obj, InOut_t.input_t,""):
-            
-            args += ", " + x["vhdl_name"]
-
+        members = obj.getMember( InOut_t.input_t) 
+        for x in members:
+            if obj.__v_classType__ == v_classType_t.Master_t:
+                args += ", " + x["symbol"].__receiver__[-1].get_vhdl_name() +"_s2m"
+            elif obj.__v_classType__ == v_classType_t.Slave_t:
+                args += ", " + x["symbol"].__Driver__.get_vhdl_name() + "_m2s"
         return "    pull( " +str(obj) +args+");\n"
 
     def _vhdl__push(self,obj):
         if obj.__v_classType__  == v_classType_t.Record_t:
             return ""
         args = ""
-        for x in obj.hdl_conversion__.getMemberArgsImpl(obj, InOut_t.output_t,""):
-            
-            args += ", " + x["vhdl_name"]
+        members = obj.getMember( InOut_t.output_t) 
+        for x in members:
+            if obj.__v_classType__ == v_classType_t.Master_t:
+                args += ", " + x["symbol"].__receiver__[-1].get_vhdl_name() +"_m2s"
+            elif obj.__v_classType__ == v_classType_t.Slave_t:
+                args += ", " + x["symbol"].__Driver__.get_vhdl_name() + "_s2m"
 
         return  "    push( " +str(obj) +args+");\n"
 
@@ -633,8 +638,8 @@ class v_class(vhdl_base):
             varSigConst = getDefaultVarSig()
         self.varSigConst = varSigConst
 
-    def set_vhdl_name(self,name):
-        if self.vhdl_name and self.vhdl_name != name:
+    def set_vhdl_name(self,name, Overwrite = False):
+        if self.vhdl_name and self.vhdl_name != name and Overwrite == False:
             raise Exception("double Conversion to vhdl")
         else:
             self.vhdl_name = name
@@ -828,6 +833,8 @@ class v_class(vhdl_base):
             raise Exception("Unable to connect different types")
         
         self.__Driver__ = rhs
+        rhs.__receiver__.append(self)
+
         self_members  = self.get_s2m_signals()
         rhs_members  = rhs.get_s2m_signals()
 

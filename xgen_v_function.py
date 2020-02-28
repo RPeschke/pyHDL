@@ -146,6 +146,9 @@ class v_Arch_converter(vhdl_converter_base):
         inc_str = ""
         for x in obj.Symbols:
             inc_str +=  x.hdl_conversion__.includes(x, x.vhdl_name,obj)
+        
+        for x in obj.Arch_vars:
+            inc_str +=  x['symbol'].hdl_conversion__.includes(x['symbol'], x['name'],obj)
         return inc_str
 
     def get_architecture_header(self, obj):
@@ -154,13 +157,34 @@ class v_Arch_converter(vhdl_converter_base):
             if x.type == "undef":
                 continue
             header += x.hdl_conversion__.get_architecture_header(x)
-            
+        
+        for x in obj.Arch_vars:
+            header += x['symbol'].hdl_conversion__.get_architecture_header(x['symbol'])    
         return header
+
+    def make_signal_connections(self, obj, objList):
+        ret = ""
+        for x in objList:
+            if x['symbol'].__Driver__ and not x['symbol'].DriverIsProcess() and x['symbol'].__Driver__.vhdl_name:
+                ret += x['symbol'].hdl_conversion__._vhdl__reasign(x['symbol'],x['symbol'].__Driver__)  +";\n  "
+            else:
+                ret += obj.hdl_conversion__.make_signal_connections(obj,x['symbol'].getMember(VaribleSignalFilter=varSig.signal_t))
+
+        return ret
 
     def get_architecture_body(self, obj):
         body = ""  
         body += str(obj.body)
-
+        for x in obj.Symbols:
+            if x.type == "undef":
+                continue
+            body += x.hdl_conversion__.get_architecture_body(x)+";\n  "
+        
+        for x in obj.Arch_vars:
+            body += x['symbol'].hdl_conversion__.get_architecture_body(x['symbol'])  +";\n  "
+        
+        body +=obj.hdl_conversion__.make_signal_connections(obj, obj.Arch_vars)
+ 
         return body
 
 
@@ -173,10 +197,11 @@ class v_Arch_converter(vhdl_converter_base):
         return ""
 
 class v_Arch(vhdl_base):
-    def __init__(self,body, Symbols):
+    def __init__(self,body, Symbols,Arch_vars):
         super().__init__()
         self.body = body 
         self.Symbols = Symbols
+        self.Arch_vars = Arch_vars
         self.hdl_conversion__ = v_Arch_converter()
         
 

@@ -167,8 +167,8 @@ class v_list(vhdl_base):
         self.content.append(obj)
         self.size = len(self.content)
 
-    def set_vhdl_name(self,name):
-        if self.vhdl_name and self.vhdl_name != name:
+    def set_vhdl_name(self,name, Overwrite = False):
+        if self.vhdl_name and self.vhdl_name != name and Overwrite == False:
             raise Exception("double Conversion to vhdl")
         else:
             self.vhdl_name = name

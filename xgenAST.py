@@ -52,7 +52,7 @@ class xgenAST:
         self.FuncArgs = list()
         self.LocalVar = list()
         self.varScope = list()
-
+        self.Archetecture_vars = list()
         self.ContextName = list()
         self.ContextName.append("global")
         self.Context = None
@@ -205,6 +205,7 @@ class xgenAST:
             self.parent = parent
             self.FuncArgs = list()
             self.LocalVar = list()
+            self.Archetecture_vars =[]
             self.FuncArgs.append(
                 {
                     "name":"self",
@@ -217,12 +218,13 @@ class xgenAST:
             
             #self.local_function = p.__globals__
             self.local_function = ClassInstance.__init__.__globals__
+            self.Archetecture_vars = ClassInstance.__local_symbols__
             body = self.Unfold_body(f)  ## get local vars 
 
             header =""
 
             
-            proc = v_Arch(body=body,Symbols=self.LocalVar)
+            proc = v_Arch(body=body,Symbols=self.LocalVar, Arch_vars=self.Archetecture_vars)
             ClassInstance.__processList__.append(proc)
 
     def extractFunctionsForEntity(self, ClassInstance, parent):
@@ -236,6 +238,7 @@ class xgenAST:
             self.parent = parent
             self.FuncArgs = list()
             self.LocalVar = list()
+            self.Archetecture_vars =[]
             self.FuncArgs.append(
                 {
                     "name":"self",
@@ -291,7 +294,7 @@ class xgenAST:
             self.parent = parent
             self.FuncArgs = list()
             self.LocalVar = list()
-            
+            self.Archetecture_vars =[]
             ArglistProcedure = ""
             Arglist = list(self.get_func_args_list(f))
             for x in Arglist:
@@ -360,7 +363,11 @@ class xgenAST:
         except:
             pass
         
-        
+        for x in self.Archetecture_vars:
+            if x["name"] == SymbolName:
+                self.LocalVar.append(x["symbol"])
+                return x["symbol"]
+
         raise Exception("Unable to find symbol", SymbolName, "\nAvalible Symbols\n",self.FuncArgs)
 
 

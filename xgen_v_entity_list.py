@@ -105,8 +105,11 @@ class v_entity_list(vhdl_base0):
 
 
 
-    def set_vhdl_name(self, Name):
-        self.vhdl_name  = Name
+    def set_vhdl_name(self,name, Overwrite = False):
+        if self.vhdl_name and self.vhdl_name != name and Overwrite == False:
+            raise Exception("double Conversion to vhdl")
+        else:
+            self.vhdl_name = name
 
 
     

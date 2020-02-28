@@ -147,9 +147,6 @@ class vhdl_converter_base:
 
     def _vhdl_make_port(self, obj, name):
         objName = str(obj)
-        if obj.__Driver__ != None:
-            objName = str(obj.__Driver__)
-
         return  name + " => " + objName
 
 
@@ -274,8 +271,19 @@ class vhdl_base0:
         gHDL_objectList.append(self)
         self._isInstance = False
         self.hdl_conversion__ = vhdl_converter_base()
+        self.__Driver__ = None
+        self.__receiver__ = []
         #self._isInstance = True
-    
+    def getMember(self,InOut_Filter=None, VaribleSignalFilter = None):
+        return []
+
+    def DriverIsProcess(self):
+        if type(self.__Driver__).__name__ == "str":
+            return self.__Driver__ == "process"
+        
+        return False
+
+        
     def set_simulation_param(self,module, name,writer):
         pass
 
@@ -311,6 +319,11 @@ class vhdl_base0:
         return "vhdl_base0" == test
     def _remove_drivers(self):
         self.__Driver__ = None
+
+    def set_vhdl_name(self,name,Overwrite = False):
+        raise Exception("update not implemented")                
+
+
 class vhdl_base(vhdl_base0):
 
     def __init__(self):

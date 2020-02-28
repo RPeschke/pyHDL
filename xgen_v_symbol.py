@@ -95,8 +95,8 @@ class v_symbol_converter(vhdl_converter_base):
         
         VarSymb = get_varSig(obj.varSigConst)
 
-        if  obj.__Driver__ != None and str(obj.__Driver__ ) != 'process':
-            return ""
+        #if  obj.__Driver__ != None and str(obj.__Driver__ ) != 'process':
+        #    return ""
         name = obj.vhdl_name
 
             
@@ -226,8 +226,8 @@ class v_symbol(vhdl_base):
             inoutstr = ""
         return name + " : " + inoutstr +" " + self.getType()
 
-    def set_vhdl_name(self,name):
-        if self.vhdl_name and self.vhdl_name != name:
+    def set_vhdl_name(self,name, Overwrite = False):
+        if self.vhdl_name and self.vhdl_name != name and Overwrite==False:
             raise Exception("double Conversion to vhdl")
         else:
             self.vhdl_name = name
@@ -388,6 +388,7 @@ class v_symbol(vhdl_base):
                 raise Exception("symbol has already a driver", str(self))
             if issubclass(type(rhs),vhdl_base0):
                 self.__Driver__ = rhs
+                rhs.__receiver__.append(self)
                 self.nextValue = rhs.nextValue
                 self.value = rhs.value
 

@@ -166,6 +166,7 @@ class v_entity_converter(vhdl_converter_base):
         set_isConverting2VHDL(True)
         
         obj._un_instantiate_()
+        
         obj.hdl_conversion__.parse_file(obj)
         
         
@@ -302,8 +303,8 @@ class v_entity_converter(vhdl_converter_base):
             for x in members:
                 sym = x["symbol"]
                 #ret += start + sym.hdl_conversion__.get_port_list(sym)
-                if sym.vhdl_name == None:
-                    sym.vhdl_name = x["name"]
+                
+                sym.vhdl_name = x["name"]
                 portdef = sym.hdl_conversion__.get_port_list(sym)
                 if portdef:
                     ret += start +portdef
@@ -433,7 +434,8 @@ class v_entity(vhdl_base0):
     def _un_instantiate_(self):
         if self._isInstance == False:
             return self
-
+        
+        self.set_vhdl_name("", True)
         mem = v_entity_getMember(self)
         for x in mem:
             if not issubclass(type(self.__dict__[x["name"]]), vhdl_base):
@@ -441,6 +443,7 @@ class v_entity(vhdl_base0):
                 continue
             self.__dict__[x["name"]]._isInstance = False
             self.__dict__[x["name"]].flipInout()
+            self.__dict__[x["name"]].set_vhdl_name(x["name"],True)
         
         self._isInstance = False
         return self
@@ -449,8 +452,11 @@ class v_entity(vhdl_base0):
 
 
 
-    def set_vhdl_name(self,name):
-        self.vhdl_name = name   
+    def set_vhdl_name(self,name, Overwrite = False):
+        if self.vhdl_name and self.vhdl_name != name and Overwrite == False:
+            raise Exception("double Conversion to vhdl")
+        else:
+            self.vhdl_name = name
 
     def _sim_append_update_list(self,up):
         for x in self.getMember():
