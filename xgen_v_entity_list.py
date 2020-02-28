@@ -121,20 +121,7 @@ class v_entity_list(vhdl_base0):
 
 
     def  __str__(self):
-        ret = ""
-        start = ""
-        for i in range(len(self.nexted_entities) -1):
-            source = self.nexted_entities[i]
-            destination = self.nexted_entities[i+1]
-            rhs_StreamIn = destination["symbol"]._get_Stream_input()
-            lhs_StreamOut = source["symbol"]._get_Stream_output()
-            if issubclass( type(lhs_StreamOut),vhdl_base) and issubclass( type(rhs_StreamIn),vhdl_base):
-                rhs_StreamIn = rhs_StreamIn.hdl_conversion__._vhdl__reasign_type(rhs_StreamIn)
-                lhs_StreamOut = lhs_StreamOut.hdl_conversion__._vhdl__getValue(lhs_StreamOut, rhs_StreamIn,self.astParser)
-                
-                ret +=start+rhs_StreamIn.hdl_conversion__._vhdl__reasign(rhs_StreamIn, lhs_StreamOut)
-                start = ";\n  "
-        self._isInstance = True
+        ret = "----  --------- -------- " + self.vhdl_name +'----\n'
         return ret
 
     def _get_Stream_input(self):
