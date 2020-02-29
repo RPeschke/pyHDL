@@ -19,7 +19,8 @@ class clk_generator(v_entity):
         super().__init__(__file__)
         self.clk = port_out(v_sl())
         self.architecture()
-
+    
+    @architecture
     def architecture(self):
         
         @timed()
