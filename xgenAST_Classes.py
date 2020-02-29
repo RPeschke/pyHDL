@@ -298,7 +298,7 @@ def body_unfold_porcess_body_combinational(astParser,Node):
 
     dummy_DefaultVarSig = getDefaultVarSig()
     setDefaultVarSig(varSig.signal_t)
-    decorator_l = astParser.Unfold_body(Node.decorator_list)
+    #decorator_l = astParser.Unfold_body(Node.decorator_list)
 
     ret = list()
     astParser.Context = ret
@@ -334,7 +334,7 @@ def body_unfold_architecture_body(astParser,Node):
 
     dummy_DefaultVarSig = getDefaultVarSig()
     setDefaultVarSig(varSig.signal_t)
-    decorator_l = astParser.Unfold_body(Node.decorator_list)
+    #decorator_l = astParser.Unfold_body(Node.decorator_list)
 
     ret = list()
     astParser.Context = ret

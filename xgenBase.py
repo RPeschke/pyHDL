@@ -8,6 +8,25 @@ def architecture(func):
         func(self) 
     return wrap
 
+
+def join_str(content, start="",end="",LineEnding="",Delimeter="",LineBeginning="", IgnoreIfEmpty=False):
+    ret = ""
+    if len(content) == 0 and IgnoreIfEmpty:
+        return ret
+    elif len(content) == 0:
+        ret += start
+        ret += end
+        return ret
+
+    ret += start
+    
+    for x in content[0:-1]:
+        ret += LineBeginning + x + Delimeter + LineEnding
+
+    ret += LineBeginning + content[-1] +  LineEnding
+    ret += end
+    return ret
+
 def file_get_contents(filename):
     with open(filename) as f:
         return f.read().strip()
@@ -278,7 +297,7 @@ class vhdl_base0:
         self.hdl_conversion__ = vhdl_converter_base()
         self.__Driver__ = None
         self.__receiver__ = []
-        #self._isInstance = True
+
     def getMember(self,InOut_Filter=None, VaribleSignalFilter = None):
         return []
 

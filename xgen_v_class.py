@@ -63,11 +63,7 @@ class v_class_converter(vhdl_converter_base):
         if issubclass(type(parent),v_class):
             if obj.Inout == InOut_t.Slave_t:
                 Inout = InoutFlip(Inout)
-
-
             return "  " + name + " : " +obj.getType(Inout) +"; \n"
-
-        
         return ""
 
     def recordMemberDefault(self, obj, name,parent,Inout=None):
@@ -82,18 +78,15 @@ class v_class_converter(vhdl_converter_base):
     def make_constant(self, obj, name,parent=None,InOut_Filter=None, VaribleSignalFilter = None):
         TypeName = obj.getType(InOut_Filter,VaribleSignalFilter)
         member = obj.getMember(InOut_Filter,VaribleSignalFilter)
-        if len(member) == 0:
-            return ""
-        
-        ret = "\nconstant " + name + " : " + TypeName + ":= (\n  "
-        start = ""
-        for x in member:
-            default = x["symbol"].hdl_conversion__.recordMemberDefault(x["symbol"], x["name"],obj,InOut_Filter)
-            if default:
-                ret += start + default
-                start = ",\n  "
-                
-        ret += "\n);\n"
+       
+        start = "\n  constant " + name + " : " + TypeName + ":= (\n  "
+
+        Content = [
+            x["symbol"].hdl_conversion__.recordMemberDefault(x["symbol"], x["name"],obj,InOut_Filter) 
+            for x in member
+        ]
+        ret=join_str(Content,start= start ,end=  "\n  );\n",Delimeter=",\n    ", IgnoreIfEmpty=True)
+
         return ret
 
     def getHeader(self,obj, name,parent):
@@ -136,39 +129,47 @@ class v_class_converter(vhdl_converter_base):
         TypeName = obj.getType(InOut_Filter, VaribleSignalFilter)
         member = obj.getMember(InOut_Filter, VaribleSignalFilter)
         
-        if len(member) == 0:
-            return ""
-
-        ret = "\ntype "+TypeName+" is record \n"
-        for x in member:
-            ret += x["symbol"].hdl_conversion__.recordMember(x["symbol"],x["name"],obj,InOut_Filter)
-        ret += "end record;\n\n"
+        
 
 
 
-        ret += obj.hdl_conversion__.make_constant(obj,TypeName+ "_null", parent, InOut_Filter,VaribleSignalFilter)
-   
-        ret += "\n\n"
-        ret += "type "+ TypeName+"_a is array (natural range <>) of "+TypeName+";\n\n"
+        start= "\ntype "+TypeName+" is record \n"
+
+        end=  """end record;
+    
+    {Default}
+
+    type {TypeName}_a is array (natural range <>) of {TypeName};
+        """.format(
+          Default = obj.hdl_conversion__.make_constant(
+                obj,
+                TypeName+ "_null", 
+                parent, 
+                InOut_Filter,
+                VaribleSignalFilter
+              ),
+          TypeName=TypeName  
+        )
+
+        
+        Content = [
+            x["symbol"].hdl_conversion__.recordMember(x["symbol"],x["name"],obj,InOut_Filter)
+            for x in member
+        ]
+        ret=join_str(Content,start= start ,end= end, IgnoreIfEmpty=True)
+
+
         return ret
 
     def make_connection(self, obj, name, parent):
             
         
         if obj.__v_classType__ == v_classType_t.transition_t:    
-            obj.pull          =  obj.hdl_conversion__.getConnecting_procedure(obj, InOut_t.input_t , "pull", "dataIn",procedureName="pull" )
-            obj.pull_nc       =  obj.hdl_conversion__.getConnecting_procedure(obj, InOut_t.input_t , "pull",procedureName="pull")
-
-
-            obj.push          =  obj.hdl_conversion__.getConnecting_procedure(obj, InOut_t.output_t, "push", "dataOut",procedureName="push")
-            obj.push_nc       =  obj.hdl_conversion__.getConnecting_procedure(obj, InOut_t.output_t, "push" ,procedureName="push")
-
-            obj.pull_rev      =  obj.hdl_conversion__.getConnecting_procedure(obj, InOut_t.output_t, "pull", "dataIn", procedureName="pull_rev")
-            obj.pull_rev_nc   =  obj.hdl_conversion__.getConnecting_procedure(obj, InOut_t.output_t, "pull" , procedureName="pull_rev")
-
-            obj.push_rev      =  obj.hdl_conversion__.getConnecting_procedure(obj, InOut_t.input_t , "push", "dataOut" ,procedureName="push_rev")
-            obj.push_rev_nc   =  obj.hdl_conversion__.getConnecting_procedure(obj, InOut_t.input_t , "push",procedureName="push_rev")
-
+            obj.pull          =  obj.hdl_conversion__.getConnecting_procedure(obj, InOut_t.input_t , "pull", procedureName="pull" )
+            obj.push          =  obj.hdl_conversion__.getConnecting_procedure(obj, InOut_t.output_t, "push", procedureName="push")
+            obj.pull_rev      =  obj.hdl_conversion__.getConnecting_procedure(obj, InOut_t.output_t, "pull", procedureName="pull_rev")
+            obj.push_rev      =  obj.hdl_conversion__.getConnecting_procedure(obj, InOut_t.input_t , "push", procedureName="push_rev")
+            
         elif obj.__v_classType__ == v_classType_t.Master_t or obj.__v_classType__ == v_classType_t.Slave_t:
    
             obj.pull       =  obj.hdl_conversion__.getConnecting_procedure(obj, InOut_t.input_t , "pull")
@@ -191,15 +192,21 @@ class v_class_converter(vhdl_converter_base):
             isEmpty = obj.pull.isEmpty
 
         TypeName = obj.getType(obj.__v_classType__)
-        members = obj.getMember(InOut_Filter) 
         selfarg = "self : inout "+ TypeName+"_a"
         argumentList =  obj.hdl_conversion__.getMemberArgs(obj, InOut_Filter,inout,suffix="_a").strip()
         if argumentList:
             selfarg += "; " +argumentList
-        args =""
-        start =", "
-        for x in members:
-            args+= start + x["name"]+"(i)"
+        
+
+        members = obj.getMember(InOut_Filter) 
+        args=join_str([
+                str(x["name"]+"(i)")
+                for x in members
+            ],
+            LineBeginning= ",",
+            IgnoreIfEmpty=True
+            )
+
             
         ret        = v_procedure(name=procedureName, argumentList=selfarg , body='''
         for i in 0 to self'length - 1 loop
@@ -228,34 +235,23 @@ class v_class_converter(vhdl_converter_base):
         return ""
 
 
-    def getConnecting_procedure(self,obj, InOut_Filter,PushPull,ClassName=None,procedureName=None):
+    def getConnecting_procedure(self,obj, InOut_Filter,PushPull, procedureName=None):
+        ClassName=None
+        beforeConnecting = ""
+        AfterConnecting = ""
+        classType = obj.getType(InOut_Filter)
+        
         if PushPull== "push":
-            beforeConnecting = obj.hdl_conversion__.__BeforePush__
-            beforeConnecting += obj.hdl_conversion__.getBody_onPush(obj)
-            AfterConnecting = obj.hdl_conversion__.__AfterPush__
+            beforeConnecting = obj.hdl_conversion__.getBody_onPush(obj)
             inout = " out "
-            
-            if InOut_Filter == InOut_t.input_t:
-                classType = obj.hdl_conversion__.get_NameSlave2Master(obj)
-            elif InOut_Filter == InOut_t.output_t:
-                classType = obj.hdl_conversion__.get_NameMaster2Slave(obj)
-            else:
-                raise Exception("unexpected combination")
-
         else:
-            beforeConnecting = obj.hdl_conversion__.__BeforePull__
-            AfterConnecting = obj.hdl_conversion__.__AfterPull__
-            AfterConnecting += obj.hdl_conversion__.getBody_onPull(obj)
+            AfterConnecting = obj.hdl_conversion__.getBody_onPull(obj)
             inout = " in "
+            
+            
 
-            if InOut_Filter == InOut_t.input_t:
-                classType = obj.hdl_conversion__.get_NameSlave2Master(obj)
-            elif InOut_Filter == InOut_t.output_t:
-                classType = obj.hdl_conversion__.get_NameMaster2Slave(obj)
-            else:
-                raise Exception("unexpected combination")
-
-        if  ClassName:
+        if  obj.__v_classType__ == v_classType_t.transition_t:
+            ClassName="IO_data"
             argumentList = "signal " + ClassName +" : " + inout+ classType
         else:
             argumentList = obj.hdl_conversion__.getMemberArgs(obj, InOut_Filter,inout)
@@ -281,21 +277,27 @@ class v_class_converter(vhdl_converter_base):
     def getBody(self,obj, name,parent):
         if issubclass(type(parent),v_class):
             return ""
-        ret = "-------------------------------------------------------------------------\n"
-        ret += "------- Start Psuedo Class " +obj.getName() +" -------------------------\n"
-        
+        start  = "-------------------------------------------------------------------------\n"
+        start += "------- Start Psuedo Class " +obj.getName() +" -------------------------\n"
+        end  = "------- End Psuedo Class " +obj.getName() +" -------------------------\n  "
+        end += "-------------------------------------------------------------------------\n\n\n"
+  
         for x in obj.__dict__.items():
             t = getattr(obj, x[0])
             if issubclass(type(t),vhdl_base):
-                ret += t.hdl_conversion__.getBody(t,x[0],obj)
-        
-        for x in obj.hdl_conversion__.__ast_functions__:
-            if x.name.lower() == "_onpull" or x.name.lower() == "_onpush":
-                continue
-            ret +=  x.hdl_conversion__.getBody(x,None,None)
+                start += t.hdl_conversion__.getBody(t,x[0],obj)
 
-        ret += "------- End Psuedo Class " +obj.getName() +" -------------------------\n  "
-        ret += "-------------------------------------------------------------------------\n\n\n"
+        content2 =  [
+            x.hdl_conversion__.getBody(x,None,None) 
+            for x in obj.hdl_conversion__.__ast_functions__ 
+            if not (x.name.lower() == "_onpull" or x.name.lower() == "_onpush")
+        ]
+
+
+        ret=join_str(content2, start=start,end=end)
+        
+        
+
         return ret
     
     def _vhdl__DefineSymbol(self, obj ,VarSymb=None):
