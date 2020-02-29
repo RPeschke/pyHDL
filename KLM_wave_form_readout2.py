@@ -51,27 +51,37 @@ class klm_globals(v_class):
         self.reg   =  register_t() 
 
 class InputDelay(v_entity):
-    def __init__(self,k_globals =None,InputType = SerialDataConfig()):
+    def __init__(self,k_globals =None,InputType = SerialDataConfig(),Delay=0):
         super().__init__(__file__)
         self.globals  = port_Slave(klm_globals())
         if k_globals != None:
             self.globals  << k_globals
         self.ConfigIn = port_Stream_Slave(axisStream( InputType))
         self.ConfigOut = port_Stream_Master(axisStream( InputType))
+        self.Delay = Delay
         self.architecture()
 
 
     def architecture(self):
         
-        pipe = self.ConfigIn \
-            | stream_delay_one(self.globals.clk, self.ConfigIn.data) \
-            | stream_delay_one(self.globals.clk, self.ConfigIn.data) \
-            | stream_delay_one(self.globals.clk, self.ConfigIn.data) \
-            | \
-        self.ConfigOut   
-
+#        pipe = self.ConfigIn \
+#            | stream_delay_one(self.globals.clk, self.ConfigIn.data) \
+#            | stream_delay_one(self.globals.clk, self.ConfigIn.data) \
+#            | stream_delay_one(self.globals.clk, self.ConfigIn.data) \
+#            | \
+#        self.ConfigOut   
+        pipe2 = delay(10,self)
         end_architecture()
 
+
+def delay(times,obj):
+    pipe1 = obj.ConfigIn |  stream_delay_one(obj.globals.clk,  obj.ConfigIn.data) 
+    for x in range(obj.Delay):
+        pipe1 |   stream_delay_one(obj.globals.clk,  obj.ConfigIn.data) 
+            
+
+    pipe1 |   obj.ConfigOut
+    return pipe1
 
 class InputDelay_print(v_entity):
     def __init__(self,k_globals =None,InputType = SerialDataConfig()):
@@ -111,7 +121,7 @@ class InputDelay_tb(v_entity):
         axprint.ConfigIn << dut.ConfigOut
         k_globals.clk << clkgen.clk
         mast = get_master(dut.ConfigIn)
-        
+
 
         @rising_edge(clkgen.clk)
         def proc():
