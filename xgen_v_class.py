@@ -817,7 +817,7 @@ class v_class(vhdl_base):
     def set_simulation_param(self,module, name,writer):
         members = self.getMember() 
         for x in members:
-            x["symbol"].set_simulation_param(module, name+"_"+ x["name"], writer)
+            x["symbol"].set_simulation_param(module+"."+name, x["name"], writer)
   
     def __str__(self):
         if self.__Driver__ and str( self.__Driver__) != 'process':
