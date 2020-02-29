@@ -61,7 +61,7 @@ class InputDelay(v_entity):
         self.Delay = Delay
         self.architecture()
 
-
+    @architecture
     def architecture(self):
         
 #        pipe = self.ConfigIn \
@@ -92,7 +92,7 @@ class InputDelay_print(v_entity):
         self.ConfigIn = port_Stream_Slave(axisStream( InputType))
         self.architecture()
 
-
+    @architecture
     def architecture(self):
         d =  v_copy(self.ConfigIn.data)
         ax_slave = get_salve(self.ConfigIn)
@@ -110,6 +110,7 @@ class InputDelay_tb(v_entity):
         super().__init__(srcFileName=__file__)
         self.architecture()
 
+    @architecture
     def architecture(self):
         clkgen = v_create(clk_generator())
         k_globals =klm_globals()

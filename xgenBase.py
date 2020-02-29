@@ -3,6 +3,11 @@ import copy
 import  inspect 
 
 
+def architecture(func):
+    def wrap(self): 
+        func(self) 
+    return wrap
+
 def file_get_contents(filename):
     with open(filename) as f:
         return f.read().strip()

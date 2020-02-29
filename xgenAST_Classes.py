@@ -21,6 +21,18 @@ def Unfold_call(astParser, callNode):
     return astParser._unfold_symbol_fun_arg[callNode.func.id](astParser, callNode.args)
 
 
+def isDecoratorName(dec, Name):
+    if len(dec) == 0:
+        return False
+    if hasattr(dec[0], "func"): 
+        if hasattr(dec[0].func, "id"):
+            return dec[0].func.id== Name
+    if hasattr(dec[0], "id"):
+        return dec[0].id== Name
+    return False
+    
+
+
 class GNames:
     process = "process"
 
@@ -373,18 +385,18 @@ def body_unfold_functionDef(astParser,Node):
 
                 }
     )
-    if len(Node.decorator_list) == 1 and Node.decorator_list[0].func.id== "process":
+    if isDecoratorName(Node.decorator_list, "process" ):
         return body_unfold_porcess(astParser,Node)
-    elif len(Node.decorator_list) == 1 and Node.decorator_list[0].func.id== "rising_edge":
+    elif  isDecoratorName(Node.decorator_list, "rising_edge" ):
         return body_unfold_porcess_body(astParser,Node)
 
-    elif len(Node.decorator_list) == 1 and Node.decorator_list[0].func.id== "timed":
+    elif  isDecoratorName(Node.decorator_list, "timed" ):
         return body_unfold_porcess_body_timed(astParser,Node)
 
-    elif len(Node.decorator_list) == 1 and Node.decorator_list[0].func.id== "combinational":
+    elif isDecoratorName(Node.decorator_list, "combinational" ): 
         return body_unfold_porcess_body_combinational(astParser,Node)
 
-    elif Node.name ==  "architecture":
+    elif isDecoratorName(Node.decorator_list, "architecture" ):
         return body_unfold_architecture_body(astParser,Node)
 
 

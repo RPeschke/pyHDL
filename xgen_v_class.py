@@ -877,7 +877,7 @@ class v_class(vhdl_base):
             self._connect_running(rhs)
         else:
             if self.__Driver__ and not isConverting2VHDL():
-                raise Exception("symbol has already a driver", obj.get_vhdl_name())
+                raise Exception("symbol has already a driver", self.get_vhdl_name())
             self._connect(rhs)
 
 
