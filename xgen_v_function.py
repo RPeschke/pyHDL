@@ -186,7 +186,6 @@ class v_Arch_converter(vhdl_converter_base):
     def make_signal_connections2(self, obj, objList):
         ret = ""
         for x in objList:
-            print(x["name"])
             if x['symbol'].__Driver__ == None:
                 continue
             if x['symbol'].DriverIsProcess():
