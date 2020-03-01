@@ -170,8 +170,10 @@ class vhdl_converter_base:
         return ""
 
     def _vhdl_make_port(self, obj, name):
+        ret =[]
         objName = str(obj)
-        return  name + " => " + objName
+        ret.append(name + " => " + objName)
+        return  ret
 
 
     def _vhdl_get_attribute(self,obj, attName):

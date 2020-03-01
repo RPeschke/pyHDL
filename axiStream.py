@@ -382,7 +382,7 @@ def make_package(PackageName,AxiType):
     PackageContent = [
         ax_t,
         axisStream_slave(ax_t),
-        axisStream_master(ax_t)
+        axisStream_master(ax_t),
         #axisStream_slave_signal(ax_t)
         #axisStream_master_with_strean_counter(ax_t)
     ]

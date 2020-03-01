@@ -28,9 +28,13 @@ class v_class_converter(vhdl_converter_base):
         return ret
 
     def get_packet_file_name(self, obj):
+        if obj.__vetoHDLConversion__  == True:
+            return ""
         return obj.hdl_conversion__.get_type_simple(obj)+"_pack.vhd"
 
     def get_packet_file_content(self, obj):
+        if obj.__vetoHDLConversion__  == True:
+            return ""
         PackageName = obj.hdl_conversion__.get_type_simple(obj)+"_pack"
         s = isConverting2VHDL()
         set_isConverting2VHDL(True)
@@ -76,8 +80,8 @@ class v_class_converter(vhdl_converter_base):
         return ""
 
     def make_constant(self, obj, name,parent=None,InOut_Filter=None, VaribleSignalFilter = None):
-        TypeName = obj.getType(InOut_Filter,VaribleSignalFilter)
-        member = obj.getMember(InOut_Filter,VaribleSignalFilter)
+        TypeName = obj.getType()
+        member = obj.getMember()
        
         start = "\n  constant " + name + " : " + TypeName + ":= (\n  "
 
@@ -94,18 +98,11 @@ class v_class_converter(vhdl_converter_base):
             return ""
         ret = "-------------------------------------------------------------------------\n"
         ret += "------- Start Psuedo Class " +obj.getName() +" -------------------------\n"
-        if obj.__v_classType__ == v_classType_t.transition_t:     
-            ret +=  obj.hdl_conversion__.getHeader_make_record(obj, name,parent,InOut_t.output_t)
+        
+        ts = obj.hdl_conversion__.extract_conversion_types(obj)
+        for t in ts:
+            ret +=  obj.hdl_conversion__.getHeader_make_record(t["symbol"], name,parent,t["symbol"].Inout ,t["symbol"].varSigConst)
             ret += "\n\n"
-            ret +=  obj.hdl_conversion__.getHeader_make_record(obj, name,parent,InOut_t.input_t)
-            ret += "\n\n"
-            ret +=  obj.hdl_conversion__.getHeader_make_record(obj, name,parent)
-            
-        else:
-            ret +=  obj.hdl_conversion__.getHeader_make_record(obj, name,parent,None,varSig.signal_t)
-            ret +=  obj.hdl_conversion__.getHeader_make_record(obj, name,parent,None,varSig.variable_t)
-
-        #
         
         obj.hdl_conversion__.make_connection(obj,name,parent)
         
@@ -126,15 +123,9 @@ class v_class_converter(vhdl_converter_base):
 
 
     def getHeader_make_record(self,obj, name, parent=None, InOut_Filter=None, VaribleSignalFilter = None):
-        TypeName = obj.getType(InOut_Filter, VaribleSignalFilter)
-        member = obj.getMember(InOut_Filter, VaribleSignalFilter)
-        
-        
-
-
-
+        TypeName = obj.getType()
+        member = obj.getMember()
         start= "\ntype "+TypeName+" is record \n"
-
         end=  """end record;
     
     {Default}
@@ -318,90 +309,97 @@ class v_class_converter(vhdl_converter_base):
     
 
     def get_architecture_header(self, obj):
-        if obj.Inout != InOut_t.Internal_t and obj._isInstance == False:
-            return ""
+        ret = []
+        xs = obj.hdl_conversion__.extract_conversion_types(obj)
+        for x in xs:
+            if  x["symbol"].__v_classType__ ==  v_classType_t.transition_t:
+                continue
+            if obj.Inout != InOut_t.Internal_t and obj._isInstance == False:
+                continue
+            if x["symbol"].varSigConst == varSig.variable_t:
+                continue
+
+            VarSymb = get_varSig(x["symbol"].varSigConst)
+
+            ret.append(VarSymb + " " +x["symbol"].get_vhdl_name() + " : " + x["symbol"].type+" := " + x["symbol"].type+"_null")
+
+        ret=join_str(
+            ret, 
+            LineEnding=";\n",
+            LineBeginning="  "
+            )
+        return ret
         
-        if obj.varSigConst != varSig.signal_t or obj.varSigConst != varSig.signal_t:
-            return ""
 
-        VarSymb = get_varSig(obj.varSigConst)
-
-
-        t = obj.getTypes()
-        if len(t) ==3 and obj.__v_classType__ ==  v_classType_t.transition_t:
-            ret = ""
-            ret += "  " + VarSymb + " " +obj.get_vhdl_name() + "_m2s : " + t["m2s"] +" := " + t["m2s"]+"_null;\n"
-            ret += "  " + VarSymb + " " +obj.get_vhdl_name() + "_s2m : " + t["s2m"] +" := " + t["s2m"]+"_null;\n"
-            return ret
-
-        return "  " + VarSymb +" " +obj.get_vhdl_name() + " : " +obj.type +" := " + obj.type+"_null;\n"
-        
     def get_port_list(self,obj):
-        ret = ""
-        if obj.Inout == InOut_t.Internal_t:
-            return ""
-        
-        if obj.varSigConst != varSig.signal_t:
-            return ""
-        
-        if obj.Inout == InOut_t.Slave_t:
-            types = obj.getTypes()
-            ret += obj.vhdl_name + "_m2s : in  " +types["m2s"] + " := " + types["m2s"] + "_null;\n  "
-            ret += obj.vhdl_name + "_s2m : out " +types["s2m"] + " := " + types["s2m"] + "_null"
-                    
-        elif obj.Inout == InOut_t.Master_t:
-            types = obj.getTypes()
-            ret += obj.vhdl_name + "_m2s : out " +types["m2s"] + " := " + types["m2s"] + "_null;\n  "
-            ret += obj.vhdl_name + "_s2m : in  " +types["s2m"] + " := " + types["s2m"] + "_null"
-            
-        elif obj.Inout == InOut_t.input_t:
-            types = obj.getTypes()
-            ret += obj.vhdl_name + " : in  " +types["main"] + " := " + types["main"] + "_null"
-        
-        elif obj.Inout == InOut_t.output_t:
-            types = obj.getTypes()
-            ret += obj.vhdl_name + " : out  " +types["main"] + " := " + types["main"] + "_null"           
+        ret = []
+        xs = obj.hdl_conversion__.extract_conversion_types(obj)
+        for x in xs:
+            if x["symbol"].__v_classType__ ==  v_classType_t.transition_t:
+                continue
+            inoutstr = " : "+ x["symbol"].hdl_conversion__.InOut_t2str(x["symbol"]) +" "
+            ret.append( x["symbol"].get_vhdl_name()+ inoutstr +x["symbol"].type + " := " + x["symbol"].type + "_null")
+    
         return ret
 
 
     def _vhdl_make_port(self, obj, name):
-        t = obj.getTypes()
-        if len(t) ==3 and obj.__v_classType__ ==  v_classType_t.transition_t:
-            ret = ""
-            ret += name + "_m2s => " + obj.get_vhdl_name()+"_m2s, \n    "
-            ret += name + "_s2m => " + obj.get_vhdl_name()+"_s2m"
-            return ret
-
-        if obj.__Driver__ != None:
-            return  name + " => " + obj.__Driver__.get_vhdl_name()    
+        ret = []
+        xs = obj.hdl_conversion__.extract_conversion_types(obj)
+        for x in xs:
+            if x["symbol"].__v_classType__ ==  v_classType_t.transition_t:
+                continue
             
-        return  name + " => " + obj.get_vhdl_name()
+            ret.append( name + x["suffix"] + " => " + x["symbol"].get_vhdl_name())
+
+        return ret
 
 
-    def _vhdl__Pull(self,obj):
+    def _get_connector_name(self,obj,Inout):
+        if obj.Inout == InOut_t.Master_t:
+
+           return obj.__receiver__[-1].get_vhdl_name(Inout) 
+
+        
+        if obj.Inout == InOut_t.Slave_t :
+            Inout = InoutFlip(Inout)
+            return obj.__Driver__.get_vhdl_name(Inout) 
+
+            
+
+
+    def __vhdl__Pull_Push(self, obj, Inout):
         if obj.__v_classType__  == v_classType_t.Record_t:
             return ""
-        args = ""
-        members = obj.getMember( InOut_t.input_t) 
-        for x in members:
-            if obj.__v_classType__ == v_classType_t.Master_t:
-                args += ", " + x["symbol"].__receiver__[-1].get_vhdl_name() +"_s2m"
-            elif obj.__v_classType__ == v_classType_t.Slave_t:
-                args += ", " + x["symbol"].__Driver__.get_vhdl_name() + "_m2s"
-        return "    pull( " +str(obj) +args+");\n"
+        
+        selfHandles = ["self => " +str(obj)]
+        content = [
+            x["name"]+" => "+x["symbol"].hdl_conversion__._get_connector_name(x["symbol"], Inout)
+            for x in obj.getMember( Inout,varSig.variable_t) 
+        ]
+
+        pushpull= "push"
+        if Inout == InOut_t.input_t:
+            pushpull = "pull"
+
+        ret=join_str(
+            selfHandles+content, 
+            start="    " + pushpull + "( ",
+            end=");\n",
+            Delimeter=", "
+            )
+
+        return ret        
+        
+    def _vhdl__Pull(self,obj):
+
+        return obj.hdl_conversion__.__vhdl__Pull_Push(obj,InOut_t.input_t)
 
     def _vhdl__push(self,obj):
-        if obj.__v_classType__  == v_classType_t.Record_t:
-            return ""
-        args = ""
-        members = obj.getMember( InOut_t.output_t) 
-        for x in members:
-            if obj.__v_classType__ == v_classType_t.Master_t:
-                args += ", " + x["symbol"].__receiver__[-1].get_vhdl_name() +"_m2s"
-            elif obj.__v_classType__ == v_classType_t.Slave_t:
-                args += ", " + x["symbol"].__Driver__.get_vhdl_name() + "_s2m"
 
-        return  "    push( " +str(obj) +args+");\n"
+
+        return obj.hdl_conversion__.__vhdl__Pull_Push(obj,InOut_t.output_t)
+
 
 
    
@@ -575,7 +573,7 @@ class v_class_converter(vhdl_converter_base):
 
 
     def get_NameMaster2Slave(self,obj):
-        return obj.name + "_m2s"
+        return obj.type + "_m2s"
 
     def get_NameSlave2Master(self,obj):
         return obj.type + "_s2m"
@@ -589,30 +587,65 @@ class v_class_converter(vhdl_converter_base):
     def extract_conversion_types(self, obj):
         ret =[]
         t = obj.getTypes()
-        if len(t) ==3 and obj.__v_classType__ ==  v_classType_t.transition_t:
+        
+        if obj.__v_classType__ ==  v_classType_t.transition_t:
             
             
             x = v_class(obj.hdl_conversion__.get_NameSlave2Master(obj), obj.varSigConst)
             x.__v_classType__ = v_classType_t.Record_t
+            x.__vetoHDLConversion__  = True
+            x.vhdl_name = str(obj.vhdl_name)+"_s2m"
+
             x.Inout=InOut_t.input_t
+            if obj.Inout == InOut_t.input_t or obj.Inout == InOut_t.Slave_t:
+                x.Inout=InOut_t.output_t
+
             ys= obj.getMember(InOut_t.input_t)
             for y in ys: 
                 setattr(x, y["name"], y["symbol"])
             ret.append({ "suffix":"_s2m", "symbol": x})
 
-            x = v_class(obj.hdl_conversion__.get_NameSlave2Master(obj), obj.varSigConst)
+            x = v_class(obj.hdl_conversion__.get_NameMaster2Slave(obj), obj.varSigConst)
             x.__v_classType__ = v_classType_t.Record_t
+            x.__vetoHDLConversion__  = True
             x.Inout=InOut_t.output_t
+            
+            if obj.Inout == InOut_t.input_t or obj.Inout == InOut_t.Slave_t:
+                x.Inout=InOut_t.input_t
+                
+            x.vhdl_name = str(obj.vhdl_name)+"_m2s"
             ys= obj.getMember(InOut_t.output_t)
             for y in ys: 
                 setattr(x, y["name"], y["symbol"])
             ret.append({ "suffix":"_m2s", "symbol": x})
 
-            #ret.append({ "suffix":"", "symbol": obj})
-        
-        elif obj.__v_classType__ ==  v_classType_t.Master_t:
             ret.append({ "suffix":"", "symbol": obj})
-        elif obj.__v_classType__ ==  v_classType_t.Slave_t:
+        
+        elif obj.__v_classType__ ==  v_classType_t.Master_t or obj.__v_classType__ ==  v_classType_t.Slave_t: 
+            x = v_class(obj.hdl_conversion__.get_NameSignal(obj), varSig.signal_t)
+            x.__v_classType__ = v_classType_t.Record_t
+            x.__vetoHDLConversion__  = True
+            x.Inout=InOut_t.Internal_t
+            x.vhdl_name = obj.vhdl_name+"_sig"
+            ys= obj.getMember(VaribleSignalFilter=varSig.signal_t)
+            if len(ys)>0:
+                for y in ys: 
+                    setattr(x, y["name"], y["symbol"])
+                
+                ret.append({ "suffix":"_sig", "symbol": x})
+
+            x = v_class(obj.type, varSig.variable_t)
+            x.__v_classType__ = v_classType_t.Record_t
+            x.__vetoHDLConversion__  = True
+            x.Inout=InOut_t.Internal_t
+            ys= obj.getMember(VaribleSignalFilter=varSig.variable_t)
+            if len(ys)>0:
+                for y in ys: 
+                    setattr(x, y["name"], y["symbol"])
+                ret.append({ "suffix":"", "symbol": x})
+
+            #ret.append({ "suffix":"", "symbol": obj})
+        else:
             ret.append({ "suffix":"", "symbol": obj})
         return ret
             
@@ -629,7 +662,7 @@ class v_class(vhdl_base):
 
         self.__vectorPush__ = False
         self.__vectorPull__ = False
-
+        self.__vetoHDLConversion__ = False
         self.Inout  = InOut_t.Internal_t
         self.vhdl_name =None
         self.__Driver__ = None
@@ -684,7 +717,7 @@ class v_class(vhdl_base):
 
     def getType(self,Inout=None,varSigType=None):
         if self.__v_classType__ == v_classType_t.Record_t:
-            return self.type 
+             return self.type 
         if Inout == InOut_t.input_t:
             return self.hdl_conversion__.get_NameSlave2Master(self)
         elif Inout == InOut_t.output_t:

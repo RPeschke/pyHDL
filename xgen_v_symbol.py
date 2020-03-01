@@ -103,13 +103,14 @@ class v_symbol_converter(vhdl_converter_base):
         return  "  " + VarSymb+ " " + name + " : " +obj.type +" := " +  obj.DefaultValue  + "; \n"   
 
     def get_port_list(self,obj):
+        ret = []
         if obj.Inout == InOut_t.Internal_t:
-            return ""
+            return ret
         
         if obj.varSigConst != varSig.signal_t:
-            return ""
+            return ret
         
-        ret = obj.vhdl_name + " : "+ obj.hdl_conversion__.InOut_t2str(obj) + " " + obj.type + " := " + obj.DefaultValue
+        ret.append( obj.vhdl_name + " : "+ obj.hdl_conversion__.InOut_t2str(obj) + " " + obj.type + " := " + obj.DefaultValue)
         return ret
 
 

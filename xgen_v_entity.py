@@ -253,20 +253,23 @@ class v_entity_converter(vhdl_converter_base):
 
     def get_architecture_body(self, obj):
 
-        ret = str(obj.vhdl_name) +" : entity work." + obj._name+" port map ( \n"
+        content = []
+        
 
-        start = "    "
-        mem = v_entity_getMember(obj)
-        for x in mem:
+        for x in v_entity_getMember(obj):
             if x["symbol"].Inout ==InOut_t.Internal_t:
                 continue
             if not x["symbol"].vhdl_name:
                 x["symbol"].set_vhdl_name(obj.vhdl_name+"_"+ x["name"])
 
-            ret +=start + x["symbol"].hdl_conversion__._vhdl_make_port(x["symbol"], x["name"] )
-            start = ",\n    "
+            content += x["symbol"].hdl_conversion__._vhdl_make_port(x["symbol"], x["name"] )
 
-        ret += "\n)"
+
+        
+        start = str(obj.vhdl_name) +" : entity work." + obj._name+" port map (\n    "
+        ret=join_str(content,start=start ,end="\n  )",Delimeter=",\n    ")
+      
+  
         return ret
  
 
@@ -295,22 +298,16 @@ class v_entity_converter(vhdl_converter_base):
         return ret
 
     def get_declaration(self,obj):
-        ret = "entity " + obj._name + " is \n" 
-        members= obj.hdl_conversion__.getMember(obj)
-        start = "  "
-        if len(members)>0:
-            ret+="port(\n"
-            for x in members:
-                sym = x["symbol"]
-                #ret += start + sym.hdl_conversion__.get_port_list(sym)
-                
-                sym.vhdl_name = x["name"]
-                portdef = sym.hdl_conversion__.get_port_list(sym)
-                if portdef:
-                    ret += start +portdef
-                start = ";\n  "
+        portdef=[]
         
-            ret+="\n);\n"
+        for x in obj.hdl_conversion__.getMember(obj):
+            sym = x["symbol"]
+            sym.vhdl_name = x["name"]
+            portdef += sym.hdl_conversion__.get_port_list(sym)
+
+      
+        ret = "entity " + obj._name + " is \n" 
+        ret+=join_str(portdef,start="  port(\n    " ,end="\n  );\n",Delimeter=";\n    ",IgnoreIfEmpty=True)
         ret += "end entity;\n\n"
         return ret
 
