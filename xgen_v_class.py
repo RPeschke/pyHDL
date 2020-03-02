@@ -189,6 +189,33 @@ class v_class_converter(vhdl_converter_base):
             if obj.__vectorPush__:
                 obj.vpush       =  obj.hdl_conversion__.getConnecting_procedure_vector(obj, InOut_t.output_t, "push",procedureName="push")
 
+        elif obj.__v_classType__ == v_classType_t.Record_t:
+            obj.pull       =  obj.hdl_conversion__.getConnecting_procedure_record(obj, "pull")
+            obj.push       =  obj.hdl_conversion__.getConnecting_procedure_record(obj, "push")
+
+
+    def getConnecting_procedure_record(self,obj, PushPull):
+        
+        if PushPull== "push":
+            inout = " out "
+            line =  "data_IO  <=  self;"
+        else:
+            inout = " in "
+            line =  "self  := data_IO;"
+
+
+        TypeName = obj.getType()
+        args = "self : inout "+ TypeName + "; signal data_IO : " + inout + " " + TypeName
+
+        ret = v_procedure(
+            name=None, 
+            argumentList=args , 
+            body=line,
+            isFreeFunction=True,
+            IsEmpty=False
+            )
+
+        return ret
     def getConnecting_procedure_vector(self,obj, InOut_Filter,PushPull,procedureName=None):
         
         isEmpty = False
@@ -363,11 +390,11 @@ class v_class_converter(vhdl_converter_base):
 
     def _vhdl_make_port(self, obj, name):
         ret = []
-        xs = obj.hdl_conversion__.extract_conversion_types(obj)
+
+        xs =obj.hdl_conversion__.extract_conversion_types(obj, 
+                exclude_class_type= v_classType_t.transition_t
+            )
         for x in xs:
-            if x["symbol"].__v_classType__ ==  v_classType_t.transition_t:
-                continue
-            
             ret.append( name + x["suffix"] + " => " + x["symbol"].get_vhdl_name())
 
         return ret
@@ -385,13 +412,11 @@ class v_class_converter(vhdl_converter_base):
         for x in obj.getMember( Inout,varSig.variable_t):
             n_connector = _get_connector( x["symbol"])
             
-            xs = n_connector.hdl_conversion__.extract_conversion_types(n_connector)
+
+            xs =n_connector.hdl_conversion__.extract_conversion_types(n_connector, 
+                    exclude_class_type= v_classType_t.transition_t, filter_inout=Inout
+                )
             for y in xs:
-                if y["symbol"].__v_classType__ ==  v_classType_t.transition_t:
-                    continue
-                if y["symbol"].Inout != Inout:
-                    continue
-                
                 content.append(x["name"]+" => "+y["symbol"].get_vhdl_name())
         
         #content = [ 
@@ -455,13 +480,12 @@ class v_class_converter(vhdl_converter_base):
        
         for i in members:
             n_connector = _get_connector( i["symbol"])
-            xs =n_connector.hdl_conversion__.extract_conversion_types(i["symbol"])
+            xs = i["symbol"].hdl_conversion__.extract_conversion_types( i["symbol"], 
+                    exclude_class_type= v_classType_t.transition_t, filter_inout=InOut_Filter
+                )
+
             for x in xs:
-                if x["symbol"].__v_classType__ == v_classType_t.transition_t:
-                    continue
-                if x["symbol"].Inout != InOut_Filter:
-                    continue
-                
+               
                 varsig = " "
                 if n_connector.varSigConst == varSig.signal_t :
                     varsig = " signal "
