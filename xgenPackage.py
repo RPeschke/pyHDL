@@ -1,8 +1,16 @@
 import ast
-
-from .xgenBase import *
-from .xgenAST import *
-from .xgen_to_v_object import *
+import os,sys,inspect
+if __name__== "__main__":
+    currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+    parentdir = os.path.dirname(currentdir)
+    sys.path.insert(0,parentdir) 
+    from CodeGen.xgenBase import *
+    from CodeGen.xgenAST import *
+    from CodeGen.xgen_to_v_object import *
+else:
+    from .xgenBase import *
+    from .xgenAST import *
+    from .xgen_to_v_object import *
 
 
 
@@ -67,7 +75,7 @@ class v_package(vhdl_base):
             self.astTree = xgenAST(sourceFile)
 
             for x in self.PackageContent:
-                if issubclass(type(x),v_class):
+                if x._issubclass_("v_class"):
                     fun= list(self.astTree.extractFunctionsForClass(x ,self ))
                     for f in fun:
                         x.hdl_conversion__.__ast_functions__.append(f)

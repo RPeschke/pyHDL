@@ -282,7 +282,9 @@ class vhdl_converter_base:
         return obj.type + "_null"
 
 
-    def extract_conversion_types(self, obj):
+    def extract_conversion_types(self, obj, exclude_class_type=None,filter_inout=None):
+        if filter_inout and obj.Inout != filter_inout: 
+            return []
         return [{ "suffix":"", "symbol": obj}]
 
     def get_Name_array(self,obj):

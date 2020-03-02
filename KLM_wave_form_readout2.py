@@ -131,6 +131,7 @@ class InputDelay_tb(v_entity):
                 data.column_select << data.column_select + 1
 
         end_architecture()
+        
 def main():
     tb  =v_create(InputDelay_tb())
     #gsimulation.run_timed(tb, 1000,"InputDelay_tb.vcd")

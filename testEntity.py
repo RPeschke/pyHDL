@@ -24,8 +24,8 @@ class axiFifo(v_clk_entity):
         super().__init__(__file__, clk)
 
            
-        self.Axi_in = port_Slave(axisStream(32,v_slv(32)))
-        self.Axi_out = port_Master(axisStream(32,v_slv(32)))
+        self.Axi_in = port_Slave(axisStream(v_slv(32)))
+        self.Axi_out = port_Master(axisStream(v_slv(32)))
         self.architecture()
 
         

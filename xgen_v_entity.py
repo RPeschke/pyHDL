@@ -1,9 +1,20 @@
-from .xgenBase import *
-from .xgen_v_symbol import *
-from .axiStream import *
 import  functools 
 
-from .xgen_v_entity_list import *
+import os,sys,inspect
+if __name__== "__main__":
+    currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+    parentdir = os.path.dirname(currentdir)
+    sys.path.insert(0,parentdir) 
+    from CodeGen.xgenBase import *
+    from CodeGen.xgen_v_symbol import *
+    from CodeGen.xgen_v_entity_list import *
+    from CodeGen.xgenAST import *
+else:
+    from .xgenBase import *
+    from .xgen_v_symbol import *
+    from .xgen_v_entity_list import *
+    from .xgenAST import *
+
 
 def end_architecture():
     add_symbols_to_entiy()
@@ -139,12 +150,12 @@ def v_entity_getMember_expand(entity):
             if x in gport_veto__:
                 continue
             t = getattr(entity, x[0])
-            if issubclass(type(t),v_class):
+            if t._issubclass_("v_class"):
                 ret.append({
                         "name": x[0],
                         "symbol": t
                     })
-            elif issubclass(type(t),vhdl_base):
+            elif t._issubclass_("vhdl_base"):
                 ret.append({
                         "name": x[0],
                         "symbol": t

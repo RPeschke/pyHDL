@@ -1,9 +1,18 @@
 import sys
 from vcd import VCDWriter
 import  functools 
-from .xgenBase import *
-import  functools 
 import inspect 
+
+
+import os,sys,inspect
+if __name__== "__main__":
+    currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+    parentdir = os.path.dirname(currentdir)
+    sys.path.insert(0,parentdir) 
+    from CodeGen.xgenBase import *
+else:
+    from .xgenBase import *
+
 
 def getNameOf(obj):
     funcrec = inspect.stack()[2]

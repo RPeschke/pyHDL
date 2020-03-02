@@ -1,9 +1,19 @@
 import ast
 import os,sys,inspect
 
-from .xgenBase import *
-from .xgenAST_Classes import *
-from .xgen_v_function import *
+
+import os,sys,inspect
+if __name__== "__main__":
+    currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+    parentdir = os.path.dirname(currentdir)
+    sys.path.insert(0,parentdir) 
+    from CodeGen.xgenBase import *
+    from CodeGen.xgenAST_Classes import * 
+    from CodeGen.xgen_v_function import *
+else:
+    from .xgenBase import *
+    from .xgenAST_Classes import *
+    from .xgen_v_function import *
 
 
 def check_if_subclasses(BaseNames,baseclasses):

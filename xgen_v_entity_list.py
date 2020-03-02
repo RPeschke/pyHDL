@@ -1,6 +1,16 @@
-from .xgenBase import *
-from .xgen_v_symbol import *
 import  functools 
+
+import os,sys,inspect
+if __name__== "__main__":
+    currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+    parentdir = os.path.dirname(currentdir)
+    sys.path.insert(0,parentdir) 
+    from CodeGen.xgenBase import *
+    from CodeGen.xgen_v_symbol import *
+else:
+    from .xgenBase import *
+    from .xgen_v_symbol import *
+
 
 
 class v_entity_list_converter(vhdl_converter_base):

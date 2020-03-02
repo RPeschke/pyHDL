@@ -2,10 +2,20 @@ import argparse
 import os,sys,inspect
 import copy
 
+if __name__== "__main__":
+    currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+    parentdir = os.path.dirname(currentdir)
+    sys.path.insert(0,parentdir) 
+    from CodeGen.xgenBase import *
+    from CodeGen.xgenPackage import *
+    from CodeGen.xgenDB import *
+    from CodeGen.xgen_v_class import *
+else:
+    from .xgenBase import *
+    from .xgenPackage import *
+    from .xgenDB import *
+    from .xgen_v_class import *
 
-from .xgenBase import *
-from .xgenPackage import *
-from .xgenDB import *
 
 class axisStream_converter(v_class_converter):
     def __init__(self):

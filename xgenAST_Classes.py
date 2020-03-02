@@ -1,10 +1,20 @@
 
 import copy
 
-from .xgenBase import *
-from .xgen_v_enum import * 
-from .xgen_to_v_object import *
-#from .xgen_v_entity import *
+
+import os,sys,inspect
+if __name__== "__main__":
+    currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+    parentdir = os.path.dirname(currentdir)
+    sys.path.insert(0,parentdir) 
+    from CodeGen.xgenBase import *
+    from CodeGen.xgen_v_enum import * 
+    from CodeGen.xgen_to_v_object import *
+else:
+    from .xgenBase import *
+    from .xgen_v_enum import * 
+    from .xgen_to_v_object import *
+
 
 def Node_line_col_2_str(astParser, Node):
     return  "Error in File: "+ astParser.sourceFileName+" line: "+str(Node.lineno) + ".\n"
@@ -454,7 +464,7 @@ class v_compare(v_ast_base):
             obj = astParser.get_variable(self.lhs.Value,None)
             return obj.hdl_conversion__._vhdl__compare(obj, rhs)
 
-        elif issubclass(type(self.lhs),v_class):
+        elif self.lhs._issubclass_("v_class"):
             return self.lhs.hdl_conversion__._vhdl__compare(self.lhs,self.ops, self.rhs)
         
         elif issubclass(type(self.lhs),v_symbol):
@@ -1045,18 +1055,7 @@ class v_boolOp(v_ast_base):
     def get_type(self):
         return "boolean"
 
-    def _vhdl__to_bool(self,astParser):
-        if type(self.rhs).__name__ == "v_name":
-            rhs = astParser.get_variable(self.rhs.Value,None)
-        else:
-            rhs = self.rhs
 
-        if type(self.lhs).__name__ == "v_name":
-            obj = astParser.get_variable(self.lhs.Value,None)
-            return obj.hdl_conversion__._vhdl__compare(obj, rhs)
-
-        elif issubclass(type(self.lhs),v_class):
-            return self.lhs.hdl_conversion__._vhdl__compare(self.lhs,self.rhs)
 
 
 def body_BoolOp(astParser, Node):

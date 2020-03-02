@@ -1,7 +1,13 @@
-from .xgenBase import *
-from .xgen_v_class import *
-
-from .xgen_simulation import *
+import os,sys,inspect
+if __name__== "__main__":
+    currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+    parentdir = os.path.dirname(currentdir)
+    sys.path.insert(0,parentdir) 
+    from CodeGen.xgenBase import *
+    from CodeGen.xgen_simulation import *
+else:
+    from .xgenBase import *
+    from .xgen_simulation import *
 
 
 class v_symbol_converter(vhdl_converter_base):
@@ -37,7 +43,7 @@ class v_symbol_converter(vhdl_converter_base):
         return name + " : " + obj.type   
 
     def _vhdl_slice(self,obj,sl,astParser=None):
-        if "std_logic_vector" in self.type:
+        if "std_logic_vector" in obj.type:
             ret = v_sl(obj.Inout)
             ret.vhdl_name = obj.vhdl_name+"("+str(sl)+")"
             return ret
@@ -427,11 +433,12 @@ class v_symbol(vhdl_base):
 slv_includes = """
 library IEEE;
 library UNISIM;
+library work;
   use IEEE.numeric_std.all;
   use IEEE.std_logic_1164.all;
   use UNISIM.VComponents.all;
   use ieee.std_logic_unsigned.all;
-  
+  use work.hlpydlcore.all;
 """
 
 
