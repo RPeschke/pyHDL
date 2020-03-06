@@ -28,6 +28,7 @@ class stream_delay_one(v_clk_entity):
         def proc():
             if axiSalve and axMaster:
                 axMaster << axiSalve
+                axMaster.Send_end_Of_Stream( axiSalve.IsEndOfStream())
 
         end_architecture()
 

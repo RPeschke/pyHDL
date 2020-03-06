@@ -112,27 +112,74 @@ def make_unique_includes(incs,exclude=None):
 
     
     
-
+def isSameArgs(args1,args2):
+    if len(args1) != len(args2):
+        return False
+    for i in range(len(args1)):
+        if args1[i].get_type() != args2[i].get_type():
+            return False
+    return True  
 class vhdl_converter_base:
 
-    def convert_all(self, obj, ouputFolder):
-        FilesDone = ['']
+    def __init__(self):
+        self.MemfunctionCalls=[]
+        self.IsConverted = False
+        self.MissingTemplate = False
 
+    def IsSucessfullConverted(self,obj):
+        if self.MissingTemplate:
+            return False
+        return self.IsConverted
+
+    def convert_all(self, obj, ouputFolder):
+
+        
+        
+        FilesDone = ['']
+        while len(FilesDone) > 0:
+            FilesDone = []
+            print("==================")
+            for x in gHDL_objectList:
+                if "axis"  in type(x).__name__ :
+                    print("axi")
+                #print("----------------")
+                
+                if x.hdl_conversion__.IsSucessfullConverted(x):
+                    continue
+                
+
+                packetName =  x.hdl_conversion__.get_packet_file_name(x)
+                if packetName not in FilesDone:
+                    packet = x.hdl_conversion__.get_packet_file_content(x)
+                    if packet:
+                        file_set_content(ouputFolder+"/" +packetName,packet)
+                    FilesDone.append(packetName)
+                    print(type(x).__name__)
+                    print("processing")
+                    
+                
+                entiyFileName =  x.hdl_conversion__.get_entity_file_name(x)
+
+                if entiyFileName not in FilesDone:
+                    entity_content = x.hdl_conversion__.get_enity_file_content(x)
+                    if entity_content:
+                        file_set_content(ouputFolder+"/" +entiyFileName,entity_content)
+                    FilesDone.append(entiyFileName)
+                    print(type(x).__name__)
+                    print("processing")
+                
+                x.hdl_conversion__.IsConverted = True
+
+    def get_primary_object(self,obj):
+        obj_packetName =  obj.hdl_conversion__.get_packet_file_name(obj)
+        obj_entiyFileName =  obj.hdl_conversion__.get_entity_file_name(obj)
         for x in gHDL_objectList:
             packetName =  x.hdl_conversion__.get_packet_file_name(x)
-            if packetName not in FilesDone:
-                packet = x.hdl_conversion__.get_packet_file_content(x)
-                if packet:
-                    file_set_content(ouputFolder+"/" +packetName,packet)
-                FilesDone.append(packetName)
-            
             entiyFileName =  x.hdl_conversion__.get_entity_file_name(x)
+            if obj_packetName ==  packetName and obj_entiyFileName == entiyFileName and type(obj) == type(x):
+                return x
 
-            if entiyFileName not in FilesDone:
-                entity_content = x.hdl_conversion__.get_enity_file_content(x)
-                if entity_content:
-                    file_set_content(ouputFolder+"/" +entiyFileName,entity_content)
-                FilesDone.append(entiyFileName)
+        raise Exception("did not find primary object")
 
     def get_packet_file_name(self, obj):
         return ""
@@ -204,10 +251,47 @@ class vhdl_converter_base:
     def _vhdl__reasign(self, obj, rhs, context=None):
         return str(obj) + " := " +  str(rhs)
 
-    def _vhdl__call_member_func(self, obj, name, args):
+    def get_get_call_member_function(self, obj, name, args):
+        
+        for x  in obj.hdl_conversion__.MemfunctionCalls:
+            if x["name"] != name:
+                continue
+            if not isSameArgs(x["args"] , args):
+                continue
+            
+            return x
+
+        obj.hdl_conversion__.MemfunctionCalls.append({
+            "name" : name,
+            "args": args,
+            "self" :obj,
+            "call_func" : None
+        })
+        obj.IsConverted = False
+        return None
+    def _vhdl__call_member_func(self, obj, name, args, astParser=None):
+        
+        primary = obj.hdl_conversion__.get_primary_object(obj)
+        if  primary is not obj:
+            return primary.hdl_conversion__._vhdl__call_member_func( obj, name, args)
+        
+        
+        call_obj = obj.hdl_conversion__.get_get_call_member_function(obj, name, args)
+
+        if call_obj == None:
+            primary.hdl_conversion__.MissingTemplate=True
+            return None
+        call_func = call_obj["call_func"]
+        if call_func:
+            return call_func(obj, name, args, astParser)
+
         if name =="Connect":
             return str(obj)
-        return name+"(" +  str(obj) + ")" 
+        args_str = [ args[0].vhdl for x in args]
+        args_str = [str(obj)] + args_str
+
+        ret = join_str(args_str, Delimeter=", ", start= name+"(" ,end=")")
+        return ret
 
     
 
@@ -275,7 +359,8 @@ class vhdl_converter_base:
             return " in "
         elif inOut == InOut_t.output_t:
             return " out "
-
+        elif inOut == InOut_t.InOut_tt:
+            return " inout "
         raise Exception("unkown Inout type",inOut)
 
     def get_default_value(self,obj):

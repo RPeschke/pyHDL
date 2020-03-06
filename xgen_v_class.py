@@ -227,30 +227,42 @@ class v_class_converter(vhdl_converter_base):
             inout = " in "
             isEmpty = obj.pull.isEmpty
 
-        TypeName = obj.getType(obj.__v_classType__)
-        selfarg = "self : inout "+ TypeName+"_a"
+        selfarg = obj.hdl_conversion__.get_self_func_name(obj,suffix="_a")
+        
         argumentList =  obj.hdl_conversion__.getMemberArgs(obj, InOut_Filter,inout,suffix="_a").strip()
         if argumentList:
             selfarg += "; " +argumentList
         
+        xs = obj.hdl_conversion__.extract_conversion_types(obj ,filter_inout=InOut_t.Internal_t)
+        content = []
+             
+
+        for x in xs:
+            line = "self" + x["suffix"] +" =>  self" + x["suffix"]+"(i)"
+            content.append(line)
+        selfargout =join_str(content,
+            Delimeter= ", ",
+            IgnoreIfEmpty=True
+            )
 
         members = obj.getMember(InOut_Filter) 
         args=join_str([
-                str(x["name"]+"(i)")
+                str(x["name"]) +" => " + str(x["name"]+"(i)")
                 for x in members
             ],
-            LineBeginning= ",",
+            LineBeginning= ", ",
             IgnoreIfEmpty=True
             )
 
             
         ret        = v_procedure(name=procedureName, argumentList=selfarg , body='''
         for i in 0 to self'length - 1 loop
-        {PushPull}(self(i) {args});
+        {PushPull}({selfargout} {args});
         end loop;
             '''.format(
                 PushPull=PushPull,
-                args = args
+                args = args,
+                selfargout=selfargout
             ),
             isFreeFunction=True,
             IsEmpty=isEmpty
@@ -406,17 +418,22 @@ class v_class_converter(vhdl_converter_base):
     def __vhdl__Pull_Push(self, obj, Inout):
         if obj.__v_classType__  == v_classType_t.Record_t:
             return ""
+        selfHandles = []
         xs = obj.hdl_conversion__.extract_conversion_types(obj)
-        selfHandles = ["self => " +str(obj)]
+        for x in xs:
+            arg = "self"+x["suffix"] + "  =>  " +str(obj) + x["suffix"]
+            selfHandles.append(arg)
+
+        
         content = []
         for x in obj.getMember( Inout,varSig.variable_t):
             n_connector = _get_connector( x["symbol"])
             
 
-            xs =n_connector.hdl_conversion__.extract_conversion_types(n_connector, 
+            ys =n_connector.hdl_conversion__.extract_conversion_types(n_connector, 
                     exclude_class_type= v_classType_t.transition_t, filter_inout=Inout
                 )
-            for y in xs:
+            for y in ys:
                 content.append(x["name"]+" => "+y["symbol"].get_vhdl_name())
         
         #content = [ 
@@ -544,12 +561,34 @@ class v_class_converter(vhdl_converter_base):
 
         return obj.get_vhdl_name() + asOp +  rhs.get_vhdl_name()
 
-    def get_self_func_name(self, obj, IsFunction = False):
-        inout = " inout "
-        if IsFunction:
-            inout = "  "
+    def get_self_func_name(self, obj, IsFunction = False, suffix = ""):
+        xs = obj.hdl_conversion__.extract_conversion_types(obj ,filter_inout=InOut_t.Internal_t)
+        content = []
+             
+
+        for x in xs:
+            inout = " inout "
+            if x["symbol"].__v_classType__ == v_classType_t.transition_t:
+                pass
+            elif x["symbol"].varSigConst != varSig.variable_t:
+                inout = " in "
+
+            if IsFunction:
+                inout = "  "
+                
+
+            
+            line = "self" +x["suffix"] + " : " + inout + x["symbol"].get_type()  + suffix
+            content.append(line)
+
         
-        return "self : " + inout + obj.get_type() 
+        
+        ret=join_str(
+            content, 
+            Delimeter="; "
+            )
+        
+        return ret
 
 
     def _vhdl_get_attribute(self,obj, attName):

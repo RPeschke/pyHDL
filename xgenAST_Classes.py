@@ -417,6 +417,7 @@ def body_unfold_functionDef(astParser,Node):
     astParser.Context = ret
     for x in Node.body:
         ret.append( astParser.Unfold_body(x))
+        
 
     astParser.Context = localContext
     return v_funDef(ret,decorator_l)
@@ -727,18 +728,21 @@ def body_unfold_call(astParser,Node):
 
         args = list()
         for x in Node.args:
-            pass #fill arg list here 
+            args.append(astParser.Unfold_body(Node.args[0]))
         
-        if len(Node.args) == 0:
+        if len(args) == 0:
             r = f()  # find out how to forward args 
         elif len(Node.args) == 1:
-            r = f(astParser.Unfold_body(Node.args[0]))  # find out how to forward args
+            r = f(args[0])  # find out how to forward args
         elif len(Node.args) == 2:
-            r = f(astParser.Unfold_body(Node.args[0]),astParser.Unfold_body(Node.args[1]))  # find out how to forward args
+            r = f(args[0],args[1])  # find out how to forward args
         
 
-        r = to_v_object(r)
-        vhdl = obj.hdl_conversion__._vhdl__call_member_func(obj, memFunc,args)
+        r = v_copy(to_v_object(r))
+        vhdl = obj.hdl_conversion__._vhdl__call_member_func(obj, memFunc,args,astParser)
+        if vhdl == None:
+            astParser.Missing_template=True
+            vhdl = "$$missing Template$$"
         r.set_vhdl_name(vhdl)
         ret = v_call(memFunc,r, vhdl)
         return ret

@@ -9,6 +9,8 @@ else:
 
 
 class v_procedure_converter(vhdl_converter_base):
+    def __init__(self):
+        super().__init__()
     def getHeader(self, obj,name, parent):
         classDef =""
         if parent != None and not obj.isFreeFunction:
@@ -51,19 +53,20 @@ class v_procedure_converter(vhdl_converter_base):
 class v_procedure(vhdl_base):
     def __init__(self, argumentList="", body="",VariableList="",name=None,IsEmpty=False,isFreeFunction=False):
         super().__init__()
+        self.hdl_conversion__ = v_procedure_converter()
         self.argumentList = argumentList
         self.body = body
         self.VariableList=VariableList
         self.name = name
         self.isEmpty = IsEmpty
         self.isFreeFunction =isFreeFunction
-        self.hdl_conversion__ = v_procedure_converter()
     
 
     
 
 class v_function_converter(vhdl_converter_base):
-
+    def __init__(self):
+        super().__init__()
     def getHeader(self, obj, name, parent):
         classDef =""
         if parent != None and not obj.isFreeFunction:
@@ -107,6 +110,7 @@ class v_function_converter(vhdl_converter_base):
 class v_function(vhdl_base):
     def __init__(self,body="", returnType="", argumentList="",VariableList="",name=None,IsEmpty=False,isFreeFunction=False):
         super().__init__()
+        self.hdl_conversion__ = v_function_converter()
         self.body = body
         self.returnType = returnType
         self.argumentList = argumentList
@@ -114,12 +118,13 @@ class v_function(vhdl_base):
         self.name = name
         self.isEmpty = IsEmpty
         self.isFreeFunction =isFreeFunction
-        self.hdl_conversion__ = v_function_converter()
 
 
 
 
 class v_process_converter(vhdl_converter_base):
+    def __init__(self):
+        super().__init__()
     def getBody(self, obj,name,parent):
         ret = "process("+str(obj.SensitivityList)+") is\n" +str(obj.VariableList)+ "\n  begin\n"
         if obj.prefix:
@@ -147,7 +152,8 @@ class v_process(vhdl_base):
 
 
 class v_Arch_converter(vhdl_converter_base):
-
+    def __init__(self):
+        super().__init__()
 
     def includes(self,obj, name,parent):
         inc_str = ""

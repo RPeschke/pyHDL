@@ -55,6 +55,11 @@ def AddDataType(dType,Name=""):
             "symbol" : copy.deepcopy( dType)
         }
     )
+
+def isNewTemplateOfFunction(FunctionName , FunctionArgs,TemplateDescription):
+    return False
+
+    
 class xgenAST:
 
     def __init__(self,sourceFileName):
@@ -62,6 +67,7 @@ class xgenAST:
         self.FuncArgs = list()
         self.LocalVar = list()
         self.varScope = list()
+        self.Missing_template = False
         self.Archetecture_vars = list()
         self.ContextName = list()
         self.ContextName.append("global")
@@ -208,6 +214,7 @@ class xgenAST:
         ClassName  = type(ClassInstance).__name__
         cl = self.getClassByName(ClassName)
         for f in cl.body:
+            self.Missing_template = False
             self.local_function ={}
             if  f.name in self.functionNameVetoList:
                 continue
@@ -231,11 +238,11 @@ class xgenAST:
             self.Archetecture_vars = ClassInstance.__local_symbols__
             body = self.Unfold_body(f)  ## get local vars 
 
-            header =""
-
-            
-            proc = v_Arch(body=body,Symbols=self.LocalVar, Arch_vars=self.Archetecture_vars,ports=ClassInstance.getMember())
-            ClassInstance.__processList__.append(proc)
+            if self.Missing_template == True:
+                ClassInstance.hdl_conversion__.MissingTemplate = True
+            else:
+                proc = v_Arch(body=body,Symbols=self.LocalVar, Arch_vars=self.Archetecture_vars,ports=ClassInstance.getMember())
+                ClassInstance.__processList__.append(proc)
 
     def extractFunctionsForEntity(self, ClassInstance, parent):
         ClassName  = type(ClassInstance).__name__
@@ -293,28 +300,43 @@ class xgenAST:
             ClassInstance.__processList__.append(proc)
             
 
+    def extractFunctionsForClass_impl(self, ClassInstance,parent, funcDef, FuncArgs ):
+            ClassName  = type(ClassInstance).__name__
+            self.parent = parent
+            self.FuncArgs = FuncArgs
+            self.LocalVar = list()
+            self.Archetecture_vars =[]
+            argList = [x["symbol"].to_arglist(x['name'],ClassName) for x in FuncArgs]
+            ArglistProcedure = join_str(argList,Delimeter="; ")
+            
+            
+            body = self.Unfold_body(funcDef)
+            bodystr= str(body)
+            if "return" in bodystr:
+                ArglistProcedure = ArglistProcedure.replace(" in "," ").replace(" out "," ").replace(" inout "," ")
+                ret = v_function(name=funcDef.name, body=bodystr,VariableList=self.get_local_var_def(), returnType=body.get_type(),argumentList=ArglistProcedure)
+            else:
+                ret = v_procedure(name=funcDef.name,body=bodystr,VariableList=self.get_local_var_def(), argumentList=ArglistProcedure)
+            
+            return ret
 
     def extractFunctionsForClass(self,ClassInstance,parent ):
-        
+        primary = ClassInstance.hdl_conversion__.get_primary_object(ClassInstance)
+        ClassInstance.hdl_conversion__ = primary.hdl_conversion__
+        ClassInstance.hdl_conversion__.MissingTemplate = False
         ClassName  = type(ClassInstance).__name__
         cl = self.getClassByName(ClassName)
         for f in cl.body:
             if  f.name in self.functionNameVetoList:
                 continue
-            self.parent = parent
-            self.FuncArgs = list()
-            self.LocalVar = list()
-            self.Archetecture_vars =[]
-            ArglistProcedure = ""
-            Arglist = list(self.get_func_args_list(f))
-            for x in Arglist:
-                ArglistProcedure =  "; "  + x["symbol"].to_arglist(x['name'],ClassName) + ArglistProcedure
+           
+            print(f.name)
+            print(ClassInstance.hdl_conversion__.MemfunctionCalls)
 
-
-
-            ArglistProcedure = "self : inout "+ClassInstance.name + ArglistProcedure
-            ClassInstance.set_vhdl_name ( "self")
+            
+            ClassInstance.set_vhdl_name ( "self",True)
             ClassInstance.Inout  = InOut_t.InOut_tt
+            Arglist = []
             Arglist.append(
                 {
                     "name":"self",
@@ -323,16 +345,16 @@ class xgenAST:
 
                 }
             )
-            self.FuncArgs = Arglist
-            body = self.Unfold_body(f)
-            bodystr= str(body)
-            if "return" in bodystr:
-                ArglistProcedure = ArglistProcedure.replace(" in "," ").replace(" out "," ").replace(" inout "," ")
-                ret = v_function(name=f.name, body=bodystr,VariableList=self.get_local_var_def(), returnType=body.get_type(),argumentList=ArglistProcedure)
-            else:
-                ret = v_procedure(name=f.name,body=bodystr,VariableList=self.get_local_var_def(), argumentList=ArglistProcedure)
-                
+            Arglist += list(self.get_func_args_list(f))
+            ArglistLocal = copy.deepcopy(Arglist)
+            ret = self.extractFunctionsForClass_impl(ClassInstance, parent, f, Arglist )
+
+            
             yield ret 
+
+            for temp in ClassInstance.hdl_conversion__.MemfunctionCalls:
+                if isNewTemplateOfFunction(f.name, ArglistLocal, temp):
+                    print(f.name)
 
 
     def Unfold_body(self,FuncDef):
@@ -394,7 +416,7 @@ class xgenAST:
         for args in self.get_func_args(funcDef): 
             inArg = self.unfold_argList(args[1])
             inArg = to_v_object(inArg)
-            inArg.set_vhdl_name(args[0])
+            inArg.set_vhdl_name(args[0],True)
             yield {
                     "name": args[0],
                     "symbol": inArg

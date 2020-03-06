@@ -14,6 +14,8 @@ else:
 
 
 class v_entity_list_converter(vhdl_converter_base):
+        def __init__(self):
+            super().__init__()
         def get_architecture_header(self, obj):
             ret = "--------------------------"+ obj.vhdl_name  +"-----------------\n"
             VarSymb = "signal"

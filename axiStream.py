@@ -105,6 +105,7 @@ class axisStream_slave(v_class_slave):
         self.data_internal_isvalid2  = v_variable( v_sl())
         self.data_internal_was_read2 = v_variable(v_sl())
         self.data_internal_isLast2   = v_variable( v_sl())
+        self.sig_test                = v_signal( v_sl())
 
 
     def observe_data(self, dataOut = variable_port_out(dataType())):
@@ -123,7 +124,7 @@ class axisStream_slave(v_class_slave):
 
 
     def IsEndOfStream(self):
-        return  self.data_internal_isvalid2  and  self.data_internal_isLast2
+        return  self.data_internal_isvalid2 > 0 and  self.data_internal_isLast2 > 0
 
     def __bool__(self):
         return self.isReceivingData()

@@ -12,6 +12,7 @@ else:
 
 class v_symbol_converter(vhdl_converter_base):
     def __init__(self,inc_str):
+        super().__init__()
         self.inc_str  = inc_str
 
     def includes(self,obj, name,parent):
