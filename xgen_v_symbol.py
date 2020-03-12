@@ -227,6 +227,8 @@ class v_symbol(vhdl_base):
     def isInOutType(self, Inout):
         if Inout == None:
             return True
+        if self.Inout == InOut_t.InOut_tt:
+            return True
 
         return self.Inout == Inout
 

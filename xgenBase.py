@@ -368,6 +368,14 @@ class vhdl_converter_base:
             return " out "
         elif inOut == InOut_t.InOut_tt:
             return " inout "
+        
+        inOut = obj._writtenRead
+        if inOut == InOut_t.input_t:
+            return " in "
+        elif inOut == InOut_t.output_t:
+            return " out "
+        elif inOut == InOut_t.InOut_tt:
+            return " inout "
         raise Exception("unkown Inout type",inOut)
 
     def get_default_value(self,obj):
@@ -451,19 +459,20 @@ class vhdl_base(vhdl_base0):
 
     def __init__(self):
         super().__init__()
-        self.Inout  = InOut_t.Internal_t
+        self.Inout         = InOut_t.Internal_t
+        self._writtenRead  = InOut_t.Internal_t
 
     def _add_input(self):
-        if self.Inout == InOut_t.Internal_t:
-            self.Inout = InOut_t.input_t
-        elif self.Inout == InOut_t.output_t:
-            self.Inout = InOut_t.InOut_tt
+        if self._writtenRead == InOut_t.Internal_t:
+            self._writtenRead = InOut_t.input_t
+        elif self._writtenRead == InOut_t.output_t:
+            self._writtenRead = InOut_t.InOut_tt
 
     def _add_output(self):
-        if self.Inout == InOut_t.Internal_t:
-            self.Inout = InOut_t.output_t
-        elif self.Inout == InOut_t.input_t:
-            self.Inout = InOut_t.InOut_tt
+        if self._writtenRead == InOut_t.Internal_t:
+            self._writtenRead = InOut_t.output_t
+        elif self._writtenRead == InOut_t.input_t:
+            self._writtenRead = InOut_t.InOut_tt
 
     def flipInout(self):
         pass
@@ -544,6 +553,7 @@ class  InOut_t(Enum):
     Slave_t    = 5
     InOut_tt   = 6
     Default_t  = 7
+    Unset_t    = 8 
 
 class varSig(Enum):
     variable_t = 1
