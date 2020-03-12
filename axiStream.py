@@ -68,6 +68,7 @@ class axisStream_slave_converter(axisStream_converter):
         return "isReceivingData(" + str(obj) + ") "
 
     def _vhdl__getValue(self,obj, ReturnToObj=None,astParser=None):
+
         vhdl_name = str(obj) + "_buff"
         buff =  astParser.try_get_variable(vhdl_name)
 
@@ -75,6 +76,10 @@ class axisStream_slave_converter(axisStream_converter):
             buff = v_copy(obj.rx.data)
             buff.vhdl_name = str(obj) + "_buff"
             astParser.LocalVar.append(buff)
+
+
+        obj.hdl_conversion__._vhdl__call_member_func(obj, "read_data",[buff],astParser)
+
 
         astParser.AddStatementBefore("read_data(" +str(obj) +", " +str(buff) +' ) ')
         return buff
@@ -113,7 +118,7 @@ class axisStream_slave(v_class_slave):
             dataOut << self.data_internal2
     
     
-    def read_data(self, dataOut = variable_port_out(dataType())):
+    def read_data(self, dataOut ):
         if self.data_internal_isvalid2:
             dataOut << self.data_internal2
             self.data_internal_was_read2 << 1
@@ -164,10 +169,18 @@ class axisStream_master_converter(axisStream_converter):
         super().__init__()
 
     def _vhdl__to_bool(self, obj, astParser):
-        return "ready_to_send(" + str(obj) + ") "
+        ret =  obj.hdl_conversion__._vhdl__call_member_func(obj, "ready_to_send",[],astParser)
+        if ret == None:
+            return "$$missing_template$$"
+        return ret
     
-    def _vhdl__reasign(self,obj, rhs):
-        return "send_data( "+str(obj) + ", " +  str(rhs)+")"
+    def _vhdl__reasign(self,obj, rhs,astParser):
+        ret =  obj.hdl_conversion__._vhdl__call_member_func(obj, "send_data",[rhs],astParser)
+        if ret == None:
+            return "$$missing_template$$"
+        return ret
+
+
     
     def includes(self,obj, name,parent):
         ret = obj.tx.hdl_conversion__.includes(obj.tx,None,None)
@@ -192,14 +205,14 @@ class axisStream_master(v_class_master):
    
 
         
-    def send_data(self, dataIn = variable_port_in(dataType())):
+    def send_data(self, dataIn ):
         self.tx.valid   << 1
         self.tx.data    << dataIn    
     
     def ready_to_send(self):
         return not self.tx.valid
 
-    def Send_end_Of_Stream(self, EndOfStream= variable_port_in(v_bool())):
+    def Send_end_Of_Stream(self, EndOfStream):
         if EndOfStream:
             self.tx.last << 1
         else:

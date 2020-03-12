@@ -336,6 +336,10 @@ class v_entity_converter(vhdl_converter_base):
         ret += obj.hdl_conversion__.get_archhitecture(obj)
         return ret
 
+    def get_process_header(self,obj):
+        return ""
+        
+
     def get_entity_definition(self, obj):
         #s = isConverting2VHDL()
         #set_isConverting2VHDL(True)
@@ -356,7 +360,7 @@ class v_entity(vhdl_base0):
         self._name = name
         self._srcFileName = srcFileName
         self.__processList__ = list()
-        self.Inout = ""
+        self.Inout = InOut_t.Internal_t
         self.vhdl_name = None
         self.type = "entity"
         self.__local_symbols__ = list()

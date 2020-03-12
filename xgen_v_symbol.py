@@ -44,6 +44,7 @@ class v_symbol_converter(vhdl_converter_base):
         return name + " : " + obj.type   
 
     def _vhdl_slice(self,obj,sl,astParser=None):
+        obj._add_input()
         if "std_logic_vector" in obj.type:
             ret = v_sl(obj.Inout)
             ret.vhdl_name = obj.vhdl_name+"("+str(sl)+")"
@@ -53,6 +54,9 @@ class v_symbol_converter(vhdl_converter_base):
 
 
     def _vhdl__compare(self,obj, ops, rhs):
+        obj._add_input()
+        if issubclass(type(rhs),vhdl_base):
+            rhs._add_input()
         if obj.type == "std_logic":
             value = str(rhs).lower()
             if value == "true":
@@ -69,6 +73,7 @@ class v_symbol_converter(vhdl_converter_base):
         return str(obj) + " "+ ops2str(ops)+" " +   str(rhs)
 
     def _vhdl__to_bool(self,obj, astParser):
+        obj._add_input()
         if obj.type == "std_logic":
             return str(obj) + " = '1'"
         elif "std_logic_vector" in obj.type:
@@ -123,6 +128,7 @@ class v_symbol_converter(vhdl_converter_base):
 
 
     def _vhdl__reasign(self, obj, rhs, context=None):
+        obj._add_output()
         if issubclass(type(rhs),vhdl_base0)  and str( obj.__Driver__) != 'process':
             obj.__Driver__ = rhs
         
@@ -132,7 +138,7 @@ class v_symbol_converter(vhdl_converter_base):
         asOp = obj.hdl_conversion__.get_assiment_op(obj)
         
         if obj.type == "std_logic":
-            if type(rhs).__name__=="v_symbol":
+            if issubclass(type(rhs),vhdl_base0):
                 return str(obj) + asOp + str(rhs.hdl_conversion__._vhdl__getValue(rhs, obj.type)) 
             
             return str(obj) + asOp+  str(rhs) 
@@ -170,6 +176,7 @@ class v_symbol_converter(vhdl_converter_base):
         return ret
 
     def _vhdl__getValue(self,obj, ReturnToObj=None,astParser=None):
+        obj._add_input()
         if ReturnToObj == "integer" and  "std_logic_vector" in obj.type:
             return  "to_integer(signed( " + str(obj)  + "))"
         
@@ -194,6 +201,7 @@ class v_symbol(vhdl_base):
         self.type = v_type
         self.DefaultValue = str(DefaultValue)
         self.Inout = Inout
+        
         self.inc = ""
         self.vhdl_name = None
         self.value = get_value_or_default(value, DefaultValue)

@@ -56,8 +56,21 @@ def AddDataType(dType,Name=""):
         }
     )
 
-def isNewTemplateOfFunction(FunctionName , FunctionArgs,TemplateDescription):
-    return False
+def GetNewArgList(FunctionName , FunctionArgs,TemplateDescription):
+    ret = None
+    localArgs = copy.deepcopy(FunctionArgs)
+    if FunctionName != TemplateDescription["name"]:
+        return None
+    for x,y in zip(localArgs[1:],TemplateDescription["args"]):
+        print(x,y)
+        if x["symbol"] == None or x["symbol"].type != y.type or x['symbol'].varSigConst != y.varSigConst:
+            #y.Inout =  x["symbol"].Inout
+            y.set_vhdl_name(x["name"],True)
+            x["symbol"] = y
+
+            ret = localArgs
+
+    return ret
 
     
 class xgenAST:
@@ -301,17 +314,26 @@ class xgenAST:
             
 
     def extractFunctionsForClass_impl(self, ClassInstance,parent, funcDef, FuncArgs ):
+
+            for x in FuncArgs:
+                if x["symbol"] == None:
+                    return None
+
             ClassName  = type(ClassInstance).__name__
             self.parent = parent
             self.FuncArgs = FuncArgs
             self.LocalVar = list()
             self.Archetecture_vars =[]
-            argList = [x["symbol"].to_arglist(x['name'],ClassName) for x in FuncArgs]
+            FuncArgsLocal = copy.copy(FuncArgs)
+            
+            body = self.Unfold_body(funcDef)
+
+            bodystr= str(body)
+            argList = [x["symbol"].to_arglist(x['name'],ClassName) for x in FuncArgsLocal]
             ArglistProcedure = join_str(argList,Delimeter="; ")
             
             
-            body = self.Unfold_body(funcDef)
-            bodystr= str(body)
+            
             if "return" in bodystr:
                 ArglistProcedure = ArglistProcedure.replace(" in "," ").replace(" out "," ").replace(" inout "," ")
                 ret = v_function(name=funcDef.name, body=bodystr,VariableList=self.get_local_var_def(), returnType=body.get_type(),argumentList=ArglistProcedure)
@@ -347,14 +369,19 @@ class xgenAST:
             )
             Arglist += list(self.get_func_args_list(f))
             ArglistLocal = copy.deepcopy(Arglist)
+            
             ret = self.extractFunctionsForClass_impl(ClassInstance, parent, f, Arglist )
 
-            
-            yield ret 
+            if ret:
+                yield ret 
 
             for temp in ClassInstance.hdl_conversion__.MemfunctionCalls:
-                if isNewTemplateOfFunction(f.name, ArglistLocal, temp):
+                newArglist = GetNewArgList(f.name, ArglistLocal, temp)
+                if newArglist != None:
                     print(f.name)
+                    ret = self.extractFunctionsForClass_impl(ClassInstance, parent, f, newArglist )
+                    yield ret 
+
 
 
     def Unfold_body(self,FuncDef):
@@ -407,16 +434,24 @@ class xgenAST:
 
 
     def get_func_args(self, funcDef):
+        
+
         for i in range(len(funcDef.args.args),1,-1):
-            yield (funcDef.args.args[i-1].arg,funcDef.args.defaults[i-2])
+            try:
+                default = funcDef.args.defaults[i-2]
+            except:
+                default = None
+            yield (funcDef.args.args[i-1].arg,default)
 
     def get_func_args_list(self, funcDef):
         
     
         for args in self.get_func_args(funcDef): 
-            inArg = self.unfold_argList(args[1])
-            inArg = to_v_object(inArg)
-            inArg.set_vhdl_name(args[0],True)
+            inArg = None
+            if args[1] != None:
+                inArg = self.unfold_argList(args[1])
+                inArg = to_v_object(inArg)
+                inArg.set_vhdl_name(args[0],True)
             yield {
                     "name": args[0],
                     "symbol": inArg

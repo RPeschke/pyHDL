@@ -125,6 +125,9 @@ class v_ast_base:
     def _vhdl__setReturnType(self,ReturnToObj=None,astParser=None):
         pass
 
+    def get_symbol(self):
+        return None
+
 class v_noop(v_ast_base):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -509,8 +512,8 @@ def body_unfold_Attribute(astParser,Node):
 
     n = obj.hdl_conversion__._vhdl_get_attribute(obj,Node.attr)
 
-    att.set_vhdl_name(n)
-    
+    att.set_vhdl_name(n,True)
+#    att.Inout =  obj.Inout
     astParser.FuncArgs.append(
                     {
                     "name":att.vhdl_name,
@@ -686,13 +689,16 @@ class v_call(v_ast_base):
         self.memFunc = memFunc    
         self.symbol  =  symbol
         
-        self.vhdl =vhdl
+        self.vhdl_name =vhdl
     
     def __str__(self):
-        return str(self.vhdl) 
+        return str(self.vhdl_name) 
     
     def get_type(self):
         return self.symbol.type
+
+    def get_symbol(self):
+        return self.symbol
 
 def body_unfold_call_local_func(astParser,Node):
 
@@ -768,25 +774,26 @@ def body_RShift(astParser,Node):
         rhs = rhs.hdl_conversion__._vhdl__reasign_type(rhs)
         lhs = lhs._vhdl__getValue(lhs,astParser)
         lhs >> rhs
-        return v_re_assigne(rhs, lhs)
+        return v_re_assigne(rhs, lhs,None,astParser)
 
     var = astParser.get_variable(rhs.Value, Node)
 
-    return v_re_assigne(lhs, var)
+    return v_re_assigne(lhs, var,None, astParser)
 
 
 class v_re_assigne(v_ast_base):
-    def __init__(self,lhs, rhs,context=None):
+    def __init__(self,lhs, rhs,context=None, astParser=None):
         self.lhs = lhs
         self.rhs = rhs
         self.context =context
+        self.astParser = astParser
         
 
  
 
     def __str__(self):
         if issubclass(type(self.lhs),vhdl_base):
-            return self.lhs.hdl_conversion__._vhdl__reasign(self.lhs, self.rhs)
+            return self.lhs.hdl_conversion__._vhdl__reasign(self.lhs, self.rhs, self.astParser)
 
         return str(self.lhs) + " := " +  str(self.rhs) 
 
@@ -807,11 +814,11 @@ def body_LShift(astParser,Node):
         if astParser.ContextName[-1] == 'process':
             lhs.__Driver__ = 'process'
             
-        return v_re_assigne(lhs, rhs,astParser.ContextName[-1])
+        return v_re_assigne(lhs, rhs,astParser.ContextName[-1],astParser)
 
     var = astParser.get_variable(lhs.Value, Node)
 
-    return v_re_assigne(var, rhs)
+    return v_re_assigne(var, rhs,astParser)
 
 def hasNumericalValue(symb):
     if type(symb).__name__ == "int":

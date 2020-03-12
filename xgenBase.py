@@ -173,10 +173,13 @@ class vhdl_converter_base:
     def get_primary_object(self,obj):
         obj_packetName =  obj.hdl_conversion__.get_packet_file_name(obj)
         obj_entiyFileName =  obj.hdl_conversion__.get_entity_file_name(obj)
+        i = 0 
         for x in gHDL_objectList:
+            i +=1 
             packetName =  x.hdl_conversion__.get_packet_file_name(x)
             entiyFileName =  x.hdl_conversion__.get_entity_file_name(x)
             if obj_packetName ==  packetName and obj_entiyFileName == entiyFileName and type(obj) == type(x):
+                print(i)
                 return x
 
         raise Exception("did not find primary object")
@@ -243,6 +246,7 @@ class vhdl_converter_base:
         return "pyhdl_to_bool(" + str(obj) + ") "
 
     def _vhdl__getValue(self,obj, ReturnToObj=None,astParser=None):
+        obj._add_input()
         return obj
 
     def _vhdl__reasign_type(self, obj ):
@@ -252,7 +256,9 @@ class vhdl_converter_base:
         return str(obj) + " := " +  str(rhs)
 
     def get_get_call_member_function(self, obj, name, args):
-        
+        args = [x.get_symbol() for x in args ]
+
+
         for x  in obj.hdl_conversion__.MemfunctionCalls:
             if x["name"] != name:
                 continue
@@ -273,13 +279,14 @@ class vhdl_converter_base:
         
         primary = obj.hdl_conversion__.get_primary_object(obj)
         if  primary is not obj:
-            return primary.hdl_conversion__._vhdl__call_member_func( obj, name, args)
+            return primary.hdl_conversion__._vhdl__call_member_func( primary, name, args, astParser)
         
         
         call_obj = obj.hdl_conversion__.get_get_call_member_function(obj, name, args)
 
         if call_obj == None:
             primary.hdl_conversion__.MissingTemplate=True
+            astParser.Missing_template = True
             return None
         call_func = call_obj["call_func"]
         if call_func:
@@ -287,7 +294,7 @@ class vhdl_converter_base:
 
         if name =="Connect":
             return str(obj)
-        args_str = [ args[0].vhdl for x in args]
+        args_str = [ x.vhdl_name for x in args]
         args_str = [str(obj)] + args_str
 
         ret = join_str(args_str, Delimeter=", ", start= name+"(" ,end=")")
@@ -390,6 +397,9 @@ class vhdl_base0:
     def getMember(self,InOut_Filter=None, VaribleSignalFilter = None):
         return []
 
+    def get_symbol(self):
+        return self
+
     def DriverIsProcess(self):
         if type(self.__Driver__).__name__ == "str":
             return self.__Driver__ == "process"
@@ -441,7 +451,19 @@ class vhdl_base(vhdl_base0):
 
     def __init__(self):
         super().__init__()
-        
+        self.Inout  = InOut_t.Internal_t
+
+    def _add_input(self):
+        if self.Inout == InOut_t.Internal_t:
+            self.Inout = InOut_t.input_t
+        elif self.Inout == InOut_t.output_t:
+            self.Inout = InOut_t.InOut_tt
+
+    def _add_output(self):
+        if self.Inout == InOut_t.Internal_t:
+            self.Inout = InOut_t.output_t
+        elif self.Inout == InOut_t.input_t:
+            self.Inout = InOut_t.InOut_tt
 
     def flipInout(self):
         pass

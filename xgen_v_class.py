@@ -129,10 +129,16 @@ class v_class_converter(vhdl_converter_base):
             if issubclass(type(t),vhdl_base) and not issubclass(type(t),v_class):
                 ret += t.hdl_conversion__.getHeader(t,x[0],obj)
 
-        for x in obj.hdl_conversion__.__ast_functions__:
+        funlist =[]
+        for x in reversed(obj.hdl_conversion__.__ast_functions__):
             if x.name.lower() == "_onpull" or x.name.lower() == "_onpush":
                 continue
-            ret +=  x.hdl_conversion__.getHeader(x,None,None)
+            funDeclaration = x.hdl_conversion__.getHeader(x,None,None)
+            if funDeclaration in funlist:
+                x.isEmpty = True
+                continue
+            funlist.append(funDeclaration)
+            ret +=  funDeclaration
 
 
         ret += "------- End Psuedo Class " +obj.getName() +" -------------------------\n"
@@ -535,12 +541,9 @@ class v_class_converter(vhdl_converter_base):
          
  
     def _vhdl__reasign(self, obj, rhs, context=None):
-
+        
         asOp = obj.hdl_conversion__.get_assiment_op(obj)
-        if obj.Inout == InOut_t.Slave_t:
-            raise Exception("cannot assign to slave")
-        elif obj.Inout == InOut_t.input_t:
-            raise Exception("cannot assign to input")
+
         
         if rhs.Inout == InOut_t.Master_t:
             raise Exception("cannot read from Master")
@@ -550,7 +553,7 @@ class v_class_converter(vhdl_converter_base):
         if rhs.type != obj.type:
             raise Exception("cannot assigne different types.", str(obj), rhs.type, obj.type )
 
-
+        
         t = obj.getTypes()
         if len(t) ==3 and obj.__v_classType__ ==  v_classType_t.transition_t:
             ret ="---------------------------------------------------------------------\n--  " + obj.get_vhdl_name() +" << " + rhs.get_vhdl_name()+"\n" 
@@ -559,6 +562,7 @@ class v_class_converter(vhdl_converter_base):
             ret += rhs.get_vhdl_name(InOut_t.input_t) + asOp + obj.get_vhdl_name(InOut_t.input_t)
             return ret 
 
+        obj._add_output()
         return obj.get_vhdl_name() + asOp +  rhs.get_vhdl_name()
 
     def get_self_func_name(self, obj, IsFunction = False, suffix = ""):
@@ -723,7 +727,7 @@ class v_class(vhdl_base):
         self.__vectorPush__ = False
         self.__vectorPull__ = False
         self.__vetoHDLConversion__ = False
-        self.Inout  = InOut_t.Internal_t
+        
         self.vhdl_name =None
         self.__Driver__ = None
 
@@ -935,11 +939,11 @@ class v_class(vhdl_base):
         self.__Driver__ = rhs
         rhs.__receiver__.append(self)
 
-        self_members  = self.get_s2m_signals()
-        rhs_members  = rhs.get_s2m_signals()
+        self_members_s2m  = self.get_s2m_signals()
+        rhs_members_s2m  = rhs.get_s2m_signals()
 
-        for i in range(len(self_members)):
-            rhs_members[i]['symbol'] << self_members[i]['symbol']
+        for i in range(len(self_members_s2m)):
+            rhs_members_s2m[i]['symbol'] << self_members_s2m[i]['symbol']
 
         self_members  = self.get_m2s_signals()
         rhs_members  = rhs.get_m2s_signals()
@@ -1017,23 +1021,10 @@ class v_class(vhdl_base):
 
 
 
-        if self.__v_classType__ ==v_classType_t.Record_t and self.Inout == InOut_t.Master_t:
-            self_members = self.getMember(louput)
-            return self_members
-        
-        elif self.__v_classType__ ==v_classType_t.Record_t and self.Inout == InOut_t.Slave_t:
-            self_members = self.getMember(louput)
-            return self_members
-
-        elif self.__v_classType__ ==v_classType_t.Record_t and self.Inout == InOut_t.input_t:
-            self_members = self.getMember( linput)
-            return self_members
-        elif self.__v_classType__ ==v_classType_t.Record_t and self.Inout == InOut_t.output_t:
-            self_members = self.getMember(louput)
-            return self_members
-        elif self.__v_classType__ ==v_classType_t.Record_t and self.Inout == InOut_t.Internal_t:
+        if self.__v_classType__ ==v_classType_t.Record_t :
             self_members = self.getMember()
-            return self_members       
+            return self_members
+                
         elif  self.Inout == InOut_t.Master_t:
             self_members = self.getMember(louput)
             return self_members
@@ -1051,23 +1042,10 @@ class v_class(vhdl_base):
 
 
 
-        if self.__v_classType__ ==v_classType_t.Record_t and self.Inout == InOut_t.Slave_t:
-            self_members = self.getMember(linput)
-            return self_members
-        
-        elif self.__v_classType__ ==v_classType_t.Record_t and self.Inout == InOut_t.Master_t:
-            self_members = self.getMember(louput)
-            return self_members
-
-        elif self.__v_classType__ ==v_classType_t.Record_t and self.Inout == InOut_t.output_t:
-            self_members = self.getMember(linput)#
-            return self_members
-        elif self.__v_classType__ ==v_classType_t.Record_t and self.Inout == InOut_t.input_t:
-            self_members = self.getMember(louput)
-            return self_members
-        elif self.__v_classType__ ==v_classType_t.Record_t and self.Inout == InOut_t.Internal_t:
+        if self.__v_classType__ ==v_classType_t.Record_t:
             
             return []
+        
         elif  self.Inout == InOut_t.Master_t:
             self_members = self.getMember(linput)
             return self_members
