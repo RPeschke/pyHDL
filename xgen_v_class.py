@@ -1058,10 +1058,14 @@ class v_class(vhdl_base):
             return self_members      
             
     def to_arglist(self,name,parent):
+        ret = []
         inoutstr = self.hdl_conversion__.InOut_t2str(self)
         if not inoutstr:
             inoutstr = ""
-        return name + " : " + inoutstr +" " + self.getType()
+        ret.append(name + " : " + inoutstr +" " + self.getType())
+
+
+        return ret[0]
 
     def _remove_drivers(self):
         self.__Driver__ = None

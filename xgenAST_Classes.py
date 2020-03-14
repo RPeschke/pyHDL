@@ -513,6 +513,7 @@ def body_unfold_Attribute(astParser,Node):
     n = obj.hdl_conversion__._vhdl_get_attribute(obj,Node.attr)
 
     att.set_vhdl_name(n,True)
+    att._add_used()
 #    att.Inout =  obj.Inout
     astParser.FuncArgs.append(
                     {

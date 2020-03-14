@@ -119,6 +119,7 @@ class axisStream_slave(v_class_slave):
     
     
     def read_data(self, dataOut ):
+        self.sig_test << 1
         if self.data_internal_isvalid2:
             dataOut << self.data_internal2
             self.data_internal_was_read2 << 1

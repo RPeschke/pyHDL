@@ -474,6 +474,12 @@ class vhdl_base(vhdl_base0):
         elif self._writtenRead == InOut_t.input_t:
             self._writtenRead = InOut_t.InOut_tt
 
+    def _add_used(self):
+        if self._writtenRead == InOut_t.Internal_t:
+            self._writtenRead = InOut_t.Used_t
+        elif self._writtenRead == InOut_t.Unset_t:
+            self._writtenRead = InOut_t.Used_t
+
     def flipInout(self):
         pass
     def resetInout(self):
@@ -554,6 +560,7 @@ class  InOut_t(Enum):
     InOut_tt   = 6
     Default_t  = 7
     Unset_t    = 8 
+    Used_t     = 9 
 
 class varSig(Enum):
     variable_t = 1
