@@ -607,7 +607,14 @@ class v_class_converter(vhdl_converter_base):
                         suffix = "_s2m"
 
                     return obj.get_vhdl_name() + suffix + "." +   attName
-        
+        xs = obj.hdl_conversion__.extract_conversion_types(obj)
+        for x in xs:
+            for y in x["symbol"].getMember():
+                if y["name"] == attName:
+                    return obj.get_vhdl_name() + x["suffix"] + "." +   attName
+
+
+           
         return obj.get_vhdl_name() + "." +str(attName)
    
     def get_process_header(self,obj):
@@ -680,7 +687,8 @@ class v_class_converter(vhdl_converter_base):
             x = v_class(obj.hdl_conversion__.get_NameSignal(obj), varSig.signal_t)
             x.__v_classType__ = v_classType_t.Record_t
             x.__vetoHDLConversion__  = True
-            x.Inout=InOut_t.Internal_t
+            x.Inout= obj.Inout
+            x._writtenRead = obj._writtenRead
             x.vhdl_name = obj.vhdl_name+"_sig"
             ys= obj.getMember(VaribleSignalFilter=varSig.signal_t)
             if len(ys)>0:
@@ -692,7 +700,8 @@ class v_class_converter(vhdl_converter_base):
             x = v_class(obj.type, varSig.variable_t)
             x.__v_classType__ = v_classType_t.Record_t
             x.__vetoHDLConversion__  = True
-            x.Inout=InOut_t.Internal_t
+            x.Inout= obj.Inout
+            x._writtenRead = obj._writtenRead
             ys= obj.getMember(VaribleSignalFilter=varSig.variable_t)
             if len(ys)>0:
                 for y in ys: 
@@ -1059,13 +1068,30 @@ class v_class(vhdl_base):
             
     def to_arglist(self,name,parent):
         ret = []
-        inoutstr = self.hdl_conversion__.InOut_t2str(self)
-        if not inoutstr:
+        
+        xs = self.hdl_conversion__.extract_conversion_types(self)
+
+        for x in xs:
             inoutstr = ""
-        ret.append(name + " : " + inoutstr +" " + self.getType())
+            varSignal = "signal "
+            if x["symbol"].varSigConst == varSig.variable_t:
+                inoutstr = self.hdl_conversion__.InOut_t2str(self)
+                varSignal = ""
+            ret.append(varSignal + name + x["suffix"] + " : " + inoutstr +" " +  x["symbol"].getType())
 
+            if x["symbol"].varSigConst == varSig.signal_t:
+                members = x["symbol"].getMember()
+                for m in members:
+                    if m["symbol"].Inout == InOut_t.Internal_t and m["symbol"]._writtenRead == InOut_t.Internal_t:
+                        continue
+                    ret.append(m["symbol"].to_arglist(name + x["suffix"]+"_"+m["name"],None))
 
-        return ret[0]
+                
+
+ 
+
+        r =join_str(ret,Delimeter="; ",IgnoreIfEmpty=True)
+        return r
 
     def _remove_drivers(self):
         self.__Driver__ = None

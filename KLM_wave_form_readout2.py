@@ -131,7 +131,33 @@ class InputDelay_tb(v_entity):
                 data.column_select << data.column_select + 1
 
         end_architecture()
+
+
+
+import cProfile, pstats, io
+
+
+
+def profile(fnc):
+    
+    """A decorator that uses cProfile to profile a function"""
+    
+    def inner(*args, **kwargs):
         
+        pr = cProfile.Profile()
+        pr.enable()
+        retval = fnc(*args, **kwargs)
+        pr.disable()
+        s = io.StringIO()
+        sortby = 'cumulative'
+        ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
+        ps.print_stats()
+        print(s.getvalue())
+        return retval
+
+    return inner
+
+@profile
 def main():
     tb  =v_create(InputDelay_tb())
     #gsimulation.run_timed(tb, 1000,"InputDelay_tb.vcd")

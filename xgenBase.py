@@ -141,7 +141,8 @@ class vhdl_converter_base:
             print("==================")
             for x in gHDL_objectList:
                 if "axis"  in type(x).__name__ :
-                    print("axi")
+                    #print("axi")
+                    pass
                 #print("----------------")
                 
                 if x.hdl_conversion__.IsSucessfullConverted(x):
@@ -154,8 +155,8 @@ class vhdl_converter_base:
                     if packet:
                         file_set_content(ouputFolder+"/" +packetName,packet)
                     FilesDone.append(packetName)
-                    print(type(x).__name__)
-                    print("processing")
+                    #print(type(x).__name__)
+                    #print("processing")
                     
                 
                 entiyFileName =  x.hdl_conversion__.get_entity_file_name(x)
@@ -165,8 +166,8 @@ class vhdl_converter_base:
                     if entity_content:
                         file_set_content(ouputFolder+"/" +entiyFileName,entity_content)
                     FilesDone.append(entiyFileName)
-                    print(type(x).__name__)
-                    print("processing")
+                    #print(type(x).__name__)
+                    #print("processing")
                 
                 x.hdl_conversion__.IsConverted = True
 
@@ -179,7 +180,7 @@ class vhdl_converter_base:
             packetName =  x.hdl_conversion__.get_packet_file_name(x)
             entiyFileName =  x.hdl_conversion__.get_entity_file_name(x)
             if obj_packetName ==  packetName and obj_entiyFileName == entiyFileName and type(obj) == type(x):
-                print(i)
+                #print(i)
                 return x
 
         raise Exception("did not find primary object")
@@ -264,14 +265,17 @@ class vhdl_converter_base:
                 continue
             if not isSameArgs(x["args"] , args):
                 continue
-            
+            if x["call_func"] == None:
+                continue
             return x
 
         obj.hdl_conversion__.MemfunctionCalls.append({
             "name" : name,
             "args": args,
             "self" :obj,
-            "call_func" : None
+            "call_func" : None,
+            "func_args" : None
+
         })
         obj.IsConverted = False
         return None
@@ -288,9 +292,14 @@ class vhdl_converter_base:
             primary.hdl_conversion__.MissingTemplate=True
             astParser.Missing_template = True
             return None
+        print("use function of template ",name)
         call_func = call_obj["call_func"]
         if call_func:
-            return call_func(obj, name, args, astParser)
+            return call_func(obj, name, args, astParser, call_obj["func_args"])
+
+        primary.hdl_conversion__.MissingTemplate=True
+        astParser.Missing_template = True
+        return None
 
         if name =="Connect":
             return str(obj)
@@ -467,12 +476,16 @@ class vhdl_base(vhdl_base0):
             self._writtenRead = InOut_t.input_t
         elif self._writtenRead == InOut_t.output_t:
             self._writtenRead = InOut_t.InOut_tt
+        elif self._writtenRead == InOut_t.Used_t:
+            self._writtenRead = InOut_t.input_t
 
     def _add_output(self):
         if self._writtenRead == InOut_t.Internal_t:
             self._writtenRead = InOut_t.output_t
         elif self._writtenRead == InOut_t.input_t:
             self._writtenRead = InOut_t.InOut_tt
+        elif self._writtenRead == InOut_t.Used_t:
+            self._writtenRead = InOut_t.output_t
 
     def _add_used(self):
         if self._writtenRead == InOut_t.Internal_t:

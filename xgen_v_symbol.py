@@ -129,6 +129,10 @@ class v_symbol_converter(vhdl_converter_base):
 
     def _vhdl__reasign(self, obj, rhs, context=None):
         obj._add_output()
+        target = str(obj)
+        if obj.varSigConst == varSig.signal_t:
+            target = target.replace(".","_")
+
         if issubclass(type(rhs),vhdl_base0)  and str( obj.__Driver__) != 'process':
             obj.__Driver__ = rhs
         
@@ -139,32 +143,32 @@ class v_symbol_converter(vhdl_converter_base):
         
         if obj.type == "std_logic":
             if issubclass(type(rhs),vhdl_base0):
-                return str(obj) + asOp + str(rhs.hdl_conversion__._vhdl__getValue(rhs, obj.type)) 
+                return target + asOp + str(rhs.hdl_conversion__._vhdl__getValue(rhs, obj.type)) 
             
-            return str(obj) + asOp+  str(rhs) 
+            return target + asOp+  str(rhs) 
         elif "std_logic_vector" in obj.type:
             if str(rhs) == '0':
-                return str(obj) + asOp+ " (others => '0')"
+                return target + asOp+ " (others => '0')"
             elif  issubclass(type(rhs),vhdl_base):
-                return str(obj) + asOp +  str(rhs.hdl_conversion__._vhdl__getValue(rhs, obj.type)) 
+                return target + asOp +  str(rhs.hdl_conversion__._vhdl__getValue(rhs, obj.type)) 
             elif  type(rhs).__name__=="v_Num":
                 return  """{dest} {asOp} std_logic_vector(to_unsigned({src}, {dest}'length))""".format(
-                    dest=str(obj),
+                    dest=target,
                     src = str(rhs.value),
                     asOp=asOp
                 )
         elif obj.type == "integer":
             if str(rhs) == '0':
-                return str(obj) + asOp+ " 0"
+                return target + asOp+ " 0"
             elif type(rhs).__name__ == "str":
-                return str(obj) + asOp+ str(rhs)
+                return target + asOp+ str(rhs)
                 
             elif rhs.type == "integer":
-                return str(obj) + asOp+ str(rhs)
+                return target + asOp+ str(rhs)
             elif "std_logic_vector" in rhs.type:
-                return str(obj) + asOp +" to_integer(signed("+ str(rhs)+"))"
+                return target + asOp +" to_integer(signed("+ str(rhs)+"))"
 
-        return str(obj) +asOp +  str(rhs)
+        return target +asOp +  str(rhs)
     
     def get_type_simple(self,obj):
         ret = obj.type
@@ -240,9 +244,13 @@ class v_symbol(vhdl_base):
 
     def to_arglist(self,name,parent):
         inoutstr = self.hdl_conversion__.InOut_t2str(self)
+        varSigstr = ""
+        if self.varSigConst == varSig.signal_t:
+            varSigstr = "signal "
+
         if not inoutstr:
             inoutstr = ""
-        return name + " : " + inoutstr +" " + self.getType()
+        return varSigstr + name + " : " + inoutstr +" " + self.getType()
 
     def set_vhdl_name(self,name, Overwrite = False):
         if self.vhdl_name and self.vhdl_name != name and Overwrite==False:

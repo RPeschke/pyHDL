@@ -391,12 +391,11 @@ class v_funDef(v_ast_base):
 
 def body_unfold_functionDef(astParser,Node):
     astParser.FuncArgs.append(
-                   {
-                    "name":Node.name,
-                    "symbol": Node.name,
-                    "ScopeType": ""
-
-                }
+        {
+            "name":Node.name,
+            "symbol": Node.name,
+            "ScopeType": ""
+        }
     )
     if isDecoratorName(Node.decorator_list, "process" ):
         return body_unfold_porcess(astParser,Node)
@@ -596,7 +595,7 @@ def  body_unfold_assign(astParser,Node):
 
     for x in astParser.Archetecture_vars:
         if x["name"] == Node.targets[0].id:
-            x["symbol"].set_vhdl_name(Node.targets[0].id)
+            x["symbol"].set_vhdl_name(Node.targets[0].id,True)
             return v_noop()
     for x in astParser.LocalVar:
         if Node.targets[0].id in x.vhdl_name:
