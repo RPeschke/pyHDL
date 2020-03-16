@@ -232,12 +232,9 @@ class v_class_converter(vhdl_converter_base):
         else:
             inout = " in "
             isEmpty = obj.pull.isEmpty
+       
+        argumentList =  obj.hdl_conversion__.getMemberArgs(obj, InOut_Filter,inout,suffix="_a",IncludeSelf = True).strip()
 
-        selfarg = obj.hdl_conversion__.get_self_func_name(obj,suffix="_a")
-        
-        argumentList =  obj.hdl_conversion__.getMemberArgs(obj, InOut_Filter,inout,suffix="_a").strip()
-        if argumentList:
-            selfarg += "; " +argumentList
         
         xs = obj.hdl_conversion__.extract_conversion_types(obj ,filter_inout=InOut_t.Internal_t)
         content = []
@@ -261,7 +258,7 @@ class v_class_converter(vhdl_converter_base):
             )
 
             
-        ret        = v_procedure(name=procedureName, argumentList=selfarg , body='''
+        ret        = v_procedure(name=procedureName, argumentList=argumentList , body='''
         for i in 0 to self'length - 1 loop
         {PushPull}({selfargout} {args});
         end loop;
@@ -294,6 +291,7 @@ class v_class_converter(vhdl_converter_base):
         beforeConnecting = ""
         AfterConnecting = ""
         classType = obj.getType(InOut_Filter)
+        isFreeFunction = False
         
         if PushPull== "push":
             beforeConnecting = obj.hdl_conversion__.getBody_onPush(obj)
@@ -308,7 +306,8 @@ class v_class_converter(vhdl_converter_base):
             ClassName="IO_data"
             argumentList = "signal " + ClassName +" : " + inout+ classType
         else:
-            argumentList = obj.hdl_conversion__.getMemberArgs(obj, InOut_Filter,inout)
+            argumentList = obj.hdl_conversion__.getMemberArgs(obj, InOut_Filter,inout,IncludeSelf = True)
+            isFreeFunction = True
 
         Connecting = obj.hdl_conversion__.getMemeber_Connect(obj, InOut_Filter,PushPull, ClassName)
         IsEmpty=len(Connecting.strip()) == 0 and len(beforeConnecting.strip()) == 0 and  len(AfterConnecting.strip()) == 0
@@ -323,7 +322,8 @@ class v_class_converter(vhdl_converter_base):
                Connecting = Connecting,
                AfterConnecting=AfterConnecting
             ),
-            IsEmpty=IsEmpty
+            IsEmpty=IsEmpty,
+            isFreeFunction=isFreeFunction
             )
         
         return ret
@@ -497,9 +497,18 @@ class v_class_converter(vhdl_converter_base):
             
         return members_args
 
-    def getMemberArgs(self,obj, InOut_Filter,InOut,suffix=""):
-        members = obj.getMember(InOut_Filter) 
+    def getMemberArgs(self,obj, InOut_Filter,InOut,suffix="", IncludeSelf =False):
         members_args = []
+        
+        if IncludeSelf:
+            xs = obj.hdl_conversion__.extract_conversion_types(obj )
+            for x in xs:
+                varsig = " "
+                if x["symbol"].varSigConst == varSig.signal_t :
+                    varsig = " signal "  
+                members_args.append(varsig + "self" + x["suffix"]  + " : " + InOut + " "  + x["symbol"].getType()+suffix)
+        
+        members = obj.getMember(InOut_Filter) 
        
         for i in members:
             n_connector = _get_connector( i["symbol"])

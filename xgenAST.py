@@ -372,12 +372,7 @@ class xgenAST:
             ArglistLocal = copy.deepcopy(Arglist)
             
             ret = self.extractFunctionsForClass_impl(ClassInstance, parent, f, Arglist )
-            def call_func(obj, name, args, astParser=None,func_args=None):
-                args_str = [ x.vhdl_name for x in args]
-                args_str = [str(obj)] + args_str
-                ret = join_str(args_str, Delimeter=", ", start= name+"(" ,end=")")
-                print(ret)
-                return ret
+
             if ret:
                 print("asdasd")
                 ClassInstance.hdl_conversion__.MemfunctionCalls.append(
@@ -399,22 +394,7 @@ class xgenAST:
                     ret = self.extractFunctionsForClass_impl(ClassInstance, parent, f, newArglist )
                     
                    
-                    def call_func(obj, name, args, astParser=None,func_args=None):
-                        ret = []
-                        args1 = func_args
-                        arg = [obj] + args
-                        i = 0
-                        for x in args1:
-                            ys =x["symbol"].hdl_conversion__.extract_conversion_types(x["symbol"])
-                            for y in ys:
-                                line = x["name"] + y["suffix"]+ " => " + arg[i].vhdl_name + y["suffix"]
-                                ret.append(line)
-                            i+=1 
 
-
-                        ret = join_str(ret, Delimeter=", ", start= name+"(" ,end=")")
-                        print(ret)
-                        return ret
 
 
                     temp["call_func"] = call_func
@@ -498,3 +478,27 @@ class xgenAST:
                     "symbol": inArg
                 }
 
+def call_func(obj, name, args, astParser=None,func_args=None):
+    ret = []
+    args1 = func_args
+    arg = [obj] + args
+    i = 0
+    for x in args1:
+        ys =x["symbol"].hdl_conversion__.extract_conversion_types(x["symbol"])
+        for y in ys:
+            line = x["name"] + y["suffix"]+ " => " + arg[i].vhdl_name + y["suffix"]
+            ret.append(line)
+            if y["symbol"].varSigConst ==varSig.signal_t:
+                members = y["symbol"].getMember()
+                for m in members:
+                    if m["symbol"]._writtenRead == InOut_t.output_t:
+                        line = x["name"] + y["suffix"]+"_"+ m["name"] +" => " + arg[i].vhdl_name + y["suffix"]  +"."+m["name"]
+                        ret.append(line)
+                        #print(line)
+            
+        i+=1 
+
+
+    ret = join_str(ret, Delimeter=", ", start= name+"(" ,end=")")
+    print(ret)
+    return ret

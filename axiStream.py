@@ -65,7 +65,12 @@ class axisStream_slave_converter(axisStream_converter):
         super().__init__()
 
     def _vhdl__to_bool(self, obj, astParser):
-        return "isReceivingData(" + str(obj) + ") "
+        hdl = obj.hdl_conversion__._vhdl__call_member_func(obj, "isReceivingData",[],astParser)
+
+        if hdl == None:
+            astParser.Missing_template=True
+            return "-- $$ template missing $$"
+        return hdl
 
     def _vhdl__getValue(self,obj, ReturnToObj=None,astParser=None):
 
@@ -78,10 +83,15 @@ class axisStream_slave_converter(axisStream_converter):
             astParser.LocalVar.append(buff)
 
 
-        obj.hdl_conversion__._vhdl__call_member_func(obj, "read_data",[buff],astParser)
+        hdl = obj.hdl_conversion__._vhdl__call_member_func(obj, "read_data",[buff],astParser)
+        if hdl == None:
+            astParser.AddStatementBefore("-- $$ template missing $$")
+            astParser.Missing_template=True
+            return buff
 
 
-        astParser.AddStatementBefore("read_data(" +str(obj) +", " +str(buff) +' ) ')
+
+        astParser.AddStatementBefore(hdl)
         return buff
 
     def includes(self,obj, name,parent):
