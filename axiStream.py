@@ -65,7 +65,7 @@ class axisStream_slave_converter(axisStream_converter):
         super().__init__()
 
     def _vhdl__to_bool(self, obj, astParser):
-        hdl = obj.hdl_conversion__._vhdl__call_member_func(obj, "isReceivingData",[],astParser)
+        hdl = obj.hdl_conversion__._vhdl__call_member_func(obj, "isReceivingData",[obj],astParser)
 
         if hdl == None:
             astParser.Missing_template=True
@@ -83,7 +83,7 @@ class axisStream_slave_converter(axisStream_converter):
             astParser.LocalVar.append(buff)
 
 
-        hdl = obj.hdl_conversion__._vhdl__call_member_func(obj, "read_data",[buff],astParser)
+        hdl = obj.hdl_conversion__._vhdl__call_member_func(obj, "read_data",[obj, buff],astParser)
         if hdl == None:
             astParser.AddStatementBefore("-- $$ template missing $$")
             astParser.Missing_template=True
@@ -180,14 +180,14 @@ class axisStream_master_converter(axisStream_converter):
         super().__init__()
 
     def _vhdl__to_bool(self, obj, astParser):
-        ret =  obj.hdl_conversion__._vhdl__call_member_func(obj, "ready_to_send",[],astParser)
+        ret =  obj.hdl_conversion__._vhdl__call_member_func(obj, "ready_to_send",[obj],astParser)
         if ret == None:
             astParser.Missing_template=True
             return "$$missing_template$$"
         return ret
     
     def _vhdl__reasign(self,obj, rhs,astParser):
-        ret =  obj.hdl_conversion__._vhdl__call_member_func(obj, "send_data",[rhs],astParser)
+        ret =  obj.hdl_conversion__._vhdl__call_member_func(obj, "send_data",[obj, rhs],astParser)
         if ret == None:
             astParser.Missing_template=True
             return "$$missing_template$$"

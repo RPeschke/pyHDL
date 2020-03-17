@@ -618,7 +618,15 @@ class v_class_converter(vhdl_converter_base):
                         suffix = "_s2m"
 
                     return obj.get_vhdl_name() + suffix + "." +   attName
-        xs = obj.hdl_conversion__.extract_conversion_types(obj)
+        
+        if obj.varSigConst == varSig.combined_t:
+            xs = obj.hdl_conversion__.extract_conversion_types(obj)
+        else:
+            xs =[{
+                'suffix' : "",
+                'symbol' : obj
+            }]
+            
         for x in xs:
             for y in x["symbol"].getMember():
                 if y["name"] == attName:
@@ -629,15 +637,21 @@ class v_class_converter(vhdl_converter_base):
         return obj.get_vhdl_name() + "." +str(attName)
    
     def get_process_header(self,obj):
+
+        
+        ret = ""
         if obj.Inout != InOut_t.Internal_t:
             return ""
         
-        if obj.varSigConst != varSig.variable_t:
-            return ""
+        xs = obj.hdl_conversion__.extract_conversion_types(obj)
+        for x in xs:
+            if x["symbol"].varSigConst != varSig.variable_t:
+                continue
 
-        VarSymb = get_varSig(obj.varSigConst)
+            VarSymb = get_varSig(x["symbol"].varSigConst)
+            ret += VarSymb +" " +str(x["symbol"]) + " : " +x["symbol"].type +" := " + x["symbol"].type +"_null;\n"
 
-        return VarSymb +" " +str(obj) + " : " +obj.type +" := " + obj.type +"_null;\n"
+        return ret
 
     def get_NameMaster(self,obj):
         return obj.type + "_master"
@@ -713,6 +727,7 @@ class v_class_converter(vhdl_converter_base):
             x.__vetoHDLConversion__  = True
             x.Inout= obj.Inout
             x._writtenRead = obj._writtenRead
+            x.vhdl_name = obj.vhdl_name
             ys= obj.getMember(VaribleSignalFilter=varSig.variable_t)
             if len(ys)>0:
                 for y in ys: 
@@ -1117,7 +1132,7 @@ class v_class_master(v_class):
         self.__vectorPush__   = True
         self.__vectorPull__   = True
         self.__v_classType__  = v_classType_t.Master_t
-        self.varSigConst       = varSig.variable_t
+        self.varSigConst       = varSig.combined_t
 
 
 class v_class_slave(v_class):
@@ -1127,7 +1142,7 @@ class v_class_slave(v_class):
         self.__vectorPush__   = True
         self.__vectorPull__   = True
         self.__v_classType__  = v_classType_t.Slave_t
-        self.varSigConst       = varSig.variable_t
+        self.varSigConst       = varSig.combined_t
 
 
 def get_master(transObj):

@@ -745,7 +745,7 @@ def body_unfold_call(astParser,Node):
         
 
         r = v_copy(to_v_object(r))
-        vhdl = obj.hdl_conversion__._vhdl__call_member_func(obj, memFunc,args,astParser)
+        vhdl = obj.hdl_conversion__._vhdl__call_member_func(obj, memFunc,[obj]+ args,astParser)
         if vhdl == None:
             astParser.Missing_template=True
             vhdl = "$$missing Template$$"

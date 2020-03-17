@@ -62,7 +62,7 @@ def GetNewArgList(FunctionName , FunctionArgs,TemplateDescription):
     if FunctionName != TemplateDescription["name"]:
         return None
     localArgs = copy.copy(FunctionArgs)#deepcopy
-    for x,y in zip(localArgs[1:],TemplateDescription["args"]):
+    for x,y in zip(localArgs,TemplateDescription["args"]):
         #print(x,y)
         if x["symbol"] == None or x["symbol"].type != y.type or x['symbol'].varSigConst != y.varSigConst:
             #y.Inout =  x["symbol"].Inout
@@ -382,7 +382,7 @@ class xgenAST:
                 ClassInstance.hdl_conversion__.MemfunctionCalls.append(
                     {
                         "name" : f.name,
-                        "args": [],
+                        "args":  [x["symbol"] for x in   Arglist[0:len(ArglistLocal)]],
                         "self" :ClassInstance,
                         "call_func" : call_func,
                         "func_args" :Arglist[0:len(ArglistLocal)] #deepcopy
@@ -405,7 +405,8 @@ class xgenAST:
                     temp["func_args"] = newArglist[0: len(FuncArgsLocal1)] #deepcopy
 
                     print("create function for template ",f.name)
-                    yield ret 
+                    if ret:
+                        yield ret 
 
 
 

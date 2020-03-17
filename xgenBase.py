@@ -163,11 +163,13 @@ class vhdl_converter_base:
 
                 packetName =  x.hdl_conversion__.get_packet_file_name(x)
                 if packetName not in FilesDone:
+                    print("<"+type(x).__name__ +">")
                     x.hdl_conversion__.reset_TemplateMissing(x)
                     packet = x.hdl_conversion__.get_packet_file_content(x)
                     if packet:
                         file_set_content(ouputFolder+"/" +packetName,packet)
                     FilesDone.append(packetName)
+                    print("</"+ type(x).__name__, x.hdl_conversion__.MissingTemplate, ">")
                     #print(type(x).__name__)
                     #print("processing")
                     
@@ -295,7 +297,7 @@ class vhdl_converter_base:
         obj.IsConverted = False
         return None
     def _vhdl__call_member_func(self, obj, name, args, astParser=None):
-        args = [obj] + args
+        
         primary = obj.hdl_conversion__.get_primary_object(obj)
         if  primary is not obj:
             return primary.hdl_conversion__._vhdl__call_member_func( primary, name, args, astParser)
@@ -306,6 +308,7 @@ class vhdl_converter_base:
         if call_obj == None:
             primary.hdl_conversion__.MissingTemplate=True
             astParser.Missing_template = True
+            print("Missing Template",name)
             return None
         print("use function of template ",name)
         call_func = call_obj["call_func"]
@@ -595,6 +598,7 @@ class varSig(Enum):
     signal_t =2 
     const_t =3
     reference_t = 4
+    combined_t = 5
 
 v_defaults ={
 "defVarSig" : varSig.variable_t
