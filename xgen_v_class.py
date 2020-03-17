@@ -236,7 +236,7 @@ class v_class_converter(vhdl_converter_base):
         argumentList =  obj.hdl_conversion__.getMemberArgs(obj, InOut_Filter,inout,suffix="_a",IncludeSelf = True).strip()
 
         
-        xs = obj.hdl_conversion__.extract_conversion_types(obj ,filter_inout=InOut_t.Internal_t)
+        xs = obj.hdl_conversion__.extract_conversion_types(obj )
         content = []
              
 
@@ -504,9 +504,11 @@ class v_class_converter(vhdl_converter_base):
             xs = obj.hdl_conversion__.extract_conversion_types(obj )
             for x in xs:
                 varsig = " "
+                self_InOut = " inout "
                 if x["symbol"].varSigConst == varSig.signal_t :
-                    varsig = " signal "  
-                members_args.append(varsig + "self" + x["suffix"]  + " : " + InOut + " "  + x["symbol"].getType()+suffix)
+                    varsig = " signal "
+                    self_InOut = " in "  
+                members_args.append(varsig + "self" + x["suffix"]  + " : " + self_InOut + " "  + x["symbol"].getType()+suffix)
         
         members = obj.getMember(InOut_Filter) 
        

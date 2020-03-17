@@ -157,7 +157,7 @@ def profile(fnc):
 
     return inner
 
-@profile
+#@profile
 def main():
     tb  =v_create(InputDelay_tb())
     #gsimulation.run_timed(tb, 1000,"InputDelay_tb.vcd")

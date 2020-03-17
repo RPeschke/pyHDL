@@ -229,6 +229,7 @@ class xgenAST:
         cl = self.getClassByName(ClassName)
         for f in cl.body:
             self.Missing_template = False
+            ClassInstance.hdl_conversion__.reset_TemplateMissing(ClassInstance)
             self.local_function ={}
             if  f.name in self.functionNameVetoList:
                 continue
@@ -253,10 +254,13 @@ class xgenAST:
             body = self.Unfold_body(f)  ## get local vars 
 
             if self.Missing_template == True:
+                ClassInstance.hdl_conversion__.FlagFor_TemplateMissing(ClassInstance)
                 ClassInstance.hdl_conversion__.MissingTemplate = True
             else:
                 proc = v_Arch(body=body,Symbols=self.LocalVar, Arch_vars=self.Archetecture_vars,ports=ClassInstance.getMember())
                 ClassInstance.__processList__.append(proc)
+
+            return self
 
     def extractFunctionsForEntity(self, ClassInstance, parent):
         ClassName  = type(ClassInstance).__name__
@@ -353,7 +357,7 @@ class xgenAST:
             if  f.name in self.functionNameVetoList:
                 continue
            
-            print(f.name)
+            #print(f.name)
             #print(ClassInstance.hdl_conversion__.MemfunctionCalls)
 
             
@@ -374,7 +378,7 @@ class xgenAST:
             ret = self.extractFunctionsForClass_impl(ClassInstance, parent, f, Arglist )
 
             if ret:
-                print("asdasd")
+                #print("asdasd")
                 ClassInstance.hdl_conversion__.MemfunctionCalls.append(
                     {
                         "name" : f.name,
@@ -481,18 +485,17 @@ class xgenAST:
 def call_func(obj, name, args, astParser=None,func_args=None):
     ret = []
     args1 = func_args
-    arg = [obj] + args
     i = 0
     for x in args1:
         ys =x["symbol"].hdl_conversion__.extract_conversion_types(x["symbol"])
         for y in ys:
-            line = x["name"] + y["suffix"]+ " => " + arg[i].vhdl_name + y["suffix"]
+            line = x["name"] + y["suffix"]+ " => " + args[i].vhdl_name + y["suffix"]
             ret.append(line)
             if y["symbol"].varSigConst ==varSig.signal_t:
                 members = y["symbol"].getMember()
                 for m in members:
                     if m["symbol"]._writtenRead == InOut_t.output_t:
-                        line = x["name"] + y["suffix"]+"_"+ m["name"] +" => " + arg[i].vhdl_name + y["suffix"]  +"."+m["name"]
+                        line = x["name"] + y["suffix"]+"_"+ m["name"] +" => " + args[i].vhdl_name + y["suffix"]  +"."+m["name"]
                         ret.append(line)
                         #print(line)
             
@@ -500,5 +503,5 @@ def call_func(obj, name, args, astParser=None,func_args=None):
 
 
     ret = join_str(ret, Delimeter=", ", start= name+"(" ,end=")")
-    print(ret)
+    #print(ret)
     return ret

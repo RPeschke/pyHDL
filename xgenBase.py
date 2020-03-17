@@ -126,8 +126,20 @@ class vhdl_converter_base:
         self.IsConverted = False
         self.MissingTemplate = False
 
+    def FlagFor_TemplateMissing(self, obj):
+        primary = obj.hdl_conversion__.get_primary_object(obj)
+        primary.hdl_conversion__.MissingTemplate  = True
+
+    def reset_TemplateMissing(self, obj):
+        primary = obj.hdl_conversion__.get_primary_object(obj)
+        primary.hdl_conversion__.MissingTemplate  = False  
+
+    def isTemplateMissing(self,obj):
+        primary = obj.hdl_conversion__.get_primary_object(obj)
+        return primary.hdl_conversion__.MissingTemplate  == True  
+
     def IsSucessfullConverted(self,obj):
-        if self.MissingTemplate:
+        if obj.hdl_conversion__.isTemplateMissing(obj):
             return False
         return self.IsConverted
 
@@ -151,6 +163,7 @@ class vhdl_converter_base:
 
                 packetName =  x.hdl_conversion__.get_packet_file_name(x)
                 if packetName not in FilesDone:
+                    x.hdl_conversion__.reset_TemplateMissing(x)
                     packet = x.hdl_conversion__.get_packet_file_content(x)
                     if packet:
                         file_set_content(ouputFolder+"/" +packetName,packet)
@@ -162,11 +175,13 @@ class vhdl_converter_base:
                 entiyFileName =  x.hdl_conversion__.get_entity_file_name(x)
 
                 if entiyFileName not in FilesDone:
+                    print("<"+type(x).__name__ +">")
+                    x.hdl_conversion__.reset_TemplateMissing(x)
                     entity_content = x.hdl_conversion__.get_enity_file_content(x)
                     if entity_content:
                         file_set_content(ouputFolder+"/" +entiyFileName,entity_content)
                     FilesDone.append(entiyFileName)
-                    #print(type(x).__name__)
+                    print("</"+ type(x).__name__, x.hdl_conversion__.MissingTemplate, ">")
                     #print("processing")
                 
                 x.hdl_conversion__.IsConverted = True
@@ -280,7 +295,7 @@ class vhdl_converter_base:
         obj.IsConverted = False
         return None
     def _vhdl__call_member_func(self, obj, name, args, astParser=None):
-        
+        args = [obj] + args
         primary = obj.hdl_conversion__.get_primary_object(obj)
         if  primary is not obj:
             return primary.hdl_conversion__._vhdl__call_member_func( primary, name, args, astParser)

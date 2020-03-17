@@ -182,12 +182,14 @@ class axisStream_master_converter(axisStream_converter):
     def _vhdl__to_bool(self, obj, astParser):
         ret =  obj.hdl_conversion__._vhdl__call_member_func(obj, "ready_to_send",[],astParser)
         if ret == None:
+            astParser.Missing_template=True
             return "$$missing_template$$"
         return ret
     
     def _vhdl__reasign(self,obj, rhs,astParser):
         ret =  obj.hdl_conversion__._vhdl__call_member_func(obj, "send_data",[rhs],astParser)
         if ret == None:
+            astParser.Missing_template=True
             return "$$missing_template$$"
         return ret
 
