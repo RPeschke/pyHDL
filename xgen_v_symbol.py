@@ -127,11 +127,14 @@ class v_symbol_converter(vhdl_converter_base):
 
 
 
-    def _vhdl__reasign(self, obj, rhs, context=None):
+    def _vhdl__reasign(self, obj, rhs, context=None,context_str=None):
         obj._add_output()
         target = str(obj)
-        if obj.varSigConst == varSig.signal_t:
-            target = target.replace(".","_")
+        if context_str and context_str == "archetecture":
+            pass
+        else:
+            if obj.varSigConst == varSig.signal_t:
+                target = target.replace(".","_")
 
         if issubclass(type(rhs),vhdl_base0)  and str( obj.__Driver__) != 'process':
             obj.__Driver__ = rhs
@@ -220,6 +223,11 @@ class v_symbol(vhdl_base):
         self.__vcd_varobj__ = None
         self.__vcd_writer__ = None
         self.__UpdateFlag__ = False
+
+    def __deepcopy__(self, memodict={}):
+        ret = v_symbol(self.type, self.value,Inout = self.Inout, varSigConst=self.varSigConst)
+        ret.vhdl_name =self.vhdl_name
+        return ret
 
     def length(self):
         return str(self)+"'length"

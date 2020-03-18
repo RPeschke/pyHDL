@@ -35,6 +35,8 @@ def to_v_object(ObjIn):
     elif type(ObjIn).__name__ == 'v_call':
         return ObjIn.symbol
 
+    elif type(ObjIn).__name__ == "v_named_C":
+        return to_v_object(ObjIn.Value)
 
 
 

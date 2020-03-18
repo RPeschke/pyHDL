@@ -131,7 +131,7 @@ class v_class_converter(vhdl_converter_base):
 
         funlist =[]
         for x in reversed(obj.hdl_conversion__.__ast_functions__):
-            if x.name.lower() == "_onpull" or x.name.lower() == "_onpush":
+            if "_onpull" in x.name.lower()  or "_onpush" in x.name.lower() :
                 continue
             funDeclaration = x.hdl_conversion__.getHeader(x,None,None)
             if funDeclaration in funlist:
@@ -275,13 +275,13 @@ class v_class_converter(vhdl_converter_base):
 
     def getBody_onPush(self, obj):
         for x in obj.hdl_conversion__.__ast_functions__:
-            if x.name.lower() == "_onpush":
+            if "_onpush" in x.name.lower():
                 return x.body
         return ""
 
     def getBody_onPull(self, obj):
         for x in obj.hdl_conversion__.__ast_functions__:
-            if x.name.lower() == "_onpull":
+            if  "_onpull" in x.name.lower() :
                 return x.body
         return ""
 
@@ -344,7 +344,7 @@ class v_class_converter(vhdl_converter_base):
         content2 =  [
             x.hdl_conversion__.getBody(x,None,None) 
             for x in obj.hdl_conversion__.__ast_functions__ 
-            if not (x.name.lower() == "_onpull" or x.name.lower() == "_onpush")
+            if not ("_onpull" in x.name.lower()   or  "_onpush" in x.name.lower() )
         ]
 
 
@@ -551,7 +551,7 @@ class v_class_converter(vhdl_converter_base):
         return ret      
          
  
-    def _vhdl__reasign(self, obj, rhs, context=None):
+    def _vhdl__reasign(self, obj, rhs, context=None,context_str=None):
         
         asOp = obj.hdl_conversion__.get_assiment_op(obj)
 

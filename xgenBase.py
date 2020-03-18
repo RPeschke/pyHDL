@@ -110,13 +110,29 @@ def make_unique_includes(incs,exclude=None):
 
 
 
+def get_type(symbol):
+    if issubclass(type(symbol), vhdl_base0):
+        return symbol.get_type()
     
+    if symbol["symbol"] == None:
+        return "None"
+    return symbol["symbol"].get_type()
+
+def get_symbol(symbol):
+    if issubclass(type(symbol), vhdl_base0):
+        return symbol.get_symbol()
+    
+    if symbol["symbol"] == None:
+        return None
+    return symbol["symbol"].get_symbol()
     
 def isSameArgs(args1,args2):
     if len(args1) != len(args2):
         return False
     for i in range(len(args1)):
-        if args1[i].get_type() != args2[i].get_type():
+        if get_type(args1[i]) != get_type( args2[i]):
+            return False
+        if get_symbol(args1[i]).varSigConst != get_symbol(args2[i]).varSigConst:
             return False
     return True  
 class vhdl_converter_base:
@@ -423,11 +439,19 @@ class vhdl_converter_base:
 class vhdl_base0:
     def __init__(self):
         super().__init__()
-        gHDL_objectList.append(self)
+        if not isConverting2VHDL():
+            gHDL_objectList.append(self)
         self._isInstance = False
         self.hdl_conversion__ = vhdl_converter_base()
         self.__Driver__ = None
         self.__receiver__ = []
+
+    def _remove_connections(self):
+        self.__Driver__ = None
+        self.__receiver__ = []
+        xs = self.getMember()
+        for x in xs:
+            x["symbol"]._remove_connections()
 
     def getMember(self,InOut_Filter=None, VaribleSignalFilter = None):
         return []
@@ -788,4 +812,8 @@ def v_copy(symbol,varSig=None):
 
 
 
+import ujson
+def v_deepcopy(symbol):
 
+    g =ujson.loads(ujson.dumps(symbol))
+    return g

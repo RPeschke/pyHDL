@@ -1,6 +1,6 @@
 import ast
 import os,sys,inspect
-
+import time
 
 import os,sys,inspect
 if __name__== "__main__":
@@ -14,6 +14,42 @@ else:
     from .xgenBase import *
     from .xgenAST_Classes import *
     from .xgen_v_function import *
+
+
+import cProfile, pstats, io
+
+
+
+def profile(fnc):
+    
+    """A decorator that uses cProfile to profile a function"""
+    
+    def inner(*args, **kwargs):
+        
+        pr = cProfile.Profile()
+        pr.enable()
+        retval = fnc(*args, **kwargs)
+        pr.disable()
+        s = io.StringIO()
+        sortby = 'cumulative'
+        ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
+        ps.print_stats()
+        print(s.getvalue())
+        return retval
+
+    return inner
+
+
+def checkIfFunctionexists(cl_instant, name, funcArg ):
+    for x in cl_instant.hdl_conversion__.MemfunctionCalls:
+        if x["name"] != name:
+            continue
+        
+        if not isSameArgs(x["args"] ,funcArg):
+            continue
+        return True
+    
+    return False
 
 
 def check_if_subclasses(BaseNames,baseclasses):
@@ -56,18 +92,27 @@ def AddDataType(dType,Name=""):
         }
     )
 
+
 def GetNewArgList(FunctionName , FunctionArgs,TemplateDescription):
     ret = None
     
     if FunctionName != TemplateDescription["name"]:
         return None
-    localArgs = copy.copy(FunctionArgs)#deepcopy
+    localArgs = copy.copy(FunctionArgs) #deepcopy
     for x,y in zip(localArgs,TemplateDescription["args"]):
         #print(x,y)
         if x["symbol"] == None or x["symbol"].type != y.type or x['symbol'].varSigConst != y.varSigConst:
             #y.Inout =  x["symbol"].Inout
             y.set_vhdl_name(x["name"],True)
-            x["symbol"] = y
+            
+            x["symbol"] = copy.deepcopy(y)
+            x["symbol"]._writtenRead  = InOut_t.Internal_t
+            x["symbol"].Inout  = InOut_t.Internal_t
+            mem = x["symbol"].getMember()
+            for m in mem:
+                m["symbol"]._writtenRead  = InOut_t.Internal_t
+                m["symbol"].Inout  = InOut_t.Internal_t
+            
 
             ret = localArgs
 
@@ -317,7 +362,7 @@ class xgenAST:
             proc = v_process(body=body, SensitivityList=b.dec[0].get_sensitivity_list(),prefix=b.dec[0].get_prefix(), VariableList=header)
             ClassInstance.__processList__.append(proc)
             
-
+    
     def extractFunctionsForClass_impl(self, ClassInstance,parent, funcDef, FuncArgs ):
 
             for x in FuncArgs:
@@ -330,7 +375,14 @@ class xgenAST:
             self.LocalVar = list()
             self.Archetecture_vars =[]
             FuncArgsLocal = copy.copy(FuncArgs)
-            
+            varSigSuffix = "_"
+            for x in FuncArgsLocal:
+                if x["symbol"].varSigConst == varSig.signal_t:
+                    varSigSuffix += "1"
+                else:
+                    varSigSuffix += "0"
+
+
             body = self.Unfold_body(funcDef)
 
             bodystr= str(body)
@@ -341,26 +393,35 @@ class xgenAST:
             
             if "return" in bodystr:
                 ArglistProcedure = ArglistProcedure.replace(" in "," ").replace(" out "," ").replace(" inout "," ")
-                ret = v_function(name=funcDef.name, body=bodystr,VariableList=self.get_local_var_def(), returnType=body.get_type(),argumentList=ArglistProcedure)
+                ret = v_function(name=funcDef.name+varSigSuffix, body=bodystr,VariableList=self.get_local_var_def(), returnType=body.get_type(),argumentList=ArglistProcedure)
             else:
-                ret = v_procedure(name=funcDef.name,body=bodystr,VariableList=self.get_local_var_def(), argumentList=ArglistProcedure)
+                ret = v_procedure(name=funcDef.name+varSigSuffix,body=bodystr,VariableList=self.get_local_var_def(), argumentList=ArglistProcedure)
             
             return ret
 
+    #@profile
     def extractFunctionsForClass(self,ClassInstance,parent ):
+        t = time.time()
+        index = 0
+        fun_ret = []
         primary = ClassInstance.hdl_conversion__.get_primary_object(ClassInstance)
         ClassInstance.hdl_conversion__ = primary.hdl_conversion__
         ClassInstance.hdl_conversion__.MissingTemplate = False
         ClassName  = type(ClassInstance).__name__
+        ClassInstance_local = copy.deepcopy(ClassInstance)
+        #ClassInstance_local._remove_connections()
+        
         cl = self.getClassByName(ClassName)
         for f in cl.body:
+            index += 1000
             if  f.name in self.functionNameVetoList:
                 continue
-           
-            #print(f.name)
+            
+            
+            print("start end create function for template", f.name)
             #print(ClassInstance.hdl_conversion__.MemfunctionCalls)
 
-            
+            ArglistLocal = []
             ClassInstance.set_vhdl_name ( "self",True)
             ClassInstance.Inout  = InOut_t.InOut_tt
             Arglist = []
@@ -373,42 +434,72 @@ class xgenAST:
                 }
             )
             Arglist += list(self.get_func_args_list(f))
-            ArglistLocal = copy.deepcopy(Arglist)
-            
-            ret = self.extractFunctionsForClass_impl(ClassInstance, parent, f, Arglist )
 
-            if ret:
-                #print("asdasd")
-                ClassInstance.hdl_conversion__.MemfunctionCalls.append(
+            exist = checkIfFunctionexists(ClassInstance,f.name , Arglist)
+            if exist == False:
+                print("is new Function", f.name)
+                len_Arglist = len(Arglist)
+
+                
+                ArglistLocal.append(
                     {
-                        "name" : f.name,
-                        "args":  [x["symbol"] for x in   Arglist[0:len(ArglistLocal)]],
-                        "self" :ClassInstance,
-                        "call_func" : call_func,
-                        "func_args" :Arglist[0:len(ArglistLocal)] #deepcopy
+                        "name":"self",
+                        "symbol": copy.deepcopy(ClassInstance),
+                        "ScopeType": InOut_t.InOut_tt
+
                     }
                 )
-                yield ret 
+                ArglistLocal += list(self.get_func_args_list(f))
+                
+                
+                ret = self.extractFunctionsForClass_impl(ClassInstance, parent, f, Arglist )
+                
+                
+                if ret:
+                    #print("asdasd")
+                    ClassInstance.hdl_conversion__.MemfunctionCalls.append(
+                        {
+                            "name" : f.name,
+                            "args":  [x["symbol"] for x in   Arglist[0:len_Arglist]],
+                            "self" :ClassInstance,
+                            "call_func" : call_func,
+                            "func_args" :Arglist[0:len_Arglist] #deepcopy
+                        }
+                    )
+                    fun_ret.append(ret )
+                
+            
+            
 
             for temp in ClassInstance.hdl_conversion__.MemfunctionCalls:
+                if temp["call_func"] != None:
+                    continue
+                
+                
+                index += 1
+                if len(ArglistLocal) == 0:
+                    ArglistLocal.append({
+                        "name":"self",
+                        "symbol": copy.deepcopy(ClassInstance),
+                        "ScopeType": InOut_t.InOut_tt
+
+                    })
+                    ArglistLocal += list(self.get_func_args_list(f))
                 newArglist = GetNewArgList(f.name, ArglistLocal, temp)
+
                 if newArglist != None:
-                    #print(f.name)
-                    FuncArgsLocal1 = copy.copy(ArglistLocal)
-                    ret = self.extractFunctionsForClass_impl(ClassInstance, parent, f, newArglist )
-                    
-                   
-
-
-
+                    print("is new template", f.name)
+                    index += 100000
+                    ret = self.extractFunctionsForClass_impl(ClassInstance_local, parent, f, newArglist )
                     temp["call_func"] = call_func
-                    temp["func_args"] = newArglist[0: len(FuncArgsLocal1)] #deepcopy
-
-                    print("create function for template ",f.name)
+                    temp["func_args"] = newArglist[0: len_Arglist] #deepcopy
+                    print("end create function for template ",f.name)
                     if ret:
-                        yield ret 
-
-
+                        fun_ret.append( ret )
+        
+        elapsed = time.time() - t
+        print ("extractFunctionsForClass", elapsed ,index)      
+        return fun_ret
 
     def Unfold_body(self,FuncDef):
         ftype = type(FuncDef).__name__
@@ -416,7 +507,9 @@ class xgenAST:
 
     def unfold_argList(self,x):
         x_type = type(x).__name__
-        return self._unfold_argList[x_type](self, x)
+        if x_type in self._unfold_argList:
+            return self._unfold_argList[x_type](self, x)
+        return self._Unfold_body[x_type](self,x)
 
     def getInstantByName(self,SymbolName):
         if issubclass(type(SymbolName),vhdl_base):
@@ -484,6 +577,12 @@ class xgenAST:
                 }
 
 def call_func(obj, name, args, astParser=None,func_args=None):
+    varSigSuffix = "_"
+    for x in args:
+        if x.get_symbol().varSigConst == varSig.signal_t:
+            varSigSuffix += "1"
+        else:
+            varSigSuffix += "0"
     ret = []
     args1 = func_args
     i = 0
@@ -503,6 +602,6 @@ def call_func(obj, name, args, astParser=None,func_args=None):
         i+=1 
 
 
-    ret = join_str(ret, Delimeter=", ", start= name+"(" ,end=")")
+    ret = join_str(ret, Delimeter=", ", start= name + varSigSuffix +"(" ,end=")")
     #print(ret)
     return ret

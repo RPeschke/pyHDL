@@ -31,6 +31,7 @@ class stream_delay_one(v_clk_entity):
                 axMaster << axiSalve
                 axMaster.Send_end_Of_Stream( eos )
                 axMaster.Send_end_Of_Stream( axiSalve.IsEndOfStream())
+                axMaster.Send_end_Of_Stream( )
 
         end_architecture()
 

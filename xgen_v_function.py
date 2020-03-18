@@ -213,7 +213,7 @@ class v_Arch_converter(vhdl_converter_base):
                 continue 
             if not list_is_in_list(x['symbol'].__Driver__, objList):
                 continue
-            ret += x['symbol'].hdl_conversion__._vhdl__reasign(x['symbol'],x['symbol'].__Driver__)  +";\n  "
+            ret += x['symbol'].hdl_conversion__._vhdl__reasign(x['symbol'],x['symbol'].__Driver__,context_str = "archetecture")  +";\n  "
 
         return ret
     def get_architecture_body(self, obj):

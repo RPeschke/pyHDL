@@ -76,7 +76,7 @@ class v_package(vhdl_base):
 
             for x in self.PackageContent:
                 if x._issubclass_("v_class"):
-                    fun= list(self.astTree.extractFunctionsForClass(x ,self ))
+                    fun= self.astTree.extractFunctionsForClass(x ,self )
                     for f in fun:
                         x.hdl_conversion__.__ast_functions__.append(f)
 

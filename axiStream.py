@@ -80,6 +80,7 @@ class axisStream_slave_converter(axisStream_converter):
         if buff == None:
             buff = v_copy(obj.rx.data)
             buff.vhdl_name = str(obj) + "_buff"
+            buff.varSigConst = varSig.variable_t
             astParser.LocalVar.append(buff)
 
 
@@ -225,7 +226,7 @@ class axisStream_master(v_class_master):
     def ready_to_send(self):
         return not self.tx.valid
 
-    def Send_end_Of_Stream(self, EndOfStream):
+    def Send_end_Of_Stream(self, EndOfStream=True):
         if EndOfStream:
             self.tx.last << 1
         else:
