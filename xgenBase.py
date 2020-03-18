@@ -292,7 +292,7 @@ class vhdl_converter_base:
     def _vhdl__reasign_type(self, obj ):
         return obj
 
-    def _vhdl__reasign(self, obj, rhs, context=None):
+    def _vhdl__reasign(self, obj, rhs, astParser=None,context_str=None):
         return str(obj) + " := " +  str(rhs)
 
     def get_get_call_member_function(self, obj, name, args):

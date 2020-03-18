@@ -187,7 +187,7 @@ class axisStream_master_converter(axisStream_converter):
             return "$$missing_template$$"
         return ret
     
-    def _vhdl__reasign(self,obj, rhs,astParser):
+    def _vhdl__reasign(self,obj, rhs,astParser,context_str=None):
         ret =  obj.hdl_conversion__._vhdl__call_member_func(obj, "send_data",[obj, rhs],astParser)
         if ret == None:
             astParser.Missing_template=True

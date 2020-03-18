@@ -127,14 +127,11 @@ class v_symbol_converter(vhdl_converter_base):
 
 
 
-    def _vhdl__reasign(self, obj, rhs, context=None,context_str=None):
+    def _vhdl__reasign(self, obj, rhs, astParser=None,context_str=None):
         obj._add_output()
         target = str(obj)
-        if context_str and context_str == "archetecture":
-            pass
-        else:
-            if obj.varSigConst == varSig.signal_t:
-                target = target.replace(".","_")
+        if obj.varSigConst == varSig.signal_t and not (context_str and (context_str == "archetecture" or context_str== "process")):
+            target = target.replace(".","_")
 
         if issubclass(type(rhs),vhdl_base0)  and str( obj.__Driver__) != 'process':
             obj.__Driver__ = rhs

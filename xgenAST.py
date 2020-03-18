@@ -362,7 +362,7 @@ class xgenAST:
             
     
     def extractFunctionsForClass_impl(self, ClassInstance,parent, funcDef, FuncArgs , setDefault = False ):
-
+            self.push_scope("function")
             for x in FuncArgs:
                 if x["symbol"] == None:
                     return None
@@ -384,17 +384,11 @@ class xgenAST:
             body = self.Unfold_body(funcDef)
 
             bodystr= str(body)
-            argList = [x["symbol"].to_arglist(x['name'],ClassName) for x in FuncArgsLocal]
+            argList = [x["symbol"].to_arglist(x['name'],ClassName, withDefault = setDefault and  (x["name"] != "self")) for x in FuncArgsLocal]
             ArglistProcedure = join_str(argList,Delimeter="; ")
             
 
-            ArglistProcedure_with_defautl = None
-            if setDefault:
-                argList = [
-                    x["symbol"].to_arglist(x['name'],ClassName, withDefault = x["name"] != "self")
-                    for x in FuncArgsLocal
-                ]
-                ArglistProcedure_with_defautl = join_str(argList,Delimeter="; ")            
+         
             
             if "return" in bodystr:
                 ArglistProcedure = ArglistProcedure.replace(" in "," ").replace(" out "," ").replace(" inout "," ")
@@ -403,18 +397,16 @@ class xgenAST:
                     body=bodystr,
                     VariableList=self.get_local_var_def(), 
                     returnType=body.get_type(),
-                    argumentList=ArglistProcedure,
-                    argumentListHeader = ArglistProcedure_with_defautl
+                    argumentList=ArglistProcedure
                 )
             else:
                 ret = v_procedure(
                     name=funcDef.name+varSigSuffix,
                     body=bodystr,
                     VariableList=self.get_local_var_def(), 
-                    argumentList=ArglistProcedure,
-                    argumentListHeader = ArglistProcedure_with_defautl
+                    argumentList=ArglistProcedure
                 )
-            
+            self.pop_scope()
             return ret
 
     #@profile

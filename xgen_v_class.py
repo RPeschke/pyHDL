@@ -551,7 +551,7 @@ class v_class_converter(vhdl_converter_base):
         return ret      
          
  
-    def _vhdl__reasign(self, obj, rhs, context=None,context_str=None):
+    def _vhdl__reasign(self, obj, rhs, astParser=None,context_str=None):
         
         asOp = obj.hdl_conversion__.get_assiment_op(obj)
 

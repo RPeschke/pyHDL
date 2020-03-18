@@ -774,9 +774,9 @@ def body_RShift(astParser,Node):
         rhs = rhs.hdl_conversion__._vhdl__reasign_type(rhs)
         lhs = lhs._vhdl__getValue(lhs,astParser)
         lhs >> rhs
-        return v_re_assigne(rhs, lhs,None,astParser)
+        return v_re_assigne(rhs, lhs,context=astParser.ContextName[-1],astParser=astParser)
 
-    var = astParser.get_variable(rhs.Value, Node)
+    var = astParser.get_variable(rhs.Value,context=astParser.ContextName[-1],astParser=astParser)
 
     return v_re_assigne(lhs, var,None, astParser)
 
@@ -793,7 +793,7 @@ class v_re_assigne(v_ast_base):
 
     def __str__(self):
         if issubclass(type(self.lhs),vhdl_base):
-            return self.lhs.hdl_conversion__._vhdl__reasign(self.lhs, self.rhs, self.astParser)
+            return self.lhs.hdl_conversion__._vhdl__reasign(self.lhs, self.rhs, astParser=self.astParser, context_str=self.context )
 
         return str(self.lhs) + " := " +  str(self.rhs) 
 
@@ -814,11 +814,11 @@ def body_LShift(astParser,Node):
         if astParser.ContextName[-1] == 'process':
             lhs.__Driver__ = 'process'
             
-        return v_re_assigne(lhs, rhs,astParser.ContextName[-1],astParser)
+        return v_re_assigne(lhs, rhs,context=astParser.ContextName[-1],astParser=astParser)
 
     var = astParser.get_variable(lhs.Value, Node)
 
-    return v_re_assigne(var, rhs,astParser)
+    return v_re_assigne(var, rhs,context=astParser.ContextName[-1],astParser=astParser)
 
 def hasNumericalValue(symb):
     if type(symb).__name__ == "int":
