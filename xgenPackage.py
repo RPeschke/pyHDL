@@ -77,8 +77,7 @@ class v_package(vhdl_base):
             for x in self.PackageContent:
                 if x._issubclass_("v_class"):
                     fun= self.astTree.extractFunctionsForClass(x ,self )
-                    for f in fun:
-                        x.hdl_conversion__.__ast_functions__.append(f)
+                    x.hdl_conversion__.__ast_functions__ += fun
 
         set_isConverting2VHDL(s)
         set_isProcess(proc)

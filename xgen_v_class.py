@@ -1092,7 +1092,7 @@ class v_class(vhdl_base):
             self_members = self.getMember(linput)
             return self_members      
             
-    def to_arglist(self,name,parent):
+    def to_arglist(self,name,parent,withDefault = False):
         ret = []
         
         xs = self.hdl_conversion__.extract_conversion_types(self)
@@ -1103,14 +1103,18 @@ class v_class(vhdl_base):
             if x["symbol"].varSigConst == varSig.variable_t:
                 inoutstr = self.hdl_conversion__.InOut_t2str(self)
                 varSignal = ""
-            ret.append(varSignal + name + x["suffix"] + " : " + inoutstr +" " +  x["symbol"].getType())
+            Default_str = ""
+            if withDefault:
+                Default_str =  " := " + self.hdl_conversion__.get_default_value(self)
+
+            ret.append(varSignal + name + x["suffix"] + " : " + inoutstr +" " +  x["symbol"].getType() +Default_str)
 
             if x["symbol"].varSigConst == varSig.signal_t:
                 members = x["symbol"].getMember()
                 for m in members:
                     if m["symbol"].Inout == InOut_t.Internal_t and m["symbol"]._writtenRead == InOut_t.Internal_t:
                         continue
-                    ret.append(m["symbol"].to_arglist(name + x["suffix"]+"_"+m["name"],None))
+                    ret.append(m["symbol"].to_arglist(name + x["suffix"]+"_"+m["name"],None ,withDefault=withDefault))
 
                 
 

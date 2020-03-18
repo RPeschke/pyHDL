@@ -113,7 +113,8 @@ def make_unique_includes(incs,exclude=None):
 def get_type(symbol):
     if issubclass(type(symbol), vhdl_base0):
         return symbol.get_type()
-    
+    if symbol == None:
+        return "None"
     if symbol["symbol"] == None:
         return "None"
     return symbol["symbol"].get_type()
@@ -121,15 +122,20 @@ def get_type(symbol):
 def get_symbol(symbol):
     if issubclass(type(symbol), vhdl_base0):
         return symbol.get_symbol()
-    
+    if symbol ==None:
+        return None 
     if symbol["symbol"] == None:
         return None
     return symbol["symbol"].get_symbol()
     
-def isSameArgs(args1,args2):
-    if len(args1) != len(args2):
+def isSameArgs(args1,args2, hasDefaults = False):
+    if not hasDefaults and  len(args1) != len(args2):
         return False
     for i in range(len(args1)):
+        if get_symbol(args1[i]) == None:
+            return False
+        if get_symbol(args2[i]) == None:
+            return False
         if get_type(args1[i]) != get_type( args2[i]):
             return False
         if get_symbol(args1[i]).varSigConst != get_symbol(args2[i]).varSigConst:
@@ -292,22 +298,24 @@ class vhdl_converter_base:
     def get_get_call_member_function(self, obj, name, args):
         args = [x.get_symbol() for x in args ]
 
-
+        needAdding =True
         for x  in obj.hdl_conversion__.MemfunctionCalls:
             if x["name"] != name:
                 continue
-            if not isSameArgs(x["args"] , args):
+            if not isSameArgs(args, x["args"] ,x['setDefault']):
                 continue
             if x["call_func"] == None:
+                needAdding = False
                 continue
             return x
-
-        obj.hdl_conversion__.MemfunctionCalls.append({
+        if needAdding:
+            obj.hdl_conversion__.MemfunctionCalls.append({
             "name" : name,
             "args": args,
             "self" :obj,
             "call_func" : None,
-            "func_args" : None
+            "func_args" : None,
+            "setDefault" : False
 
         })
         obj.IsConverted = False
@@ -542,7 +550,7 @@ class vhdl_base(vhdl_base0):
     def getName(self):
         return type(self).__name__
 
-    def to_arglist(self,name,parent):
+    def to_arglist(self,name,parent,withDefault = False):
         
         localname = self.vhdl_name
         if name:

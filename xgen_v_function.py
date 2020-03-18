@@ -16,7 +16,7 @@ class v_procedure_converter(vhdl_converter_base):
         if parent != None and not obj.isFreeFunction:
             classDef = parent.hdl_conversion__.get_self_func_name (parent)
 
-        argumentList = optional_concatonat( classDef, "; ", obj.argumentList)
+        argumentList = optional_concatonat( classDef, "; ", obj.argumentListHeader)
         if obj.name:
             name = obj.name        
         if obj.isEmpty:
@@ -51,10 +51,13 @@ class v_procedure_converter(vhdl_converter_base):
         return ret
 
 class v_procedure(vhdl_base):
-    def __init__(self, argumentList="", body="",VariableList="",name=None,IsEmpty=False,isFreeFunction=False):
+    def __init__(self, argumentList="", body="",VariableList="",name=None,IsEmpty=False,isFreeFunction=False,argumentListHeader = None):
         super().__init__()
         self.hdl_conversion__ = v_procedure_converter()
         self.argumentList = argumentList
+        self.argumentListHeader = argumentList
+        if argumentListHeader:
+            self.argumentListHeader = argumentListHeader
         self.body = body
         self.VariableList=VariableList
         self.name = name
@@ -71,7 +74,7 @@ class v_function_converter(vhdl_converter_base):
         classDef =""
         if parent != None and not obj.isFreeFunction:
             classDef = parent.hdl_conversion__.get_self_func_name (parent,True)
-        argumentList = optional_concatonat( classDef, "; ", obj.argumentList)
+        argumentList = optional_concatonat( classDef, "; ", obj.argumentListHeader)
         if obj.name:
             name = obj.name
         if obj.isEmpty:
@@ -108,12 +111,16 @@ class v_function_converter(vhdl_converter_base):
         return ret
 
 class v_function(vhdl_base):
-    def __init__(self,body="", returnType="", argumentList="",VariableList="",name=None,IsEmpty=False,isFreeFunction=False):
+    def __init__(self,body="", returnType="", argumentList="",VariableList="",name=None,IsEmpty=False,isFreeFunction=False,argumentListHeader = None):
         super().__init__()
         self.hdl_conversion__ = v_function_converter()
         self.body = body
         self.returnType = returnType
         self.argumentList = argumentList
+        self.argumentListHeader = argumentList
+        if argumentListHeader:
+            self.argumentListHeader = argumentListHeader
+
         self.VariableList=VariableList
         self.name = name
         self.isEmpty = IsEmpty

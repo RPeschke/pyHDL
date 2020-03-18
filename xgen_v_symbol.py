@@ -250,7 +250,7 @@ class v_symbol(vhdl_base):
 
         return self.varSigConst == varSigType
 
-    def to_arglist(self,name,parent):
+    def to_arglist(self,name,parent,withDefault = False):
         inoutstr = self.hdl_conversion__.InOut_t2str(self)
         varSigstr = ""
         if self.varSigConst == varSig.signal_t:
@@ -258,7 +258,11 @@ class v_symbol(vhdl_base):
 
         if not inoutstr:
             inoutstr = ""
-        return varSigstr + name + " : " + inoutstr +" " + self.getType()
+        default_str = ""
+        if withDefault:
+            default_str =  " := " + self.hdl_conversion__.get_default_value(self)
+
+        return varSigstr + name + " : " + inoutstr +" " + self.getType() + default_str
 
     def set_vhdl_name(self,name, Overwrite = False):
         if self.vhdl_name and self.vhdl_name != name and Overwrite==False:

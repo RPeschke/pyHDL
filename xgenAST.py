@@ -94,13 +94,15 @@ def AddDataType(dType,Name=""):
 
 
 def GetNewArgList(FunctionName , FunctionArgs,TemplateDescription):
-    ret = None
+
     
     if FunctionName != TemplateDescription["name"]:
         return None
     localArgs = copy.copy(FunctionArgs) #deepcopy
     for x,y in zip(localArgs,TemplateDescription["args"]):
         #print(x,y)
+        if y == None:
+            return None  
         if x["symbol"] == None or x["symbol"].type != y.type or x['symbol'].varSigConst != y.varSigConst:
             #y.Inout =  x["symbol"].Inout
             y.set_vhdl_name(x["name"],True)
@@ -112,11 +114,7 @@ def GetNewArgList(FunctionName , FunctionArgs,TemplateDescription):
             for m in mem:
                 m["symbol"]._writtenRead  = InOut_t.Internal_t
                 m["symbol"].Inout  = InOut_t.Internal_t
-            
-
-            ret = localArgs
-
-    return ret
+    return localArgs
 
     
 class xgenAST:
@@ -363,7 +361,7 @@ class xgenAST:
             ClassInstance.__processList__.append(proc)
             
     
-    def extractFunctionsForClass_impl(self, ClassInstance,parent, funcDef, FuncArgs ):
+    def extractFunctionsForClass_impl(self, ClassInstance,parent, funcDef, FuncArgs , setDefault = False ):
 
             for x in FuncArgs:
                 if x["symbol"] == None:
@@ -389,13 +387,33 @@ class xgenAST:
             argList = [x["symbol"].to_arglist(x['name'],ClassName) for x in FuncArgsLocal]
             ArglistProcedure = join_str(argList,Delimeter="; ")
             
-            
+
+            ArglistProcedure_with_defautl = None
+            if setDefault:
+                argList = [
+                    x["symbol"].to_arglist(x['name'],ClassName, withDefault = x["name"] != "self")
+                    for x in FuncArgsLocal
+                ]
+                ArglistProcedure_with_defautl = join_str(argList,Delimeter="; ")            
             
             if "return" in bodystr:
                 ArglistProcedure = ArglistProcedure.replace(" in "," ").replace(" out "," ").replace(" inout "," ")
-                ret = v_function(name=funcDef.name+varSigSuffix, body=bodystr,VariableList=self.get_local_var_def(), returnType=body.get_type(),argumentList=ArglistProcedure)
+                ret = v_function(
+                    name=funcDef.name+varSigSuffix, 
+                    body=bodystr,
+                    VariableList=self.get_local_var_def(), 
+                    returnType=body.get_type(),
+                    argumentList=ArglistProcedure,
+                    argumentListHeader = ArglistProcedure_with_defautl
+                )
             else:
-                ret = v_procedure(name=funcDef.name+varSigSuffix,body=bodystr,VariableList=self.get_local_var_def(), argumentList=ArglistProcedure)
+                ret = v_procedure(
+                    name=funcDef.name+varSigSuffix,
+                    body=bodystr,
+                    VariableList=self.get_local_var_def(), 
+                    argumentList=ArglistProcedure,
+                    argumentListHeader = ArglistProcedure_with_defautl
+                )
             
             return ret
 
@@ -412,13 +430,14 @@ class xgenAST:
         #ClassInstance_local._remove_connections()
         
         cl = self.getClassByName(ClassName)
+        print("processing ", ClassName, " MemfunctionCalls ",len(ClassInstance.hdl_conversion__.MemfunctionCalls))
         for f in cl.body:
             index += 1000
             if  f.name in self.functionNameVetoList:
                 continue
             
             
-            print("start end create function for template", f.name)
+            print("start create function for template", f.name)
             #print(ClassInstance.hdl_conversion__.MemfunctionCalls)
 
             ArglistLocal = []
@@ -440,62 +459,58 @@ class xgenAST:
                 print("is new Function", f.name)
                 len_Arglist = len(Arglist)
 
-                
-                ArglistLocal.append(
+                if len(ArglistLocal) == 0:
+                    ArglistLocal.append(
                     {
                         "name":"self",
                         "symbol": copy.deepcopy(ClassInstance),
                         "ScopeType": InOut_t.InOut_tt
 
                     }
-                )
-                ArglistLocal += list(self.get_func_args_list(f))
+                    )
+                    ArglistLocal += list(self.get_func_args_list(f))
                 
-                
-                ret = self.extractFunctionsForClass_impl(ClassInstance, parent, f, Arglist )
-                
-                
-                if ret:
-                    #print("asdasd")
-                    ClassInstance.hdl_conversion__.MemfunctionCalls.append(
+
+                ClassInstance.hdl_conversion__.MemfunctionCalls.append(
                         {
                             "name" : f.name,
                             "args":  [x["symbol"] for x in   Arglist[0:len_Arglist]],
                             "self" :ClassInstance,
-                            "call_func" : call_func,
-                            "func_args" :Arglist[0:len_Arglist] #deepcopy
+                            "call_func" : None,
+                            "func_args" : None,
+                            "setDefault" : True
                         }
                     )
-                    fun_ret.append(ret )
-                
+
             
             
 
-            for temp in ClassInstance.hdl_conversion__.MemfunctionCalls:
-                if temp["call_func"] != None:
-                    continue
+        for temp in ClassInstance.hdl_conversion__.MemfunctionCalls:
+            if temp["call_func"] != None:
+                continue
                 
                 
-                index += 1
-                if len(ArglistLocal) == 0:
-                    ArglistLocal.append({
+            index += 1
+            ArglistLocal = []
+            ArglistLocal.append({
                         "name":"self",
                         "symbol": copy.deepcopy(ClassInstance),
                         "ScopeType": InOut_t.InOut_tt
 
-                    })
-                    ArglistLocal += list(self.get_func_args_list(f))
-                newArglist = GetNewArgList(f.name, ArglistLocal, temp)
+            })
+            f = [x for x in  cl.body if x.name == temp["name"]]
+            ArglistLocal += list(self.get_func_args_list(f[0]))
+            newArglist = GetNewArgList(f[0].name, ArglistLocal, temp)
 
-                if newArglist != None:
-                    print("is new template", f.name)
-                    index += 100000
-                    ret = self.extractFunctionsForClass_impl(ClassInstance_local, parent, f, newArglist )
-                    temp["call_func"] = call_func
-                    temp["func_args"] = newArglist[0: len_Arglist] #deepcopy
-                    print("end create function for template ",f.name)
-                    if ret:
-                        fun_ret.append( ret )
+            if newArglist != None:
+                print("is new template", f[0].name)
+                index += 100000
+                ret = self.extractFunctionsForClass_impl(ClassInstance_local, parent, f[0], newArglist , temp["setDefault"]  )
+                temp["call_func"] = call_func
+                temp["func_args"] = newArglist[0: len(ArglistLocal)] #deepcopy
+                print("end create function for template ",f[0].name)
+                if ret:
+                    fun_ret.append( ret )
         
         elapsed = time.time() - t
         print ("extractFunctionsForClass", elapsed ,index)      
@@ -578,28 +593,27 @@ class xgenAST:
 
 def call_func(obj, name, args, astParser=None,func_args=None):
     varSigSuffix = "_"
-    for x in args:
-        if x.get_symbol().varSigConst == varSig.signal_t:
+    for x in func_args:
+        if get_symbol(x).varSigConst == varSig.signal_t:
             varSigSuffix += "1"
         else:
             varSigSuffix += "0"
     ret = []
-    args1 = func_args
-    i = 0
-    for x in args1:
-        ys =x["symbol"].hdl_conversion__.extract_conversion_types(x["symbol"])
+
+    for x in range(len(args)):
+        ys =func_args[x]["symbol"].hdl_conversion__.extract_conversion_types(func_args[x]["symbol"])
         for y in ys:
-            line = x["name"] + y["suffix"]+ " => " + args[i].vhdl_name + y["suffix"]
+            line = func_args[x]["name"] + y["suffix"]+ " => " + args[x].vhdl_name + y["suffix"]
             ret.append(line)
             if y["symbol"].varSigConst ==varSig.signal_t:
                 members = y["symbol"].getMember()
                 for m in members:
                     if m["symbol"]._writtenRead == InOut_t.output_t:
-                        line = x["name"] + y["suffix"]+"_"+ m["name"] +" => " + args[i].vhdl_name + y["suffix"]  +"."+m["name"]
+                        line = func_args[x]["name"] + y["suffix"]+"_"+ m["name"] +" => " + args[x].vhdl_name + y["suffix"]  +"."+m["name"]
                         ret.append(line)
                         #print(line)
             
-        i+=1 
+
 
 
     ret = join_str(ret, Delimeter=", ", start= name + varSigSuffix +"(" ,end=")")
