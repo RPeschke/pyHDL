@@ -73,7 +73,8 @@ def ops2str(ops):
 
 gStatus = {
     "isConverting2VHDL" : False,
-    "isProcess" : False
+    "isProcess" : False,
+    "isPrimaryConnection" : True
 }
 
 def isConverting2VHDL():
@@ -88,7 +89,11 @@ def isProcess():
 def set_isProcess(newStatus):
     gStatus["isProcess"] = newStatus
 
+def isPrimaryConnection():
+    return gStatus["isPrimaryConnection"]
 
+def set_isPrimaryConnection(newStatus):
+    gStatus["isPrimaryConnection"] = newStatus
 
 gHDL_objectList = []
 

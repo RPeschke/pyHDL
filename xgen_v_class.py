@@ -971,9 +971,19 @@ class v_class(vhdl_base):
         if type(self).__name__ != type(rhs).__name__:
             raise Exception("Unable to connect different types")
         
+        if not isPrimaryConnection():
+            return
+
+        status = isPrimaryConnection()
+        set_isPrimaryConnection(False)    
+
+
         self.__Driver__ = rhs
         rhs.__receiver__.append(self)
 
+        set_isPrimaryConnection(status)
+        return
+        
         self_members_s2m  = self.get_s2m_signals()
         rhs_members_s2m  = rhs.get_s2m_signals()
 
@@ -984,6 +994,9 @@ class v_class(vhdl_base):
         rhs_members  = rhs.get_m2s_signals()
         for i in range(len(self_members)):
             self_members[i]['symbol'] << rhs_members[i]['symbol']
+
+        set_isPrimaryConnection(status)
+
 
     def _connect_running(self,rhs):
         if self.Inout != rhs.Inout and self.Inout != InOut_t.Internal_t and rhs.Inout != InOut_t.Internal_t and rhs.Inout != InOut_t.Slave_t and self.Inout != InOut_t.Master_t and self.Inout != InOut_t.input_t and self.Inout != InOut_t.output_t:
