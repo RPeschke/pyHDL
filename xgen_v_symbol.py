@@ -16,7 +16,9 @@ class v_symbol_converter(vhdl_converter_base):
         self.inc_str  = inc_str
 
     def includes(self,obj, name,parent):
-        return self.inc_str
+        ret = slv_includes
+        ret += self.inc_str
+        return ret
 
 
     def recordMember(self,obj, name, parent,Inout=None):
@@ -111,8 +113,8 @@ class v_symbol_converter(vhdl_converter_base):
         #    return ""
         name = obj.vhdl_name
 
-            
-        return  "  " + VarSymb+ " " + name + " : " +obj.type +" := " +  obj.DefaultValue  + "; \n"   
+        ret = "  " + VarSymb+ " " + name + " : " +obj.type +" := " +  obj.DefaultValue  + "; \n"   
+        return  ret
 
     def get_port_list(self,obj):
         ret = []
@@ -221,10 +223,7 @@ class v_symbol(vhdl_base):
         self.__vcd_writer__ = None
         self.__UpdateFlag__ = False
 
-    def __deepcopy__(self, memodict={}):
-        ret = v_symbol(self.type, self.value,Inout = self.Inout, varSigConst=self.varSigConst)
-        ret.vhdl_name =self.vhdl_name
-        return ret
+
 
     def length(self):
         return str(self)+"'length"
@@ -256,7 +255,7 @@ class v_symbol(vhdl_base):
         if not inoutstr:
             inoutstr = ""
         default_str = ""
-        if withDefault:
+        if withDefault and self._writtenRead != InOut_t.output_t and self.Inout != InOut_t.output_t:
             default_str =  " := " + self.hdl_conversion__.get_default_value(self)
 
         return varSigstr + name + " : " + inoutstr +" " + self.getType() + default_str

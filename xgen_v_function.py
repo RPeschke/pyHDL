@@ -72,7 +72,7 @@ class v_function_converter(vhdl_converter_base):
         classDef =""
         if parent != None and not obj.isFreeFunction:
             classDef = parent.hdl_conversion__.get_self_func_name (parent,True)
-        argumentList = optional_concatonat( classDef, "; ", obj.argumentListHeader)
+        argumentList = optional_concatonat( classDef, "; ", obj.argumentList)
         if obj.name:
             name = obj.name
         if obj.isEmpty:

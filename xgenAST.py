@@ -384,6 +384,7 @@ class xgenAST:
             body = self.Unfold_body(funcDef)
 
             bodystr= str(body)
+            print("----------" , funcDef.name)
             argList = [x["symbol"].to_arglist(x['name'],ClassName, withDefault = setDefault and  (x["name"] != "self")) for x in FuncArgsLocal]
             ArglistProcedure = join_str(argList,Delimeter="; ")
             

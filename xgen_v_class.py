@@ -1104,7 +1104,7 @@ class v_class(vhdl_base):
                 inoutstr = self.hdl_conversion__.InOut_t2str(self)
                 varSignal = ""
             Default_str = ""
-            if withDefault:
+            if withDefault and self._writtenRead != InOut_t.output_t and self.Inout != InOut_t.output_t:
                 Default_str =  " := " + self.hdl_conversion__.get_default_value(self)
 
             ret.append(varSignal + name + x["suffix"] + " : " + inoutstr +" " +  x["symbol"].getType() +Default_str)
