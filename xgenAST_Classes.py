@@ -808,11 +808,14 @@ def body_LShift(astParser,Node):
             rhs = rhs._vhdl__getValue(lhs,astParser)
 
         if astParser.ContextName[-1] == 'process' and issubclass( type(rhs),vhdl_base):
-            rhs.__Driver__ = 'process'
+            rhs.__Driver__ = 'process' # looks wrong 
 
-        lhs << rhs
         if astParser.ContextName[-1] == 'process':
             lhs.__Driver__ = 'process'
+        elif astParser.ContextName[-1] == 'function':
+            lhs.__Driver__ = 'function'
+        else:
+            lhs << rhs
             
         return v_re_assigne(lhs, rhs,context=astParser.ContextName[-1],astParser=astParser)
 

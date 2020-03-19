@@ -51,7 +51,7 @@ class klm_globals(v_class):
         self.reg   =  register_t() 
 
 class InputDelay(v_entity):
-    def __init__(self,k_globals =None,InputType = SerialDataConfig(),Delay=0):
+    def __init__(self,k_globals =None,InputType = v_slv(32),Delay=0):
         super().__init__(__file__)
         self.globals  = port_Slave(klm_globals())
         if k_globals != None:
@@ -70,13 +70,13 @@ class InputDelay(v_entity):
 #            | stream_delay_one(self.globals.clk, self.ConfigIn.data) \
 #            | \
 #        self.ConfigOut   
-        pipe2 = delay(10,self)
+        pipe2 = delay(times=self.Delay,obj=self)
         end_architecture()
 
 
 def delay(times,obj):
     pipe1 = obj.ConfigIn |  stream_delay_one(obj.globals.clk,  obj.ConfigIn.data) 
-    for x in range(obj.Delay):
+    for x in range(times):
         pipe1 |   stream_delay_one(obj.globals.clk,  obj.ConfigIn.data) 
             
 
@@ -84,7 +84,7 @@ def delay(times,obj):
     return pipe1
 
 class InputDelay_print(v_entity):
-    def __init__(self,k_globals =None,InputType = SerialDataConfig()):
+    def __init__(self,k_globals =None,InputType =v_slv(32)):
         super().__init__(__file__)
         self.globals  = port_Slave(klm_globals())
         if k_globals != None:
@@ -114,8 +114,8 @@ class InputDelay_tb(v_entity):
     def architecture(self):
         clkgen = v_create(clk_generator())
         k_globals =klm_globals()
-        data = SerialDataConfig()
-        dut  = v_create(InputDelay(k_globals) )
+        data = v_slv(32)
+        dut  = v_create(InputDelay(k_globals,Delay=5) )
 
         axprint  =  v_create( InputDelay_print(k_globals))
 
@@ -128,7 +128,7 @@ class InputDelay_tb(v_entity):
         def proc():
             if mast:
                 mast << data
-                data.column_select << data.column_select + 1
+                data << data + 1
 
         end_architecture()
 
