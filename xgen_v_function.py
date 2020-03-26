@@ -264,6 +264,7 @@ class v_Arch(vhdl_base):
         self.Arch_vars = Arch_vars
         self.hdl_conversion__ = v_Arch_converter()
         self.ports = ports
+        self.name = "arc"
         
 
 

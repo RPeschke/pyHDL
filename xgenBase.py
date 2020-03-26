@@ -8,6 +8,19 @@ def architecture(func):
         func(self) 
     return wrap
 
+def end_architecture():
+    add_symbols_to_entiy()
+    
+def flatten_list(In_list):
+    ret = []
+    for x in  In_list:
+        if type(x).__name__ == "list":
+            buff = flatten_list(x)
+            ret += buff
+        else:
+            ret.append(x)
+
+    return ret
 
 def join_str(content, start="",end="",LineEnding="",Delimeter="",LineBeginning="", IgnoreIfEmpty=False):
     ret = ""
@@ -19,7 +32,7 @@ def join_str(content, start="",end="",LineEnding="",Delimeter="",LineBeginning="
         return ret
 
     ret += start
-    
+    content = flatten_list(content)
     for x in content[0:-1]:
         ret += LineBeginning + x + Delimeter + LineEnding
 
@@ -180,7 +193,7 @@ class vhdl_converter_base:
             print("==================")
             for x in gHDL_objectList:
                 if "axis"  in type(x).__name__ :
-                    #print("axi")
+                    print("axi")
                     pass
                 #print("----------------")
                 
@@ -823,10 +836,21 @@ def v_copy(symbol,varSig=None):
         ret.set_varSigConst(getDefaultVarSig())
     return ret
 
-
-
-import ujson
 def v_deepcopy(symbol):
+    hdl = symbol.hdl_conversion__
+    driver = symbol.__Driver__ 
+    receiver = symbol.__receiver__
+    symbol.__receiver__ = None
+    symbol.__Driver__=None
+    symbol.hdl_conversion__ =None
+    ret  = copy.deepcopy(symbol)
+    symbol.hdl_conversion__ = hdl
+    ret.hdl_conversion__ = hdl
+    symbol.__Driver__ = driver
+    ret.__Driver__ = driver
+    symbol.__receiver__ = receiver
+    ret.__receiver__ = receiver
 
-    g =ujson.loads(ujson.dumps(symbol))
-    return g
+    return ret
+
+

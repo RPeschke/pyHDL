@@ -113,8 +113,9 @@ class axisStream_slave(v_class_slave):
     def __init__(self, Axi_in):
         super().__init__(Axi_in.type+"_slave")
         self.hdl_conversion__ =axisStream_slave_converter()
-        self.rx =  variable_port_Slave(Axi_in)
-        self.rx  << Axi_in
+        self.rx1 =  signal_port_Slave(Axi_in)
+        self.rx =  v_variable(Axi_in)
+        self.rx1  << Axi_in
     
         self.data_isvalid            = v_variable( v_sl() )
         self.data_internal2          = v_variable( v_copy(Axi_in.data) )
@@ -122,7 +123,19 @@ class axisStream_slave(v_class_slave):
         self.data_internal_was_read2 = v_variable(v_sl())
         self.data_internal_isLast2   = v_variable( v_sl())
         self.sig_test                = v_signal( v_sl())
+        self.sig_ax                  = v_signal( v_copy(Axi_in)  )
+        self.var_ax                  = v_variable( v_copy(Axi_in)  )
+        self.var_ax << self.sig_ax    
+        
 
+    @architecture
+    def arch(self):
+        
+        @combinational
+        def proc():
+            self.sig_ax << self.rx1
+
+        end_architecture()
 
     def observe_data(self, dataOut = variable_port_out(dataType())):
         if self.data_internal_isvalid2:

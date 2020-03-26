@@ -398,18 +398,58 @@ class xgenAST:
                     body=bodystr,
                     VariableList=self.get_local_var_def(), 
                     returnType=body.get_type(),
-                    argumentList=ArglistProcedure
+                    argumentList=ArglistProcedure,
+                    isFreeFunction=True
                 )
             else:
                 ret = v_procedure(
                     name=funcDef.name+varSigSuffix,
                     body=bodystr,
                     VariableList=self.get_local_var_def(), 
-                    argumentList=ArglistProcedure
+                    argumentList=ArglistProcedure,
+                    isFreeFunction=True
                 )
             self.pop_scope()
             return ret
 
+    def extractArchetectureForClass(self,ClassInstance,Arc):
+        ret = None
+        ClassInstance = copy.deepcopy(ClassInstance)
+        self.local_function ={}
+        
+        self.FuncArgs = list()
+        self.LocalVar = list()
+        self.Archetecture_vars =[]
+        self.FuncArgs.append(
+                {
+                    "name":"self",
+                    "symbol":  ClassInstance,
+                    "ScopeType": InOut_t.InOut_tt
+
+                }
+        )
+            #p=ClassInstance._process1()
+            
+            #self.local_function = p.__globals__
+        self.local_function = ClassInstance.__init__.__globals__
+        ClassInstance.vhdl_name = "self"
+#        self.Archetecture_vars = ClassInstance.__local_symbols__
+        body = self.Unfold_body(Arc)  ## get local vars 
+
+        if self.Missing_template == True:
+            ClassInstance.hdl_conversion__.FlagFor_TemplateMissing(ClassInstance)
+            ClassInstance.hdl_conversion__.MissingTemplate = True
+
+        else:
+            ret = v_Arch(body=body,Symbols=self.LocalVar, Arch_vars=self.Archetecture_vars,ports=ClassInstance.getMember())
+
+        self.local_function ={}
+        self.FuncArgs = list()
+        self.LocalVar = list()
+        self.Archetecture_vars =[]
+        return ret
+
+      
     #@profile
     def extractFunctionsForClass(self,ClassInstance,parent ):
         t = time.time()
@@ -419,7 +459,7 @@ class xgenAST:
         ClassInstance.hdl_conversion__ = primary.hdl_conversion__
         ClassInstance.hdl_conversion__.MissingTemplate = False
         ClassName  = type(ClassInstance).__name__
-        ClassInstance_local = copy.deepcopy(ClassInstance)
+        ClassInstance_local = v_deepcopy(ClassInstance)
         #ClassInstance_local._remove_connections()
         
         cl = self.getClassByName(ClassName)
@@ -429,7 +469,17 @@ class xgenAST:
             if  f.name in self.functionNameVetoList:
                 continue
             
-            
+            if f.decorator_list and f.decorator_list[0].id == 'architecture' :
+                if f.name not in [x["name"] for x in ClassInstance.hdl_conversion__.archetecture_list ]:
+                    arc = self.extractArchetectureForClass(ClassInstance,f)
+                    if arc:
+                        ClassInstance.hdl_conversion__.archetecture_list.append({
+                        "name"   : f.name,
+                        "symbol" : arc
+                        })
+                    #fun_ret.append(arc)
+                        pass
+                continue
             print("start create function for template", f.name)
             #print(ClassInstance.hdl_conversion__.MemfunctionCalls)
 
@@ -440,7 +490,7 @@ class xgenAST:
             Arglist.append(
                 {
                     "name":"self",
-                    "symbol": ClassInstance,
+                    "symbol": v_deepcopy(ClassInstance),
                     "ScopeType": InOut_t.InOut_tt
 
                 }
@@ -453,14 +503,16 @@ class xgenAST:
                 len_Arglist = len(Arglist)
 
                 if len(ArglistLocal) == 0:
+
                     ArglistLocal.append(
                     {
                         "name":"self",
-                        "symbol": copy.deepcopy(ClassInstance),
+                        "symbol": v_deepcopy(ClassInstance),
                         "ScopeType": InOut_t.InOut_tt
 
                     }
                     )
+
                     ArglistLocal += list(self.get_func_args_list(f))
                 
 
@@ -468,7 +520,7 @@ class xgenAST:
                         {
                             "name" : f.name,
                             "args":  [x["symbol"] for x in   Arglist[0:len_Arglist]],
-                            "self" :ClassInstance,
+                            "self" :v_deepcopy(ClassInstance),
                             "call_func" : None,
                             "func_args" : None,
                             "setDefault" : True
@@ -487,7 +539,7 @@ class xgenAST:
             ArglistLocal = []
             ArglistLocal.append({
                         "name":"self",
-                        "symbol": copy.deepcopy(ClassInstance),
+                        "symbol": v_deepcopy(ClassInstance),
                         "ScopeType": InOut_t.InOut_tt
 
             })

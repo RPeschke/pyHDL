@@ -23,7 +23,7 @@ class v_symbol_converter(vhdl_converter_base):
 
     def recordMember(self,obj, name, parent,Inout=None):
         if parent._issubclass_("v_class"):
-            return "  " + name + " : " +obj.type +"; \n"
+            return name + " : " +obj.type
 
         return ""
 

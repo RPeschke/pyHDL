@@ -70,7 +70,7 @@ class TXWaveFormReadout(v_clk_entity):
                 | TX_WillkonsonControl(self.globals,self.TX_Bus.SamplingSignals) \
                 | SerialDataRoutProcess_cl(self.globals,self.TX_Bus.ShiftRegister)\
                 | SerialOutputCOnverter(self.globals) \
-                | pedestal_Substraction(self.globals, splitter)
+                | pedestal_Substraction(self.globals, splitter) \
                 | ax_fifo(self.globals) \
                 | \
             self.Data_out

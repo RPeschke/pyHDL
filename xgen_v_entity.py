@@ -16,8 +16,7 @@ else:
     from .xgenAST import *
 
 
-def end_architecture():
-    add_symbols_to_entiy()
+
 
 def process():
     def decorator_processd(func):
