@@ -133,7 +133,10 @@ class axisStream_slave(v_class_slave):
         
         @combinational
         def proc():
-            self.sig_ax << self.rx1
+            self.sig_ax.valid <<  self.rx1.valid   
+            self.sig_ax.last  <<  self.rx1.last    
+            self.sig_ax.data  <<  self.rx1.data   
+            self.rx1.ready    <<  v_switch( 0 , [v_case( self.rx1.valid , self.sig_ax.ready)]) 
 
         end_architecture()
 

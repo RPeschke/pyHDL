@@ -432,7 +432,7 @@ class xgenAST:
             
             #self.local_function = p.__globals__
         self.local_function = ClassInstance.__init__.__globals__
-        ClassInstance.vhdl_name = "self"
+        ClassInstance.vhdl_name = "!!SELF!!"
 #        self.Archetecture_vars = ClassInstance.__local_symbols__
         body = self.Unfold_body(Arc)  ## get local vars 
 

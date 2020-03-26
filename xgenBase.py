@@ -193,7 +193,7 @@ class vhdl_converter_base:
             print("==================")
             for x in gHDL_objectList:
                 if "axis"  in type(x).__name__ :
-                    print("axi")
+                    #print("axi")
                     pass
                 #print("----------------")
                 
@@ -203,13 +203,13 @@ class vhdl_converter_base:
 
                 packetName =  x.hdl_conversion__.get_packet_file_name(x)
                 if packetName not in FilesDone:
-                    print("<"+type(x).__name__ +">")
+                    #print("<"+type(x).__name__ +">")
                     x.hdl_conversion__.reset_TemplateMissing(x)
                     packet = x.hdl_conversion__.get_packet_file_content(x)
                     if packet:
                         file_set_content(ouputFolder+"/" +packetName,packet)
                     FilesDone.append(packetName)
-                    print("</"+ type(x).__name__, x.hdl_conversion__.MissingTemplate, ">")
+                    #print("</"+ type(x).__name__, x.hdl_conversion__.MissingTemplate, ">")
                     #print(type(x).__name__)
                     #print("processing")
                     
@@ -217,13 +217,13 @@ class vhdl_converter_base:
                 entiyFileName =  x.hdl_conversion__.get_entity_file_name(x)
 
                 if entiyFileName not in FilesDone:
-                    print("<"+type(x).__name__ +">")
+                    #print("<"+type(x).__name__ +">")
                     x.hdl_conversion__.reset_TemplateMissing(x)
                     entity_content = x.hdl_conversion__.get_enity_file_content(x)
                     if entity_content:
                         file_set_content(ouputFolder+"/" +entiyFileName,entity_content)
                     FilesDone.append(entiyFileName)
-                    print("</"+ type(x).__name__, x.hdl_conversion__.MissingTemplate, ">")
+                    #print("</"+ type(x).__name__, x.hdl_conversion__.MissingTemplate, ">")
                     #print("processing")
                 
                 x.hdl_conversion__.IsConverted = True

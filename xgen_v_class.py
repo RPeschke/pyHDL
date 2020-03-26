@@ -445,6 +445,7 @@ class v_class_converter(vhdl_converter_base):
             ret, 
             LineBeginning="  "
             )
+        ret=ret.replace("!!SELF!!", obj.vhdl_name)
         return ret
 
 
@@ -943,9 +944,17 @@ class v_class(vhdl_base):
         
         self.vhdl_name = name
 
-        mem = self.getMember()
-        for x in mem:
-            x["symbol"].set_vhdl_name(name+"."+x["name"],Overwrite)
+
+        if self.varSigConst == varSig.variable_t:
+            mem = self.getMember()
+            for x in mem:
+                x["symbol"].set_vhdl_name(name+"."+x["name"],Overwrite)
+        else:
+            xs = self.hdl_conversion__.extract_conversion_types(self, exclude_class_type= v_classType_t.transition_t,)
+            for x in xs:
+                mem = x["symbol"].getMember()
+                for m in mem:
+                    m["symbol"].set_vhdl_name(name+x["suffix"]+"."+m["name"],Overwrite)
 
 
     def _sim_append_update_list(self,up):
