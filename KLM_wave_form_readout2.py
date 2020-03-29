@@ -64,13 +64,12 @@ class InputDelay(v_entity):
     @architecture
     def architecture(self):
         
-#        pipe = self.ConfigIn \
-#            | stream_delay_one(self.globals.clk, self.ConfigIn.data) \
-#            | stream_delay_one(self.globals.clk, self.ConfigIn.data) \
-#            | stream_delay_one(self.globals.clk, self.ConfigIn.data) \
-#            | \
-#        self.ConfigOut   
-        pipe2 = delay(times=self.Delay,obj=self)
+        pipe = self.ConfigIn \
+            | stream_delay_one(self.globals.clk, self.ConfigIn.data,0) \
+            | stream_delay_one(self.globals.clk, self.ConfigIn.data,1) \
+            | \
+        self.ConfigOut   
+        #pipe2 = delay(times=self.Delay,obj=self)
         end_architecture()
 
 
@@ -96,11 +95,16 @@ class InputDelay_print(v_entity):
     def architecture(self):
         d =  v_copy(self.ConfigIn.data)
         ax_slave = get_salve(self.ConfigIn)
+        counter = v_int(0)
         @rising_edge(self.globals.clk)
         def proc():
-            if ax_slave:
+            counter << counter + 1
+            if ax_slave :
                d << ax_slave
-               print(value(d.column_select))
+               print("InputDelay_print", value(d))
+            
+            if counter > 15:
+                counter << 0
 
 
         end_architecture()
@@ -114,21 +118,37 @@ class InputDelay_tb(v_entity):
     def architecture(self):
         clkgen = v_create(clk_generator())
         k_globals =klm_globals()
-        data = v_slv(32)
-        dut  = v_create(InputDelay(k_globals,Delay=5) )
+        data = v_slv(32,20)
+        data_out = v_slv(32,20)
+        #dut  = v_create(InputDelay(k_globals,Delay=5) )
 
-        axprint  =  v_create( InputDelay_print(k_globals))
+        #axprint  =  v_create( InputDelay_print(k_globals))
 
-        axprint.ConfigIn << dut.ConfigOut
+        #axprint.ConfigIn << dut.ConfigOut
         k_globals.clk << clkgen.clk
-        mast = get_master(dut.ConfigIn)
+        #mast = get_master(axprint.ConfigIn)
+
+        delay =  axisStream( data)
+        print(delay.valid.value_index)
+        delay_m = get_master(delay)
+        print(delay_m.tx.valid.value_index)
+        delay_s = get_salve(delay)
+        print(delay_s.rx.valid.value_index)
 
 
         @rising_edge(clkgen.clk)
         def proc():
-            if mast:
-                mast << data
-                data << data + 1
+            if delay_s:
+                data_out << delay_s
+                print("delay",  value(delay_s))
+
+        @rising_edge(clkgen.clk)
+        def proc():
+            data << data + 1
+            if delay_m:
+                print("InputDelay_tb",  value(data))
+                delay_m << data
+
 
         end_architecture()
 
@@ -160,7 +180,7 @@ def profile(fnc):
 #@profile
 def main():
     tb  =v_create(InputDelay_tb())
-    #gsimulation.run_timed(tb, 1000,"InputDelay_tb.vcd")
-    tb.hdl_conversion__.convert_all(tb,"pyhdl_waveform")
+    gsimulation.run_timed(tb, 300,"InputDelay_tb.vcd")
+    #tb.hdl_conversion__.convert_all(tb,"pyhdl_waveform")
 
 main()

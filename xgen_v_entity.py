@@ -113,7 +113,7 @@ def rising_edge(symbol):
     def decorator_rising_edge(func):
         @functools.wraps(func)
         def wrapper_rising_edge(getSymb=None):
-            if symbol.value == 1:
+            if value(symbol) == 1:
                 symbol._sim_run_pull()
                 func()
                 symbol._sim_run_push()

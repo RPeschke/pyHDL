@@ -45,10 +45,12 @@ class v_simulation():
 
         
     def append_updateList(self,obj):
-        self.updateList.append(obj)
+        self.updateList += obj
+        self.updateList = list(set(self.updateList))
 
     def append_updateList_process(self,obj):
-        self.updateList_process.append(obj)
+        self.updateList_process += obj
+        self.updateList_process = list(set(self.updateList_process))
 
     def register_var(self, module, name, vartype,size):
         vcdvar  = self.writer.register_var(module, name, vartype, size=size)
@@ -60,6 +62,8 @@ class v_simulation():
     def run_timed(self,testBench, MaxTime, FileName):
         self.CurrentTime = 0
         objName = getNameOf(testBench)
+
+            
         with open(FileName,"w") as f:
             self.writer =  VCDWriter(f, timescale='1 ns', date='today')
             testBench.set_simulation_param("", objName, self)
@@ -82,17 +86,18 @@ class v_simulation():
 
                         x["next_time"] = self.CurrentTime+val.get_time()
                         minNext= min(minNext,val.get_time())
-                    
+
                 self.CurrentTime +=  minNext
+
                 while (len(self.updateList)):
                     while (len(self.updateList)):
-                        updateList =  self.updateList
+                        updateList = list(set( self.updateList))
                         self.updateList=list()
                         for x in updateList:
                             x()
                     
                     while (len(self.updateList_process)):
-                        updateList_process =  self.updateList_process
+                        updateList_process =  list(set(self.updateList_process))
                         self.updateList_process=list()
                         for x in updateList_process:
                             x()

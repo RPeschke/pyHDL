@@ -26,7 +26,7 @@ class clk_generator(v_entity):
         @timed()
         def proc():
             self.clk << 1
-            #print("======================")
+            print("======================")
             yield wait_for(1)
             self.clk << 0
             yield wait_for(1)

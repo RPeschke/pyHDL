@@ -491,11 +491,17 @@ class vhdl_base0:
         
         return False
 
-        
+    def _sim_get_new_storage(self):
+        pass    
     def set_simulation_param(self,module, name,writer):
         pass
 
+   
+    def _sim_start_simulation(self):
+        pass
 
+    def _sim_stop_simulation(self):
+        pass
     def _sim_set_push_pull(self, symbol):
             
             if hasattr(self, "_onPull"):
@@ -698,6 +704,7 @@ class v_classType_t(Enum):
 
 def v_variable(symbol):
     ret= copy.deepcopy(symbol)
+    ret._sim_get_new_storage()
     ret._isInstance = False
     ret.setInout(InOut_t.Internal_t)
     ret.set_varSigConst(varSig.variable_t)
@@ -707,6 +714,7 @@ def v_variable(symbol):
     
 def v_signal(symbol):
     ret= copy.deepcopy(symbol)
+    ret._sim_get_new_storage()
     ret._isInstance = False
     ret.setInout(InOut_t.Internal_t)
     ret.set_varSigConst(varSig.signal_t)
@@ -715,6 +723,7 @@ def v_signal(symbol):
 
 def v_const(symbol):
     ret= copy.deepcopy(symbol)
+    ret._sim_get_new_storage()
     ret._isInstance = False
     ret.setInout(InOut_t.Internal_t)
     ret.set_varSigConst(varSig.const_t)
@@ -723,6 +732,7 @@ def v_const(symbol):
 
 def port_out(symbol):
     ret= copy.deepcopy(symbol)
+    ret._sim_get_new_storage()
     ret._isInstance = False
     ret.setInout(InOut_t.output_t)
     ret.set_varSigConst(getDefaultVarSig())
@@ -731,6 +741,7 @@ def port_out(symbol):
 
 def variable_port_out(symbol):
     ret= copy.deepcopy(symbol)
+    ret._sim_get_new_storage()
     ret._isInstance = False
     ret.setInout(InOut_t.output_t)
     ret.set_varSigConst(varSig.variable_t)
@@ -739,6 +750,7 @@ def variable_port_out(symbol):
 
 def port_in(symbol):
     ret= copy.deepcopy(symbol)
+    ret._sim_get_new_storage()
     ret._isInstance = False
     ret.setInout(InOut_t.input_t)
     ret.set_varSigConst(getDefaultVarSig())
@@ -747,6 +759,7 @@ def port_in(symbol):
 
 def variable_port_in(symbol):
     ret= copy.deepcopy(symbol)
+    ret._sim_get_new_storage()
     ret._isInstance = False
     ret.setInout(InOut_t.input_t)
     ret.set_varSigConst(varSig.variable_t)
@@ -755,6 +768,7 @@ def variable_port_in(symbol):
 
 def port_Master(symbol):
     ret= copy.deepcopy(symbol)
+    ret._sim_get_new_storage()
     ret._isInstance = False
     ret.setInout(InOut_t.Master_t)
     ret.set_varSigConst(getDefaultVarSig())
@@ -763,6 +777,7 @@ def port_Master(symbol):
 
 def variable_port_Master(symbol):
     ret= copy.deepcopy(symbol)
+    ret._sim_get_new_storage()
     ret._isInstance = False
     ret.setInout(InOut_t.Master_t)
     ret.set_varSigConst(varSig.variable_t)
@@ -771,6 +786,7 @@ def variable_port_Master(symbol):
 
 def signal_port_Master(symbol):
     ret= copy.deepcopy(symbol)
+    ret._sim_get_new_storage()
     ret._isInstance = False
     ret.setInout(InOut_t.Master_t)
     ret.set_varSigConst(varSig.signal_t)
@@ -779,6 +795,7 @@ def signal_port_Master(symbol):
 
 def port_Stream_Master(symbol):
     ret = port_Master(symbol)
+    ret._sim_get_new_storage()
     ret._isInstance = False
     funcrec = inspect.stack()[1]
         
@@ -792,6 +809,7 @@ def port_Stream_Master(symbol):
 
 def signal_port_Slave(symbol):
     ret= copy.deepcopy(symbol)
+    ret._sim_get_new_storage()
     ret._isInstance = False
     ret.setInout(InOut_t.Slave_t)
     ret.set_varSigConst(varSig.signal_t)
@@ -801,6 +819,7 @@ def signal_port_Slave(symbol):
 
 def port_Slave(symbol):
     ret= copy.deepcopy(symbol)
+    ret._sim_get_new_storage()
     ret._isInstance = False
     ret.setInout(InOut_t.Slave_t)
     ret.set_varSigConst(getDefaultVarSig())
@@ -809,6 +828,7 @@ def port_Slave(symbol):
 
 def variable_port_Slave(symbol):
     ret= copy.deepcopy(symbol)
+    ret._sim_get_new_storage()
     ret._isInstance = False
     ret.setInout(InOut_t.Slave_t)
     ret.set_varSigConst(varSig.variable_t)
@@ -817,6 +837,7 @@ def variable_port_Slave(symbol):
 
 def port_Stream_Slave(symbol):
     ret = port_Slave(symbol)
+    ret._sim_get_new_storage()
     ret._isInstance = False
     funcrec = inspect.stack()[1]
         
@@ -828,6 +849,7 @@ def port_Stream_Slave(symbol):
     return ret 
 def v_copy(symbol,varSig=None):
     ret= copy.deepcopy(symbol)
+    ret._sim_get_new_storage()
     ret.resetInout()
     ret._isInstance = False
     ret.vhdl_name = None

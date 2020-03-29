@@ -14,24 +14,25 @@ from .xgen_simulation import *
 
 
 class stream_delay_one(v_clk_entity):
-    def __init__(self,clk=v_sl(),itype =v_slv(32)):
+    def __init__(self,clk=v_sl(),itype =v_slv(32),Index = 0):
         super().__init__(__file__, clk)
         self.Axi_in = port_Stream_Slave(axisStream(itype))
         self.Axi_out = port_Stream_Master(axisStream(itype))
+        self.Index = Index
         self.architecture()
 
         
     def architecture(self):
         axiSalve = get_salve(self.Axi_in)
         axMaster = get_master(self.Axi_out) 
-        eos  = v_sl()
+
         @rising_edge(self.clk)
         def proc():
             if axiSalve and axMaster:
+                print(self.Index ,  value(axiSalve))
                 axMaster << axiSalve
-                axMaster.Send_end_Of_Stream( eos )
                 axMaster.Send_end_Of_Stream( axiSalve.IsEndOfStream())
-                axMaster.Send_end_Of_Stream( )
+
 
         end_architecture()
 

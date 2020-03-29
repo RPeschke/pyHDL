@@ -1120,7 +1120,10 @@ class v_class(vhdl_base):
         ret =sorted(ret, key=lambda element_: element_["name"])
         return ret
 
-
+    def _sim_get_new_storage(self):
+        mem = self.getMember()
+        for x in mem:
+            x["symbol"]._sim_get_new_storage()
 
     def set_simulation_param(self,module, name,writer):
         members = self.getMember() 
@@ -1147,6 +1150,17 @@ class v_class(vhdl_base):
 
         self.__Driver__ = rhs
         rhs.__receiver__.append(self)
+        if not isConverting2VHDL():
+            self_members  = self.get_s2m_signals()
+            rhs_members  = rhs.get_s2m_signals()
+
+            for i in range(len(self_members)):
+                rhs_members[i]['symbol'] << self_members[i]['symbol']
+
+            self_members  = self.get_m2s_signals()
+            rhs_members  = rhs.get_m2s_signals()
+            for i in range(len(self_members)):
+                self_members[i]['symbol'] << rhs_members[i]['symbol']
 
 
 
