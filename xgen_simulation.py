@@ -87,7 +87,16 @@ class v_simulation():
             for x in updateList_process:
                 x()
 
-                    
+    def get_timed_process_list(self):
+        p_list = list()
+        for t in self.timmed_process:
+            p_list.append({
+                "next_time" : 0,
+                "gen"       : t(),
+                "fun"       : t
+            })
+        return p_list
+
     def run_timed(self,testBench, MaxTime, FileName):
         self.CurrentTime = 0
         objName = getNameOf(testBench)
@@ -96,13 +105,8 @@ class v_simulation():
         with open(FileName,"w") as f:
             self.writer =  VCDWriter(f, timescale='1 ns', date='today')
             testBench.set_simulation_param("", objName, self)
-            p_list = list()
-            for t in self.timmed_process:
-                p_list.append({
-                        "next_time" : 0,
-                        "gen"       : t(),
-                        "fun"       : t
-                })
+            p_list = self.get_timed_process_list()
+            
             while (self.CurrentTime < MaxTime):
                 self.run_processor_timed(p_list)
 

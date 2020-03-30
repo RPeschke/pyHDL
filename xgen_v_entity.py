@@ -453,10 +453,7 @@ class v_entity(vhdl_base0):
         else:
             self.vhdl_name = name
 
-    def _sim_append_update_list(self,up):
-        for x in self.getMember():
-            x["symbol"]._sim_append_update_list(up)
-    
+
 
     def _get_Stream_input(self):
         if self._StreamIn == None:
