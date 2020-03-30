@@ -196,6 +196,19 @@ class v_symbol_converter(vhdl_converter_base):
         ret.vhdl_name=str(obj)+"'length"
         return ret
 
+    def to_arglist(self,obj, name,parent,withDefault = False):
+        inoutstr = obj.hdl_conversion__.InOut_t2str(obj)
+        varSigstr = ""
+        if obj.varSigConst == varSig.signal_t:
+            varSigstr = "signal "
+
+        if not inoutstr:
+            inoutstr = ""
+        default_str = ""
+        if withDefault and obj._writtenRead != InOut_t.output_t and obj.Inout != InOut_t.output_t:
+            default_str =  " := " + obj.hdl_conversion__.get_default_value(obj)
+
+        return varSigstr + name + " : " + inoutstr +" " + obj.getType() + default_str
 
 class v_symbol(vhdl_base):
     value_list = []
@@ -232,8 +245,7 @@ class v_symbol(vhdl_base):
 
 
 
-    def length(self):
-        return str(self)+"'length"
+
 
     def _sim_get_value(self):
         return self.value_list[self.value_index]
@@ -253,19 +265,7 @@ class v_symbol(vhdl_base):
 
         return self.varSigConst == varSigType
 
-    def to_arglist(self,name,parent,withDefault = False):
-        inoutstr = self.hdl_conversion__.InOut_t2str(self)
-        varSigstr = ""
-        if self.varSigConst == varSig.signal_t:
-            varSigstr = "signal "
 
-        if not inoutstr:
-            inoutstr = ""
-        default_str = ""
-        if withDefault and self._writtenRead != InOut_t.output_t and self.Inout != InOut_t.output_t:
-            default_str =  " := " + self.hdl_conversion__.get_default_value(self)
-
-        return varSigstr + name + " : " + inoutstr +" " + self.getType() + default_str
 
     def set_vhdl_name(self,name, Overwrite = False):
         if self.vhdl_name and self.vhdl_name != name and Overwrite==False:
@@ -417,11 +417,6 @@ class v_symbol(vhdl_base):
     def _sim_append_update_list(self,up):
         self._update_list.append(up)
     
-    def _sim_append_Pull_update_list(self,up):
-        self._Pull_update_list.append(up)
-
-    def _sim_append_Push_update_list(self,up):
-        self._Push_update_list.append(up)
 
 
     def _instantiate_(self):
@@ -429,10 +424,14 @@ class v_symbol(vhdl_base):
         self.Inout = InoutFlip(self.Inout)
         return self
         
-
+    def _un_instantiate_(self, Name = ""):
+        self._isInstance = False
+        self.flipInout()
+        self.set_vhdl_name(Name,True)
+        return self
 
     def __bool__(self):
-        return self._sim_get_value() > 0
+        return value(self) > 0
 
 
     def _Connect_running(self, rhs):

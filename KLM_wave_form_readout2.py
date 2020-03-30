@@ -171,7 +171,7 @@ def profile(fnc):
 #@profile
 def main():
     tb  =v_create(InputDelay_tb())
-    gsimulation.run_timed(tb, 300,"InputDelay_tb.vcd")
-    #tb.hdl_conversion__.convert_all(tb,"pyhdl_waveform")
+    #gsimulation.run_timed(tb, 3000,"InputDelay_tb.vcd")
+    tb.hdl_conversion__.convert_all(tb,"pyhdl_waveform")
 
 main()

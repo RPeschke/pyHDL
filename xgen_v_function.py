@@ -142,13 +142,13 @@ class v_process_converter(vhdl_converter_base):
 class v_process(vhdl_base):
     def __init__(self,body="", SensitivityList=None,VariableList="",prefix=None,name=None,IsEmpty=False):
         super().__init__()
+        self.hdl_conversion__ = v_process_converter()
         self.body = body 
         self.SensitivityList = SensitivityList
         self.VariableList = VariableList
         self.name = name
         self.IsEmpty = IsEmpty
         self.prefix = prefix
-        self.hdl_conversion__ = v_process_converter()
 
 
 

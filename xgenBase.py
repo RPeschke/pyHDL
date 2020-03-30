@@ -472,6 +472,9 @@ class vhdl_converter_base:
     def length(self,obj):
         return str(obj)+"'length"
 
+    def to_arglist(self,obj, name,parent,withDefault = False):
+        raise Exception("not implemented for class: ", type(obj).__name__)
+
 class vhdl_base0:
     def __init__(self):
         super().__init__()
@@ -535,8 +538,10 @@ class vhdl_base0:
         self._isInstance = True
         return self
     
-    def _un_instantiate_(self):
+    def _un_instantiate_(self, Name = ""):
         self._isInstance = False
+        if Name:
+            self.set_vhdl_name(Name,True)
         return self
     
     def _issubclass_(self,test):
@@ -584,8 +589,7 @@ class vhdl_base(vhdl_base0):
     def getName(self):
         return type(self).__name__
 
-    def to_arglist(self,name,parent,withDefault = False):
-        raise Exception("not implemented for class: ", type(self).__name__)
+
     
     def set_varSigConst(self, varSigConst):
         raise Exception("not implemented for class: ", type(self).__name__)

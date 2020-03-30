@@ -241,8 +241,7 @@ class v_list(vhdl_base):
     def __len__(self):
         return len(self.content)
 
-    def length(self):
-        return str(self)+"'length"
+
         
     def get_vhdl_name(self,Inout=None):
         if Inout== None:

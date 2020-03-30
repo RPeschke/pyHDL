@@ -424,26 +424,21 @@ class v_entity(vhdl_base0):
             
         mem = v_entity_getMember(self)
         for x in mem:
-            if not issubclass(type(self.__dict__[x["name"]]), vhdl_base):
-                continue
             self.__dict__[x["name"]]._instantiate_()
         
         self._isInstance = True
         return self
 
-    def _un_instantiate_(self):
+    def _un_instantiate_(self, Name = ""):
         if self._isInstance == False:
             return self
         
-        self.set_vhdl_name("", True)
+
+        self.set_vhdl_name(Name, True)
         mem = v_entity_getMember(self)
         for x in mem:
-            if not issubclass(type(self.__dict__[x["name"]]), vhdl_base):
-                #del self.__dict__[x["name"]]
-                continue
-            self.__dict__[x["name"]]._isInstance = False
-            self.__dict__[x["name"]].flipInout()
-            self.__dict__[x["name"]].set_vhdl_name(x["name"],True)
+            self.__dict__[x["name"]]._un_instantiate_(x["name"])
+
         
         self._isInstance = False
         return self

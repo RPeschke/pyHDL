@@ -913,6 +913,32 @@ class v_class_converter(vhdl_converter_base):
             ret1.append(x)
         return ret1
 
+    def to_arglist(self,obj, name,parent,withDefault = False):
+        ret = []
+        
+        xs = obj.hdl_conversion__.extract_conversion_types(obj)
+
+        for x in xs:
+            inoutstr = ""
+            varSignal = "signal "
+            if x["symbol"].varSigConst == varSig.variable_t:
+                inoutstr = obj.hdl_conversion__.InOut_t2str(obj)
+                varSignal = ""
+            Default_str = ""
+            if withDefault and obj._writtenRead != InOut_t.output_t and obj.Inout != InOut_t.output_t:
+                Default_str =  " := " + obj.hdl_conversion__.get_default_value(obj)
+
+            ret.append(varSignal + name + x["suffix"] + " : " + inoutstr +" " +  x["symbol"].getType() +Default_str)
+
+            if x["symbol"].varSigConst == varSig.signal_t:
+                members = x["symbol"].getMember()
+                for m in members:
+                    if m["symbol"]._writtenRead == InOut_t.Internal_t:
+                        continue
+                    ret.append(m["symbol"].to_arglist(name + x["suffix"]+"_"+m["name"],None ,withDefault=withDefault))
+
+        r =join_str(ret,Delimeter="; ",IgnoreIfEmpty=True)
+        return r
 
 class v_class(vhdl_base):
 
@@ -1228,6 +1254,17 @@ class v_class(vhdl_base):
         self.Inout = InoutFlip(self.Inout)
         self._isInstance = True
         return self
+    
+    def _un_instantiate_(self, Name = ""):
+        self_members = self.getMember()
+        for x in self_members:
+            x["symbol"]._un_instantiate_(x["name"])
+        
+        
+        self.set_vhdl_name(Name,True)
+        self.Inout = InoutFlip(self.Inout)
+        self._isInstance = False
+        return self
 
     def get_m2s_signals(self):
         linput = InOut_t.input_t
@@ -1272,36 +1309,7 @@ class v_class(vhdl_base):
             self_members = self.getMember(linput)
             return self_members      
             
-    def to_arglist(self,name,parent,withDefault = False):
-        ret = []
-        
-        xs = self.hdl_conversion__.extract_conversion_types(self)
-
-        for x in xs:
-            inoutstr = ""
-            varSignal = "signal "
-            if x["symbol"].varSigConst == varSig.variable_t:
-                inoutstr = self.hdl_conversion__.InOut_t2str(self)
-                varSignal = ""
-            Default_str = ""
-            if withDefault and self._writtenRead != InOut_t.output_t and self.Inout != InOut_t.output_t:
-                Default_str =  " := " + self.hdl_conversion__.get_default_value(self)
-
-            ret.append(varSignal + name + x["suffix"] + " : " + inoutstr +" " +  x["symbol"].getType() +Default_str)
-
-            if x["symbol"].varSigConst == varSig.signal_t:
-                members = x["symbol"].getMember()
-                for m in members:
-                    if m["symbol"]._writtenRead == InOut_t.Internal_t:
-                        continue
-                    ret.append(m["symbol"].to_arglist(name + x["suffix"]+"_"+m["name"],None ,withDefault=withDefault))
-
-                
-
  
-
-        r =join_str(ret,Delimeter="; ",IgnoreIfEmpty=True)
-        return r
 
     def _remove_drivers(self):
         self.__Driver__ = None
