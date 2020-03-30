@@ -337,22 +337,24 @@ class v_symbol(vhdl_base):
         for x in self._receiver_list_running:
             x._sim_write_value()
 
-    def update(self):
-        self.value_list[self.value_index]  = self.nextValue
-        
-        
+    def update_init(self):# Only needs to run once on init
         if not self._got_update_list:
             self._update_list_process_running = list(set(self._sim__update_list_process()))
             self._update_list_running =     list(set(self._sim_get_update_list()))
             self._receiver_list_running  = self._sim_get_receiver()
             self._got_update_list = True
-        
+
+
+    def update(self):
+        self.update_init() # Wrong Place here but it works 
+
+        self.value_list[self.value_index]  = self.nextValue
+
         self._sim_write_value()
         
         gsimulation.append_updateList(self._update_list_running)
-        
         gsimulation.append_updateList_process(self._update_list_process_running)
-        #print("update",self.value)
+
         self.__UpdateFlag__ = False
 
 ##################### Operators #############################################
@@ -393,14 +395,20 @@ class v_symbol(vhdl_base):
         ret = self
         if self.__Driver__:
             ret = self.__Driver__._sim_get_primary_driver()
-
         return ret
+
+    def _sim_set_new_value_index(self,Index):
+        self.value_index = Index
+        receivers = self._sim_get_receiver()
+        for x in receivers:
+            x.value_index = self.value_index
     
     def _sim__update_list_process(self):
         ret = self._update_list_process
         for x in self.__receiver__:
             ret += x._sim__update_list_process()
         return ret
+
     def _sim_start_simulation(self):
         self._update_list_process_running = self._sim__update_list_process()
         self._update_list_running =self._sim_get_update_list()
@@ -415,83 +423,64 @@ class v_symbol(vhdl_base):
     def _sim_append_Push_update_list(self,up):
         self._Push_update_list.append(up)
 
-    def _sim_run_pull(self):
-        for x in self._Pull_update_list:
-            x()
-
-    def _sim_run_push(self):
-            for x in self._Push_update_list:
-                x()
 
     def _instantiate_(self):
         self._isInstance = True
         self.Inout = InoutFlip(self.Inout)
         return self
         
-    # rhs is source
-    def _connect(self,rhs):
-        if self.Inout != rhs.Inout:
-            raise Exception("Unable to connect different InOut types")
-        if self.__Driver__ != None and not isConverting2VHDL():#todo: there is a bug with double assigment in the conversion to vhdl
-            raise Exception("symbol has already a driver", str(self))
-        #self.__Driver__ = rhs
-        #print("_connect",self.vhdl_name)
-        def update1():
-            self.nextValue = value(rhs)
-            self.update()
 
-        rhs._update_list.append(update1)
 
     def __bool__(self):
-        
         return self._sim_get_value() > 0
 
+
+    def _Connect_running(self, rhs):
+        self.nextValue = value(rhs)
+        print("assing: ", self.value_index , self._Simulation_name ,  value(rhs))
+
+        if self.nextValue !=  value(self):
+            def update():
+                self.update()
+
+            if not self.__UpdateFlag__:
+                gsimulation.append_updateList([update])
+                self.__UpdateFlag__ = True
+                
+        if self.varSigConst == varSig.variable_t:
+            self.value_list[self.value_index]  = self.nextValue
+
+    def _Conect_Not_running(self,rhs):
+        if self.__Driver__ != None and not isConverting2VHDL():#todo: there is a bug with double assigment in the conversion to vhdl
+            raise Exception("symbol has already a driver", str(self))
+        elif not issubclass(type(rhs),vhdl_base0):
+            self.nextValue = rhs
+            self.value_list[self.value_index] = rhs
+            return
+
+        if rhs.varSigConst == varSig.variable_t or self.varSigConst == varSig.variable_t:
+            self.value_list[self.value_index] = value(rhs)
+            def update1():
+                print("update: ", self.value_index , self._Simulation_name ,  value(rhs))
+                self.nextValue = value(rhs)
+                self.update()
+            rhs._update_list.append(update1)
+        else:
+            self.__Driver__ = rhs
+            rhs.__receiver__.append(self)
+            self.nextValue = rhs.nextValue
+            self._sim_set_new_value_index(  rhs._sim_get_primary_driver().value_index )
+
+        
+        
     def __lshift__(self, rhs):
         if gsimulation.isRunning():
-            
-            self.nextValue = value(rhs)
-            print("assing: ", self.value_index , self._Simulation_name ,  value(rhs))
-
-            if self.nextValue !=  value(self):
-                def update():
-                    self.update()
-
-                if not self.__UpdateFlag__:
-                    gsimulation.append_updateList([update])
-                    self.__UpdateFlag__ = True
-                
-            if self.varSigConst == varSig.variable_t:
-                self.value_list[self.value_index]  = self.nextValue
-                
-            
+            self._Connect_running(rhs)
         else:
+            self._Conect_Not_running(rhs)
             
 
-            if self.__Driver__ != None and not isConverting2VHDL():#todo: there is a bug with double assigment in the conversion to vhdl
-                raise Exception("symbol has already a driver", str(self))
-            if issubclass(type(rhs),vhdl_base0):
-                if rhs.varSigConst == varSig.variable_t or self.varSigConst == varSig.variable_t:
-                    #self.__Driver__ = rhs
-                   # rhs.__receiver__.append(self)
-                    self.value_list[self.value_index] = value(rhs)
-                    def update1():
-                        print("update: ", self.value_index , self._Simulation_name ,  value(rhs))
-                        self.nextValue = value(rhs)
-                        self.update()
-                    rhs._update_list.append(update1)
-                else:
-                    self.__Driver__ = rhs
-                    rhs.__receiver__.append(self)
-                    self.nextValue = rhs.nextValue
-                    self.value_index = rhs._sim_get_primary_driver().value_index
-                    receivers = self._sim_get_receiver()
-                    for x in receivers:
-                        x.value_index = self.value_index
 
-
-            else:
-                self.nextValue = rhs
-                self.value_list[self.value_index] = rhs
 
 
 

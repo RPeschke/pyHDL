@@ -1252,3 +1252,8 @@ def for_loop_indexed_based(astParser,Node):
 def body_handle_len(astParser,args,keywords=None):
     l = astParser.Unfold_body(args[0])
     return l.hdl_conversion__.length(l)
+
+def  body_end_architecture(astParser,args,keywords=None):
+    return v_noop()
+
+    

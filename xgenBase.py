@@ -22,7 +22,7 @@ def flatten_list(In_list):
 
     return ret
 
-def join_str(content, start="",end="",LineEnding="",Delimeter="",LineBeginning="", IgnoreIfEmpty=False):
+def join_str(content, start="",end="",LineEnding="",Delimeter="",LineBeginning="", IgnoreIfEmpty=False, RemoveEmptyElements = False):
     ret = ""
     if len(content) == 0 and IgnoreIfEmpty:
         return ret
@@ -33,6 +33,9 @@ def join_str(content, start="",end="",LineEnding="",Delimeter="",LineBeginning="
 
     ret += start
     content = flatten_list(content)
+    if RemoveEmptyElements:
+        content = [x for x in content if x]
+
     for x in content[0:-1]:
         ret += LineBeginning + x + Delimeter + LineEnding
 
@@ -582,16 +585,10 @@ class vhdl_base(vhdl_base0):
         return type(self).__name__
 
     def to_arglist(self,name,parent,withDefault = False):
-        
-        localname = self.vhdl_name
-        if name:
-            localname = name
-
-        
-        return localname +" : " +self.type
+        raise Exception("not implemented for class: ", type(self).__name__)
     
     def set_varSigConst(self, varSigConst):
-        raise Exception("not implemented")
+        raise Exception("not implemented for class: ", type(self).__name__)
 
     def get_vhdl_name(self,Inout):
         return None
@@ -615,24 +612,14 @@ class vhdl_base(vhdl_base0):
             return True
         return "vhdl_base" == test
 
-
-
-
-
-    def _connect(self,rhs):
-        raise Exception("not implemented")
-    
+   
 
 
     def _sim_get_value(self):
         raise Exception("not implemented")
     
 
-def optional_concatonat(first, delimer, Second):
-    if first and Second:
-        return first + delimer +Second
-    
-    return first + Second
+
 
 def value(Input):
     if issubclass(type(Input), vhdl_base):

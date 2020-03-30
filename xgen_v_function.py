@@ -16,7 +16,7 @@ class v_procedure_converter(vhdl_converter_base):
         if parent != None and not obj.isFreeFunction:
             classDef = parent.hdl_conversion__.get_self_func_name (parent)
 
-        argumentList = optional_concatonat( classDef, "; ", obj.argumentList)
+        argumentList = join_str( [classDef, obj.argumentList ],Delimeter="; " ,RemoveEmptyElements = True).strip()
         if obj.name:
             name = obj.name        
         if obj.isEmpty:
@@ -35,13 +35,13 @@ class v_procedure_converter(vhdl_converter_base):
         if parent != None and not obj.isFreeFunction:
             classDef = parent.hdl_conversion__.get_self_func_name (parent)
 
-        argumentList = optional_concatonat( classDef, "; ", obj.argumentList)
+        argumentList = join_str( [classDef, obj.argumentList ],Delimeter="; " ,RemoveEmptyElements = True).strip()
         if obj.name:
             name = obj.name      
         if obj.isEmpty:
             return "-- empty procedure removed. name: '"  + name+"'\n"
 
-        ret = '''procedure {functionName} ( {argumentList}) is\n  {VariableList} \n  begin \n {body} \nend procedure;\n\n'''.format(
+        ret = '''procedure {functionName} ({argumentList}) is\n  {VariableList} \n  begin \n {body} \nend procedure;\n\n'''.format(
                 functionName=name,
                 argumentList=argumentList,
                 body = obj.body,
@@ -72,13 +72,13 @@ class v_function_converter(vhdl_converter_base):
         classDef =""
         if parent != None and not obj.isFreeFunction:
             classDef = parent.hdl_conversion__.get_self_func_name (parent,True)
-        argumentList = optional_concatonat( classDef, "; ", obj.argumentList)
+        argumentList = join_str( [classDef, obj.argumentList ],Delimeter="; " ,RemoveEmptyElements = True).strip()
         if obj.name:
             name = obj.name
         if obj.isEmpty:
             return "-- empty function removed. name: '"  + name+"'\n"
 
-        ret = '''  function {functionName} (  {argumentList}) return {returnType};\n'''.format(
+        ret = '''  function {functionName} ({argumentList}) return {returnType};\n'''.format(
                 functionName=name,
                 argumentList=argumentList,
                 returnType=obj.returnType
@@ -91,14 +91,14 @@ class v_function_converter(vhdl_converter_base):
         classDef =""
         if parent != None and not obj.isFreeFunction:
             classDef = parent.hdl_conversion__.get_self_func_name(parent,True)
-        argumentList = optional_concatonat( classDef, "; ", obj.argumentList)
+        argumentList = join_str( [classDef, obj.argumentList ],Delimeter="; " ,RemoveEmptyElements = True).strip()
         
         if obj.name:
             name = obj.name  
         if obj.isEmpty:
             return "-- empty function removed. name: '"  + name   +"'\n"
 
-        ret = '''function {functionName} (  {argumentList}) return {returnType} is\n  {VariableList} \n  begin \n {body} \nend function;\n\n'''.format(
+        ret = '''function {functionName} ({argumentList}) return {returnType} is\n  {VariableList} \n  begin \n {body} \nend function;\n\n'''.format(
                 functionName=name,
                 argumentList=argumentList,
                 body = obj.body,

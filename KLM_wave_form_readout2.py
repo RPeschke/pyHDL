@@ -119,44 +119,27 @@ class InputDelay_tb(v_entity):
         clkgen = v_create(clk_generator())
         k_globals =klm_globals()
         data = v_slv(32,5)
-        counter  = v_slv(32,0)
-        data_buffer =  v_variable(v_slv(32,30))
-        data_buffer0 =  v_variable(v_slv(32,20))
-        data_out = v_slv(32,10)
 
-        #dut  = v_create(InputDelay(k_globals,Delay=5) )
 
-        #axprint  =  v_create( InputDelay_print(k_globals))
+        dut  = v_create(InputDelay(k_globals,Delay=5) )
 
-        #axprint.ConfigIn << dut.ConfigOut
+        axprint  =  v_create( InputDelay_print(k_globals))
+
+        axprint.ConfigIn << dut.ConfigOut
         k_globals.clk << clkgen.clk
-        #mast = get_master(axprint.ConfigIn)
+        mast = get_master(dut.ConfigIn)
 
-        delay =  axisStream( v_slv(32,40))
-        print(delay.ready.value_index)
-        delay_m = get_master(delay)
-        print(delay_m.tx.ready.value_index)
-        delay_s = get_salve(delay)
-        print(delay_s.rx.ready.value_index)
 
-        @rising_edge(clkgen.clk)
-        def proc():
-            print("<slave>")
-            counter << counter + 1
-            if delay_s and counter > 2:
-                print("delay_s")
-                data_out << delay_s
-                counter << 0
-            print("</slave>")
+
 
 
 
         @rising_edge(clkgen.clk)
         def proc():
             print("<master>")            
-            if delay_m:
+            if mast:
                 print("delay_m")
-                delay_m << data
+                mast << data
                 data << data + 1
             print("</master>")
 
@@ -190,7 +173,7 @@ def profile(fnc):
 #@profile
 def main():
     tb  =v_create(InputDelay_tb())
-    gsimulation.run_timed(tb, 300,"InputDelay_tb.vcd")
-    #tb.hdl_conversion__.convert_all(tb,"pyhdl_waveform")
+    #gsimulation.run_timed(tb, 300,"InputDelay_tb.vcd")
+    tb.hdl_conversion__.convert_all(tb,"pyhdl_waveform")
 
 main()

@@ -135,42 +135,40 @@ class xgenAST:
             "Call" : Unfold_call,
             "Num" : unfold_num,
             "Str" : unfold_Str
-           
         }
 
         self.functionNameVetoList = [
-        "__init__",
-        "create",
-        "__lshift__",
-        "__bool__",
-        '_vhdl__to_bool',
-        '_vhdl__getValue',
-        "_vhdl__reasign",
-        '_connect',
-        "_sim_get_value",
-        "get_master",
-        "get_slave"
-
+            "__init__",
+            "create",
+            "__lshift__",
+            "__bool__",
+            '_vhdl__to_bool',
+            '_vhdl__getValue',
+            "_vhdl__reasign",
+            '_connect',
+            "_sim_get_value",
+            "get_master",
+            "get_slave"
         ]
 
         self.local_function ={}
         self._unfold_symbol_fun_arg={
-    "port_in" : port_in_to_vhdl,
-    "port_out" : port_out_to_vhdl,
-    "variable_port_in" :  variable_port_in_to_vhdl,
-    "variable_port_out" : variable_port_out_to_vhdl,
-    "v_slv"  : v_slv_to_vhdl,
-    "v_sl"  : v_sl_to_vhdl,
-    "v_int" : v_int_to_vhdl,
-    "v_bool" : v_bool_to_vhdl,
-    "dataType":dataType,
-     "rising_edge" : handle_rising_edge,
-     "print"       : handle_print,
-     "v_switch"  : handle_v_switch,
-     "v_case"    : handle_v_case,
-     "len"       : body_handle_len
-  #   "v_create"    : handle_v_create
-    }
+            "port_in" : port_in_to_vhdl,
+            "port_out" : port_out_to_vhdl,
+            "variable_port_in" :  variable_port_in_to_vhdl,
+            "variable_port_out" : variable_port_out_to_vhdl,
+            "v_slv"  : v_slv_to_vhdl,
+            "v_sl"  : v_sl_to_vhdl,
+            "v_int" : v_int_to_vhdl,
+            "v_bool" : v_bool_to_vhdl,
+            "dataType":dataType,
+            "rising_edge" : handle_rising_edge,
+            "print"       : handle_print,
+            "v_switch"  : handle_v_switch,
+            "v_case"    : handle_v_case,
+            "len"       : body_handle_len,
+            "end_architecture" : body_end_architecture
+        }
 
         self._Unfold_body={
             "FunctionDef"   : body_unfold_functionDef,
@@ -271,11 +269,12 @@ class xgenAST:
         ClassName  = type(ClassInstance).__name__
         cl = self.getClassByName(ClassName)
         for f in cl.body:
+            if  f.name in self.functionNameVetoList:
+                continue
+
             self.Missing_template = False
             ClassInstance.hdl_conversion__.reset_TemplateMissing(ClassInstance)
             self.local_function ={}
-            if  f.name in self.functionNameVetoList:
-                continue
             # print(f.name)
             self.parent = parent
             self.FuncArgs = list()
