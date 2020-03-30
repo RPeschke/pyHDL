@@ -190,15 +190,7 @@ class v_Arch_converter(vhdl_converter_base):
             )
 
   
-    def make_signal_connections(self, obj, objList):
-        ret = ""
-        for x in objList:
-            if x['symbol'].__Driver__ and not x['symbol'].DriverIsProcess() and x['symbol'].__Driver__.vhdl_name:
-                ret += x['symbol'].hdl_conversion__._vhdl__reasign(x['symbol'],x['symbol'].__Driver__)  +";\n  "
-            else:
-                ret += obj.hdl_conversion__.make_signal_connections(obj,x['symbol'].getMember(VaribleSignalFilter=varSig.signal_t))
 
-        return ret
     def make_signal_connections2(self, obj, objList):
         ret = ""
         for x in objList:
