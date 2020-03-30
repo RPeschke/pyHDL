@@ -60,16 +60,6 @@ class wait_for():
         return " " + str(self.time) +" " + self.unit
 
 
-def addPullsPushes(symbol):
-    funcrec = inspect.stack()[2]
-    funcrec4 = inspect.stack()[4]
-    
-        
-    f_locals = funcrec.frame.f_locals
-    f_locals4  = funcrec4.frame.f_locals
-    for y in f_locals:
-        if not y in f_locals4 and y != "self" and issubclass(type(f_locals[y]), vhdl_base0):
-            f_locals[y]._sim_set_push_pull(symbol)
 
             
 def addPullsPushes_from_closure(Pull_list, Push_list, closure):
@@ -178,6 +168,8 @@ def v_entity_getMember_expand(entity):
 class v_entity_converter(vhdl_converter_base):
     def __init__(self):
         super().__init__()
+        self.astTree = None
+
     def get_entity_file_name(self, obj):
         return type(obj).__name__+".vhd"
 
@@ -205,9 +197,7 @@ class v_entity_converter(vhdl_converter_base):
         set_isConverting2VHDL(s)
         return ret
 
-    def __init__(self):
-        super().__init__()
-        self.astTree = None
+
 
 
     def parse_file(self,obj):
@@ -277,9 +267,7 @@ class v_entity_converter(vhdl_converter_base):
 
 
     def get_architecture_body(self, obj):
-
         content = []
-        
 
         for x in v_entity_getMember(obj):
             if x["symbol"].Inout ==InOut_t.Internal_t:
@@ -290,11 +278,8 @@ class v_entity_converter(vhdl_converter_base):
             content += x["symbol"].hdl_conversion__._vhdl_make_port(x["symbol"], x["name"] )
 
 
-        
         start = str(obj.vhdl_name) +" : entity work." + obj._name+" port map (\n    "
         ret=join_str(content,start=start ,end="\n  )",Delimeter=",\n    ")
-      
-  
         return ret
  
 
@@ -342,7 +327,6 @@ class v_entity_converter(vhdl_converter_base):
             obj._un_instantiate_()
         ret = ""
 
-        #ret += obj.hdl_conversion__.includes(obj,None,None)
         ret += "\n\n"
         ret += obj.hdl_conversion__.get_declaration(obj)
         ret += "\n\n"
@@ -354,13 +338,7 @@ class v_entity_converter(vhdl_converter_base):
         
 
     def get_entity_definition(self, obj):
-        #s = isConverting2VHDL()
-        #set_isConverting2VHDL(True)
-        
-        #obj.hdl_conversion__.parse_file(obj)
-
         ret = obj.hdl_conversion__.get_definition(obj)
-        #set_isConverting2VHDL(s)
         return ret.strip()
 
 class v_entity(vhdl_base0):
