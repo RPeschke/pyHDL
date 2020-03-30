@@ -72,13 +72,13 @@ def addPullsPushes(symbol):
             f_locals[y]._sim_set_push_pull(symbol)
 
             
-def addPullsPushes_from_closure(symbol,closure):
+def addPullsPushes_from_closure(Pull_list, Push_list, closure):
     if closure == None:
         return
     for x in closure:
         y = x.cell_contents
         if issubclass(type(y), vhdl_base0):
-            y._sim_set_push_pull(symbol)
+            y._sim_set_push_pull(Pull_list, Push_list)
             
 
 
@@ -109,16 +109,25 @@ def v_case(pred,value):
     }
     return ret
 
+def run_list(functionList):
+    for x in functionList:
+        x()
+
+
 def rising_edge(symbol):
     def decorator_rising_edge(func):
+        Pull_list = []
+        Push_list = []
         @functools.wraps(func)
         def wrapper_rising_edge(getSymb=None):
             if value(symbol) == 1:
-                symbol._sim_run_pull()
+                run_list(Pull_list)
                 func()
-                symbol._sim_run_push()
+                run_list(Push_list)
+
+        
+        addPullsPushes_from_closure(Pull_list,Push_list ,func.__closure__)
         symbol._update_list_process.append(wrapper_rising_edge)
-        addPullsPushes_from_closure(symbol,func.__closure__)
         return wrapper_rising_edge
     return decorator_rising_edge
 

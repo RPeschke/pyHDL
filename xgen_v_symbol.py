@@ -228,6 +228,7 @@ class v_symbol(vhdl_base):
         self.__vcd_varobj__ = None
         self.__vcd_writer__ = None
         self.__UpdateFlag__ = False
+        self._Simulation_name = "NotSet"
 
 
 
@@ -323,6 +324,7 @@ class v_symbol(vhdl_base):
         raise Exception("No Name was given to symbol")
 
     def set_simulation_param(self,module, name,writer):
+        self._Simulation_name =module+"." +name
         self.__vcd_varobj__ = writer.register_var(module, name, 'integer', size=32)
         self.__vcd_writer__ = writer 
         self.vhdl_name = name
@@ -448,6 +450,7 @@ class v_symbol(vhdl_base):
         if gsimulation.isRunning():
             
             self.nextValue = value(rhs)
+            print("assing: ", self.value_index , self._Simulation_name ,  value(rhs))
 
             if self.nextValue !=  value(self):
                 def update():
@@ -468,10 +471,11 @@ class v_symbol(vhdl_base):
                 raise Exception("symbol has already a driver", str(self))
             if issubclass(type(rhs),vhdl_base0):
                 if rhs.varSigConst == varSig.variable_t or self.varSigConst == varSig.variable_t:
-                    self.__Driver__ = rhs
-                    rhs.__receiver__.append(self)
+                    #self.__Driver__ = rhs
+                   # rhs.__receiver__.append(self)
                     self.value_list[self.value_index] = value(rhs)
                     def update1():
+                        print("update: ", self.value_index , self._Simulation_name ,  value(rhs))
                         self.nextValue = value(rhs)
                         self.update()
                     rhs._update_list.append(update1)

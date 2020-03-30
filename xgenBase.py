@@ -502,13 +502,13 @@ class vhdl_base0:
 
     def _sim_stop_simulation(self):
         pass
-    def _sim_set_push_pull(self, symbol):
+    def _sim_set_push_pull(self, Pull_list, Push_list):
             
             if hasattr(self, "_onPull"):
-                symbol._sim_append_Pull_update_list( getattr(self, '_onPull'))
+                Pull_list.append(getattr(self, '_onPull'))
 
             if hasattr(self, "_onPush"):
-                symbol._sim_append_Push_update_list(getattr(self, '_onPush'))
+                Push_list.append(getattr(self, '_onPush'))
 
 
 

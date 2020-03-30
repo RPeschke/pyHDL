@@ -118,8 +118,12 @@ class InputDelay_tb(v_entity):
     def architecture(self):
         clkgen = v_create(clk_generator())
         k_globals =klm_globals()
-        data = v_slv(32,20)
-        data_out = v_slv(32,20)
+        data = v_slv(32,5)
+        counter  = v_slv(32,0)
+        data_buffer =  v_variable(v_slv(32,30))
+        data_buffer0 =  v_variable(v_slv(32,20))
+        data_out = v_slv(32,10)
+
         #dut  = v_create(InputDelay(k_globals,Delay=5) )
 
         #axprint  =  v_create( InputDelay_print(k_globals))
@@ -128,27 +132,33 @@ class InputDelay_tb(v_entity):
         k_globals.clk << clkgen.clk
         #mast = get_master(axprint.ConfigIn)
 
-        delay =  axisStream( data)
-        print(delay.valid.value_index)
+        delay =  axisStream( v_slv(32,40))
+        print(delay.ready.value_index)
         delay_m = get_master(delay)
-        print(delay_m.tx.valid.value_index)
+        print(delay_m.tx.ready.value_index)
         delay_s = get_salve(delay)
-        print(delay_s.rx.valid.value_index)
-
+        print(delay_s.rx.ready.value_index)
 
         @rising_edge(clkgen.clk)
         def proc():
-            if delay_s:
+            print("<slave>")
+            counter << counter + 1
+            if delay_s and counter > 2:
+                print("delay_s")
                 data_out << delay_s
-                print("delay",  value(delay_s))
+                counter << 0
+            print("</slave>")
+
+
 
         @rising_edge(clkgen.clk)
         def proc():
-            data << data + 1
+            print("<master>")            
             if delay_m:
-                print("InputDelay_tb",  value(data))
+                print("delay_m")
                 delay_m << data
-
+                data << data + 1
+            print("</master>")
 
         end_architecture()
 

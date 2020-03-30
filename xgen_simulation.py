@@ -61,6 +61,7 @@ class v_simulation():
 
     def run_timed(self,testBench, MaxTime, FileName):
         self.CurrentTime = 0
+        local_time = 0
         objName = getNameOf(testBench)
 
             
@@ -76,6 +77,7 @@ class v_simulation():
                 })
             while (self.CurrentTime < MaxTime):
                 minNext = 1e100
+                self.CurrentTime = local_time 
                 for x in p_list:
                     if self.CurrentTime <= x["next_time"]:
                         try:
@@ -88,19 +90,24 @@ class v_simulation():
                         minNext= min(minNext,val.get_time())
 
                 self.CurrentTime +=  minNext
-
+                local_time = self.CurrentTime
                 while (len(self.updateList)):
+                    print("while (len(self.updateList)):")
                     while (len(self.updateList)):
+                        print("for x in updateList:")
                         updateList = list(set( self.updateList))
                         self.updateList=list()
                         for x in updateList:
                             x()
                     
                     while (len(self.updateList_process)):
+                        print("for x in updateList_process:")
                         updateList_process =  list(set(self.updateList_process))
                         self.updateList_process=list()
                         for x in updateList_process:
                             x()
+                    
+                    self.CurrentTime +=  1
 
         self.writer= None
         self.CurrentTime =0
