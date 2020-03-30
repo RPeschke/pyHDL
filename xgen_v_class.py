@@ -1163,8 +1163,20 @@ class v_class(vhdl_base):
         if self.vhdl_name:
             return str(self.vhdl_name)
 
-        return str(self.value)
+        raise Exception("Unable convert to string class: ", type(self)._name__)
 
+
+    def _conect_members(self,rhs):
+        self_members  = self.get_s2m_signals()
+        rhs_members  = rhs.get_s2m_signals()
+
+        for i in range(len(self_members)):
+            rhs_members[i]['symbol'] << self_members[i]['symbol']
+
+        self_members  = self.get_m2s_signals()
+        rhs_members  = rhs.get_m2s_signals()
+        for i in range(len(self_members)):
+            self_members[i]['symbol'] << rhs_members[i]['symbol']
 
 
     def _connect(self,rhs):
@@ -1177,40 +1189,21 @@ class v_class(vhdl_base):
         self.__Driver__ = rhs
         rhs.__receiver__.append(self)
         if not isConverting2VHDL():
-            self_members  = self.get_s2m_signals()
-            rhs_members  = rhs.get_s2m_signals()
-
-            for i in range(len(self_members)):
-                rhs_members[i]['symbol'] << self_members[i]['symbol']
-
-            self_members  = self.get_m2s_signals()
-            rhs_members  = rhs.get_m2s_signals()
-            for i in range(len(self_members)):
-                self_members[i]['symbol'] << rhs_members[i]['symbol']
-
-
+            self._conect_members(rhs)
+            
 
 
     def _connect_running(self,rhs):
         if self.Inout != rhs.Inout and self.Inout != InOut_t.Internal_t and rhs.Inout != InOut_t.Internal_t and rhs.Inout != InOut_t.Slave_t and self.Inout != InOut_t.Master_t and self.Inout != InOut_t.input_t and self.Inout != InOut_t.output_t:
             raise Exception("Unable to connect different InOut types")
         
-        rhs = rhs._sim_get_value()
+        rhs = value(rhs)
 
         if type(self).__name__ != type(rhs).__name__:
             raise Exception("Unable to connect different types")
         
         
-        self_members  = self.get_s2m_signals()
-        rhs_members  = rhs.get_s2m_signals()
-
-        for i in range(len(self_members)):
-            rhs_members[i]['symbol'] << self_members[i]['symbol']
-
-        self_members  = self.get_m2s_signals()
-        rhs_members  = rhs.get_m2s_signals()
-        for i in range(len(self_members)):
-            self_members[i]['symbol'] << rhs_members[i]['symbol']
+        self._conect_members(rhs)
 
     def __lshift__(self, rhs):
         if gsimulation.isRunning():
