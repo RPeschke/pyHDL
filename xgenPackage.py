@@ -58,6 +58,16 @@ class v_package_converter(vhdl_converter_base):
         
         return ret
 
+def Fill_AST_Tree(package,SourceFile):
+    if not SourceFile:
+        return
+    package.astTree = xgenAST(SourceFile)
+
+    for x in package.PackageContent:
+        if x._issubclass_("v_class"):
+            fun= package.astTree.extractFunctionsForClass(x ,package )
+            x.hdl_conversion__.__ast_functions__ += fun
+    
 class v_package(vhdl_base):
     def __init__(self, PackageName,PackageContent, sourceFile=None):
         super().__init__()
@@ -71,13 +81,7 @@ class v_package(vhdl_base):
         self.PackageContent = PackageContent
         self.astTree = None
         self.astv_classes = None
-        if sourceFile:
-            self.astTree = xgenAST(sourceFile)
-
-            for x in self.PackageContent:
-                if x._issubclass_("v_class"):
-                    fun= self.astTree.extractFunctionsForClass(x ,self )
-                    x.hdl_conversion__.__ast_functions__ += fun
+        Fill_AST_Tree(self, sourceFile)
 
         set_isConverting2VHDL(s)
         set_isProcess(proc)

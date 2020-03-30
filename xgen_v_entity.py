@@ -398,14 +398,11 @@ class v_entity(vhdl_base0):
     def set_simulation_param(self,module, name,writer):
         mem = v_entity_getMember(self)
         for x in mem:
-            
             x["symbol"].set_simulation_param(module +"."+ name, x["name"],writer)
-            #print(x)
+
         local_symbols =sorted(self.__local_symbols__, key=lambda element_: element_["name"])
         for x in local_symbols:
-            
             x["symbol"].set_simulation_param(module +"."+ name, x["name"],writer)
-            #print (x)
 
 
     def _add_symbol(self, name,symb):
@@ -428,7 +425,6 @@ class v_entity(vhdl_base0):
         mem = v_entity_getMember(self)
         for x in mem:
             if not issubclass(type(self.__dict__[x["name"]]), vhdl_base):
-                #del self.__dict__[x["name"]]
                 continue
             self.__dict__[x["name"]]._instantiate_()
         

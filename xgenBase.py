@@ -59,16 +59,23 @@ def get_value_or_default(value,default):
 
     return value
 
-def add_symbols_to_entiy():
+def get_variables_from_function_in_callstack(FunctionName):
     funcrec = inspect.stack()
     for x in funcrec:
             #print (x.function)
-        if x.function == "architecture":
+        if x.function == FunctionName:
             f_locals = x.frame.f_locals
-            for y in f_locals:
-                if y != "self" and issubclass(type(f_locals[y]), vhdl_base0):
-                    f_locals["self"]._add_symbol(y,f_locals[y])
-                    #print(y)
+            return f_locals
+    
+    raise Exception("unable to find Function in callstack. Function Name", FunctionName)
+
+
+def add_symbols_to_entiy():
+    f_locals = get_variables_from_function_in_callstack("architecture")
+    for y in f_locals:
+        if y != "self" and issubclass(type(f_locals[y]), vhdl_base0):
+            f_locals["self"]._add_symbol(y,f_locals[y])
+            
 
 
 __VHDL__OPS_to2str= {
@@ -81,7 +88,7 @@ __VHDL__OPS_to2str= {
 def ops2str(ops):
     return  __VHDL__OPS_to2str[ops]
         
-    raise Exception("unable to find Binary Operator")
+
 
 
 gStatus = {
