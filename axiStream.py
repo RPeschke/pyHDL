@@ -147,7 +147,6 @@ class axisStream_slave(v_class_slave):
         return self.isReceivingData()
 
     def _onPull(self):
-        print("<slave_pull>")
         if self.rx.ready and self.rx.valid:
             self.data_isvalid << 1
         
@@ -160,7 +159,6 @@ class axisStream_slave(v_class_slave):
             self.data_internal_isLast2 << self.rx.last
             self.data_isvalid << 0
         
-        print("</slave_pull>")
    
       
     def _sim_get_value(self):
@@ -170,14 +168,12 @@ class axisStream_slave(v_class_slave):
         return self.data_internal2._sim_get_value()
 
     def _onPush(self):
-        print("<slave_push>")
         if self.data_internal_was_read2:
             self.data_internal_isvalid2 << 0
 
         if not self.data_isvalid and not self.data_internal_isvalid2:
             self.rx.ready << 1
         
-        print("</slave_push>")
 
 
 class axisStream_master_converter(axisStream_converter):
@@ -238,12 +234,12 @@ class axisStream_master(v_class_master):
 
 
     def _onPull(self):
-        print("<master_pull>")
+
         if self.tx.ready: 
             self.tx.valid << 0 
             self.tx.last  << 0  
 #            self.tx.data  << 0
-        print("</master_pull>")
+
     
     def __lshift__(self, rhs):
         self.send_data(value(rhs))

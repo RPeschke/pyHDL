@@ -128,7 +128,7 @@ class v_entity_list(vhdl_base0):
             if x["temp"]:
                 tempName =   name+"_"+str(i) + "_" +type(x["symbol"]).__name__
                 x["symbol"].set_simulation_param(module, tempName,writer)
-            #print(x)
+
     
 
 

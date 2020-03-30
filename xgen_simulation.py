@@ -59,9 +59,37 @@ class v_simulation():
     def change(self, var, value):
         self.writer.change(var, self.CurrentTime, value)
 
+    def run_processor_timed(self, p_list):
+        minNext = 1e100
+        for x in p_list:
+            if self.CurrentTime <= x["next_time"]:
+                try:
+                    val = next(x["gen"])
+                except StopIteration:
+                    x["gen"] = x["fun"]()
+                    val = next(x["gen"])
+
+                x["next_time"] = self.CurrentTime+val.get_time()
+                minNext= min(minNext,val.get_time())
+        self.CurrentTime +=  minNext
+
+    def run_symbol_change(self):
+        while (len(self.updateList)):
+            updateList = list(set( self.updateList))
+            self.updateList=list()
+            for x in updateList:
+                x()
+
+    def run_processors(self):
+        while (len(self.updateList_process)):
+            updateList_process =  list(set(self.updateList_process))
+            self.updateList_process=list()
+            for x in updateList_process:
+                x()
+
+                    
     def run_timed(self,testBench, MaxTime, FileName):
         self.CurrentTime = 0
-        local_time = 0
         objName = getNameOf(testBench)
 
             
@@ -76,38 +104,13 @@ class v_simulation():
                         "fun"       : t
                 })
             while (self.CurrentTime < MaxTime):
-                minNext = 1e100
-                self.CurrentTime = local_time 
-                for x in p_list:
-                    if self.CurrentTime <= x["next_time"]:
-                        try:
-                            val = next(x["gen"])
-                        except StopIteration:
-                            x["gen"] = x["fun"]()
-                            val = next(x["gen"])
+                self.run_processor_timed(p_list)
 
-                        x["next_time"] = self.CurrentTime+val.get_time()
-                        minNext= min(minNext,val.get_time())
-
-                self.CurrentTime +=  minNext
-                local_time = self.CurrentTime
                 while (len(self.updateList)):
-                    print("while (len(self.updateList)):")
-                    while (len(self.updateList)):
-                        print("for x in updateList:")
-                        updateList = list(set( self.updateList))
-                        self.updateList=list()
-                        for x in updateList:
-                            x()
+                    self.run_symbol_change()
+                    self.run_processors()
                     
-                    while (len(self.updateList_process)):
-                        print("for x in updateList_process:")
-                        updateList_process =  list(set(self.updateList_process))
-                        self.updateList_process=list()
-                        for x in updateList_process:
-                            x()
-                    
-                    self.CurrentTime +=  1
+
 
         self.writer= None
         self.CurrentTime =0

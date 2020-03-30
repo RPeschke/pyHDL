@@ -437,7 +437,7 @@ class v_symbol(vhdl_base):
 
     def _Connect_running(self, rhs):
         self.nextValue = value(rhs)
-        print("assing: ", self.value_index , self._Simulation_name ,  value(rhs))
+        #print("assing: ", self.value_index , self._Simulation_name ,  value(rhs))
 
         if self.nextValue !=  value(self):
             def update():
@@ -461,7 +461,7 @@ class v_symbol(vhdl_base):
         if rhs.varSigConst == varSig.variable_t or self.varSigConst == varSig.variable_t:
             self.value_list[self.value_index] = value(rhs)
             def update1():
-                print("update: ", self.value_index , self._Simulation_name ,  value(rhs))
+                #print("update: ", self.value_index , self._Simulation_name ,  value(rhs))
                 self.nextValue = value(rhs)
                 self.update()
             rhs._update_list.append(update1)

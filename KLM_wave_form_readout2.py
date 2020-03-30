@@ -64,12 +64,12 @@ class InputDelay(v_entity):
     @architecture
     def architecture(self):
         
-        pipe = self.ConfigIn \
-            | stream_delay_one(self.globals.clk, self.ConfigIn.data,0) \
-            | stream_delay_one(self.globals.clk, self.ConfigIn.data,1) \
-            | \
-        self.ConfigOut   
-        #pipe2 = delay(times=self.Delay,obj=self)
+#        pipe = self.ConfigIn \
+#            | stream_delay_one(self.globals.clk, self.ConfigIn.data,0) \
+#            | stream_delay_one(self.globals.clk, self.ConfigIn.data,1) \
+#            | \
+#        self.ConfigOut   
+        pipe2 = delay(times=self.Delay,obj=self)
         end_architecture()
 
 
@@ -101,7 +101,7 @@ class InputDelay_print(v_entity):
             counter << counter + 1
             if ax_slave :
                d << ax_slave
-               print("InputDelay_print", value(d))
+               #print("InputDelay_print", value(d))
             
             if counter > 15:
                 counter << 0
@@ -136,12 +136,10 @@ class InputDelay_tb(v_entity):
 
         @rising_edge(clkgen.clk)
         def proc():
-            print("<master>")            
             if mast:
-                print("delay_m")
                 mast << data
                 data << data + 1
-            print("</master>")
+           
 
         end_architecture()
 
@@ -173,7 +171,7 @@ def profile(fnc):
 #@profile
 def main():
     tb  =v_create(InputDelay_tb())
-    #gsimulation.run_timed(tb, 300,"InputDelay_tb.vcd")
-    tb.hdl_conversion__.convert_all(tb,"pyhdl_waveform")
+    gsimulation.run_timed(tb, 300,"InputDelay_tb.vcd")
+    #tb.hdl_conversion__.convert_all(tb,"pyhdl_waveform")
 
 main()
