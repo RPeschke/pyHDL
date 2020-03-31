@@ -81,15 +81,7 @@ def add_symbols_to_entiy():
             
 
 
-__VHDL__OPS_to2str= {
-"Gt": ">",
-"Eq" : "=",
-"GtE" :">=",
-"LtE" :"<=",
-"Lt"  :"<"
-}
-def ops2str(ops):
-    return  __VHDL__OPS_to2str[ops]
+
         
 
 
@@ -170,11 +162,22 @@ def isSameArgs(args1,args2, hasDefaults = False):
             return False
     return True  
 class vhdl_converter_base:
+    __VHDL__OPS_to2str= {
+        "Gt": ">",
+        "Eq" : "=",
+        "GtE" :">=",
+        "LtE" :"<=",
+        "Lt"  :"<"
+    }
+
 
     def __init__(self):
         self.MemfunctionCalls=[]
         self.IsConverted = False
         self.MissingTemplate = False
+
+    def ops2str(self, ops):
+        return  self.__VHDL__OPS_to2str[ops]
 
     def FlagFor_TemplateMissing(self, obj):
         primary = obj.hdl_conversion__.get_primary_object(obj)
@@ -299,10 +302,10 @@ class vhdl_converter_base:
 
     def _vhdl_slice(self,obj, sl,astParser=None):
         raise Exception("Not implemented")
-        return obj
+
     
     def _vhdl__compare(self,obj, ops, rhs):
-        return str(obj) + " " +ops2str(ops)+" " + str(rhs)
+        return str(obj) + " " + obj.hdl_conversion__.ops2str(ops)+" " + str(rhs)
 
     def _vhdl__add(self,obj,args):
         return str(obj) + " + " + str(args)
@@ -501,27 +504,26 @@ class vhdl_base0:
     def DriverIsProcess(self):
         if type(self.__Driver__).__name__ == "str":
             return self.__Driver__ == "process"
-        
         return False
 
     def _sim_get_new_storage(self):
         pass    
+
     def set_simulation_param(self,module, name,writer):
         pass
-
    
     def _sim_start_simulation(self):
         pass
 
     def _sim_stop_simulation(self):
         pass
-    def _sim_set_push_pull(self, Pull_list, Push_list):
-            
-            if hasattr(self, "_onPull"):
-                Pull_list.append(getattr(self, '_onPull'))
 
-            if hasattr(self, "_onPush"):
-                Push_list.append(getattr(self, '_onPush'))
+    def _sim_set_push_pull(self, Pull_list, Push_list):
+        if hasattr(self, "_onPull"):
+            Pull_list.append(getattr(self, '_onPull'))
+
+        if hasattr(self, "_onPush"):
+            Push_list.append(getattr(self, '_onPush'))
 
 
 

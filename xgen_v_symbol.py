@@ -55,24 +55,34 @@ class v_symbol_converter(vhdl_converter_base):
         raise Exception("unexpected type")
 
 
+    def _vhdl__compare_int(self,obj, ops, rhs):
+        return str(obj) + " "+ obj.hdl_conversion__.ops2str(ops) +" " +   str(rhs)
+
+    def _vhdl__compare_std_logic(self,obj, ops, rhs):
+        value = str(rhs).lower()
+        if value == "true":
+            rhs = "1"
+        elif value == "false":
+            rhs = "0"            
+        return str(obj) + " "+ obj.hdl_conversion__.ops2str(ops) +" '" +  str(rhs) +"'"
+    
+    def _vhdl__compare_std_logic_vector(self,obj, ops, rhs):
+        return str(obj) + " "+ obj.hdl_conversion__.ops2str(ops) +" " +   str(rhs)
+
     def _vhdl__compare(self,obj, ops, rhs):
         obj._add_input()
         if issubclass(type(rhs),vhdl_base):
             rhs._add_input()
-        if obj.type == "std_logic":
-            value = str(rhs).lower()
-            if value == "true":
-                rhs = "1"
-            elif value == "false":
-                rhs = "0"            
-
-            return str(obj) + " "+ ops2str(ops)+" '" +  str(rhs) +"'"
-        
+    
+        if obj.type == "integer":
+            return obj.hdl_conversion__._vhdl__compare_int(obj, ops, rhs)
+        elif obj.type == "std_logic":
+            return obj.hdl_conversion__._vhdl__compare_std_logic(obj, ops, rhs)
         elif "std_logic_vector" in obj.type:
-            return str(obj) + " "+ ops2str(ops)+" " +   str(rhs)
+            return obj.hdl_conversion__._vhdl__compare_std_logic_vector(obj, ops, rhs)
         
 
-        return str(obj) + " "+ ops2str(ops)+" " +   str(rhs)
+        return str(obj) + " "+ obj.hdl_conversion__.ops2str(ops)+" " +   str(rhs)
 
     def _vhdl__to_bool(self,obj, astParser):
         obj._add_input()
@@ -128,6 +138,37 @@ class v_symbol_converter(vhdl_converter_base):
         return ret
 
 
+    def _vhdl__reasign_std_logic(self, obj, rhs, target, astParser=None,context_str=None):
+        asOp = obj.hdl_conversion__.get_assiment_op(obj)
+        if issubclass(type(rhs),vhdl_base0):
+            return target + asOp + str(rhs.hdl_conversion__._vhdl__getValue(rhs, obj.type)) 
+        return target + asOp+  str(rhs) 
+
+    def _vhdl__reasign_std_logic_vector(self, obj, rhs, target, astParser=None,context_str=None):
+        asOp = obj.hdl_conversion__.get_assiment_op(obj)
+        if str(rhs) == '0':
+            return target + asOp+ " (others => '0')"
+        elif  issubclass(type(rhs),vhdl_base):
+            return target + asOp +  str(rhs.hdl_conversion__._vhdl__getValue(rhs, obj.type)) 
+        elif  type(rhs).__name__=="v_Num":
+            return  """{dest} {asOp} std_logic_vector(to_unsigned({src}, {dest}'length))""".format(
+                dest=target,
+                src = str(rhs.value),
+                asOp=asOp
+            )
+    def _vhdl__reasign_int(self, obj, rhs, target, astParser=None,context_str=None):
+        asOp = obj.hdl_conversion__.get_assiment_op(obj)
+        if str(rhs) == '0':
+            return target + asOp+ " 0"
+        elif type(rhs).__name__ == "str":
+            return target + asOp+ str(rhs)
+                
+        elif rhs.type == "integer":
+            return target + asOp+ str(rhs)
+        elif "std_logic_vector" in rhs.type:
+            return target + asOp +" to_integer(signed("+ str(rhs)+"))"
+        
+        return target +asOp +  str(rhs)
 
     def _vhdl__reasign(self, obj, rhs, astParser=None,context_str=None):
         obj._add_output()
@@ -141,35 +182,15 @@ class v_symbol_converter(vhdl_converter_base):
         if isProcess():
             obj.__Driver__ = 'process'
 
-        asOp = obj.hdl_conversion__.get_assiment_op(obj)
         
         if obj.type == "std_logic":
-            if issubclass(type(rhs),vhdl_base0):
-                return target + asOp + str(rhs.hdl_conversion__._vhdl__getValue(rhs, obj.type)) 
-            
-            return target + asOp+  str(rhs) 
+            return obj.hdl_conversion__._vhdl__reasign_std_logic(obj, rhs,target, astParser,context_str)
         elif "std_logic_vector" in obj.type:
-            if str(rhs) == '0':
-                return target + asOp+ " (others => '0')"
-            elif  issubclass(type(rhs),vhdl_base):
-                return target + asOp +  str(rhs.hdl_conversion__._vhdl__getValue(rhs, obj.type)) 
-            elif  type(rhs).__name__=="v_Num":
-                return  """{dest} {asOp} std_logic_vector(to_unsigned({src}, {dest}'length))""".format(
-                    dest=target,
-                    src = str(rhs.value),
-                    asOp=asOp
-                )
+            return obj.hdl_conversion__._vhdl__reasign_std_logic(obj, rhs,target, astParser,context_str)
         elif obj.type == "integer":
-            if str(rhs) == '0':
-                return target + asOp+ " 0"
-            elif type(rhs).__name__ == "str":
-                return target + asOp+ str(rhs)
-                
-            elif rhs.type == "integer":
-                return target + asOp+ str(rhs)
-            elif "std_logic_vector" in rhs.type:
-                return target + asOp +" to_integer(signed("+ str(rhs)+"))"
+            return obj.hdl_conversion__._vhdl__reasign_int(obj, rhs,target, astParser,context_str)
 
+        asOp = obj.hdl_conversion__.get_assiment_op(obj)            
         return target +asOp +  str(rhs)
     
     def get_type_simple(self,obj):
